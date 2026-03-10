@@ -24,7 +24,7 @@ interface Props {
   orgId?: string;
 }
 
-export function SessionManager({ orgId }: Props) {
+export default function SessionManager({ orgId }: Props) {
   const { user } = useAuth();
   const [sessions, setSessions] = useState<UserSession[]>([]);
   const [isLoading, setIsLoading] = useState(true);

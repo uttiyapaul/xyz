@@ -1,73 +1,100 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-// THIS FUNCTION IS CALLED AUTOMATICALLY BY SUPABASE ON EVERY LOGIN.
-// It reads the user's org memberships and injects them into the JWT.
-// The JWT is then used by my_org_ids() in every RLS policy — no DB query needed.
+interface PlatformRole {
+  role_name: string | null;
+  role_level: string | null;
+}
+
+interface OrgRoleRow {
+  organization_id: string;
+  role_id: string;
+  platform_roles: PlatformRole | null;
+}
 
 serve(async (req: Request) => {
   try {
-    const webhookSecret = Deno.env.get("HOOK_SECRET") ?? "";
-    const signature = req.headers.get("x-supabase-signature") ?? "";
-    const body = await req.json();
-    const user = body?.user;
+    // Validate the hook authorization header
+    const hookSecret = Deno.env.get("HOOK_SECRET") ?? "";
+    const authHeader = req.headers.get("authorization") ?? "";
+    const token = authHeader.replace("Bearer ", "");
 
-    if (!user?.id) {
-      // Return empty claims — Supabase Auth Hook requires a valid response
-      return new Response(JSON.stringify({ app_metadata: {} }), {
+    if (hookSecret && token !== hookSecret) {
+      return new Response(JSON.stringify({ claims: {} }), {
         headers: { "Content-Type": "application/json" },
         status: 200,
       });
     }
 
-    // Use service role — this function runs server-side only
+     const body = await req.json() as { user?: { id?: string } };
+    const userId = body?.user?.id;
+
+    if (!userId) {
+      return new Response(JSON.stringify({ claims: {} }), {
+        headers: { "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    // Query user's active org memberships + roles
-    // Table: public.user_organization_roles (confirmed in your schema)
-    const { data: roles, error } = await supabase
+    const { data: rows, error } = await supabase
       .from("user_organization_roles")
       .select(`
         organization_id,
         role_id,
         platform_roles ( role_name, role_level )
       `)
-      .eq("user_id", user.id)
-      .eq("is_active", true);
+      .eq("user_id", userId)
+      .eq("is_active", true) as { data: OrgRoleRow[] | null; error: { message: string } | null };
 
     if (error) {
-      console.error("set-jwt-claims error:", error.message);
-      return new Response(JSON.stringify({ app_metadata: {} }), {
+      console.error("set-jwt-claims DB error:", error.message);
+      return new Response(JSON.stringify({ claims: {} }), {
         headers: { "Content-Type": "application/json" },
         status: 200,
       });
     }
 
-    // Deduplicate org IDs (user may have multiple roles in one org)
-    const orgIds = [...new Set(roles?.map((r: any) => r.organization_id) ?? [])];
+    const safeRows: OrgRoleRow[] = rows ?? [];
 
-    // Collect all role names (can have multiple across orgs)
-    const roleNames = [
+    const orgIds: string[] = [
       ...new Set(
-        roles
-          ?.map((r: any) => r.platform_roles?.role_name)
-          .filter(Boolean) ?? []
+        safeRows
+          .map((r: OrgRoleRow) => r.organization_id)
+          .filter((id: string) => typeof id === "string")
       ),
     ];
 
-    const isPlatformAdmin = roleNames.includes("platform_admin");
-    const isConsultant = roleNames.includes("consultant");
+    const roleNames: string[] = [
+      ...new Set(
+        safeRows
+          .map((r: OrgRoleRow) => r.platform_roles?.role_name ?? "")
+          .filter((name: string) => name.length > 0)
+      ),
+    ];
+
+    const isPlatformAdmin: boolean = roleNames.some((r: string) =>
+      ["platform_superadmin", "platform_admin"].includes(r)
+    );
+
+    const isConsultant: boolean = roleNames.some((r: string) =>
+      r.includes("consultant")
+    );
+
+    const primaryRole: string = roleNames[0] ?? "client_viewer";
 
     return new Response(
       JSON.stringify({
-        app_metadata: {
-          org_ids: orgIds,           // ← read by my_org_ids() in all RLS policies
-          roles: roleNames,
+        claims: {
+          org_ids:           orgIds,
+          roles:             roleNames,
           is_platform_admin: isPlatformAdmin,
-          is_consultant: isConsultant,
+          is_consultant:     isConsultant,
+          primary_role:      primaryRole,
         },
       }),
       {
@@ -76,10 +103,10 @@ serve(async (req: Request) => {
       }
     );
   } catch (err) {
-    console.error("set-jwt-claims fatal:", err);
-    return new Response(JSON.stringify({ app_metadata: {} }), {
+    console.error("set-jwt-claims fatal:", String(err));
+    return new Response(JSON.stringify({ claims: {} }), {
       headers: { "Content-Type": "application/json" },
-      status: 200, // Must return 200 or Auth Hook breaks login
+      status: 200,
     });
   }
 });

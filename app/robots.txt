@@ -1,0 +1,7 @@
+User-agent: *
+Disallow: /admin
+Disallow: /api/
+Disallow: /auth/reset-password
+Disallow: /auth/verify-email
+Allow: /
+Allow: /calculator

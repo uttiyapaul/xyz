@@ -30,7 +30,7 @@ interface Props {
   orgId: string;
 }
 
-export function ApiKeyManager({ orgId }: Props) {
+export default function ApiKeyManager({ orgId }: Props) {
   const { user } = useAuth();
   const { hasPermission, isLoading } = usePermission("api_keys:manage", orgId);
   const [keys, setKeys] = useState<ApiKey[]>([]);

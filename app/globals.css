@@ -1,8 +1,25 @@
+/* app/globals.css — complete updated version */
 @import "tailwindcss";
 
+html, body {
+  background-color: #050508;
+  color: #E8E6DE;
+  margin: 0;
+  padding: 0;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+/* Prevent flash of unstyled content on dark theme */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: dark;
+}
+
+:root {
+  --background: #050508;
+  --foreground: #E8E6DE;
 }
 
 @theme inline {
@@ -12,15 +29,8 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
-}
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #07070E; }
+::-webkit-scrollbar-thumb { background: #1A1A24; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #2A2A34; }

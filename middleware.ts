@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
 /**
- * CarbonIQ — middleware.ts
+ * A2Z Carbon Solutions — middleware.ts
  *
  * Executed at the Edge before every request. Implements:
  *   1. CSP Nonce generation (per-request, crypto-random)
@@ -18,11 +18,16 @@ import { createServerClient } from "@supabase/ssr";
 // Constants
 // ---------------------------------------------------------------------------
 const PUBLIC_ROUTES = new Set([
+  "/",                           // Public landing page
   "/auth/login",
   "/auth/register",
   "/auth/forgot-password",
   "/auth/reset-password",
   "/auth/verify-email",
+  "/auth/pending-approval",
+  "/auth/invited",
+  "/auth/suspended",
+  "/auth/offboarded",
   "/calculator",                 // Public CBAM calculator
 ]);
 
@@ -102,7 +107,7 @@ function buildCspWithNonce(nonce: string): string {
   const directives = [
     `default-src 'self'`,
     `script-src 'self' 'nonce-${nonce}'${isDev ? " 'unsafe-eval'" : ""}`,
-    `style-src 'self' 'nonce-${nonce}' https://fonts.googleapis.com`,
+    `style-src 'self' 'nonce-${nonce}' 'unsafe-inline' https://fonts.googleapis.com`,
     `font-src 'self' https://fonts.gstatic.com data:`,
     `img-src 'self' data: blob: https:`,
     `connect-src 'self' https://${supabaseHost} wss://${supabaseHost} https://api.anthropic.com`,
@@ -189,6 +194,9 @@ export async function middleware(req: NextRequest): Promise<NextResponse> {
   const supabaseKey  = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
   let   isAuthed     = false;
 
+  console.log("[Middleware] Checking auth for:", pathname);
+  console.log("[Middleware] Cookies:", req.cookies.getAll().map(c => c.name));
+
   if (supabaseUrl && supabaseKey) {
     const supabase = createServerClient(supabaseUrl, supabaseKey, {
       cookies: {
@@ -208,7 +216,9 @@ export async function middleware(req: NextRequest): Promise<NextResponse> {
       },
     });
 
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user }, error } = await supabase.auth.getUser();
+    console.log("[Middleware] User:", user?.email ?? "none");
+    console.log("[Middleware] Error:", error?.message ?? "none");
     isAuthed = !!user;
 
     // Set user context headers for downstream use
@@ -219,10 +229,13 @@ export async function middleware(req: NextRequest): Promise<NextResponse> {
     }
   }
 
+  console.log("[Middleware] isAuthed:", isAuthed);
+
   // 6. Auth guard
   const isPublic = PUBLIC_ROUTES.has(pathname) ||
                    pathname.startsWith("/_next/") ||
                    pathname.startsWith("/api/public/") ||
+                   pathname.startsWith("/debug-auth") ||
                    pathname.match(/\.(ico|png|jpg|svg|webp|woff2?)$/) !== null;
 
   if (!isPublic && !isAuthed) {
@@ -233,6 +246,16 @@ export async function middleware(req: NextRequest): Promise<NextResponse> {
 
   // Redirect authenticated users away from auth pages
   if (isAuthed && AUTH_ROUTES.has(pathname)) {
+    console.log("[Middleware] User is authenticated on auth page, should redirect");
+    console.log("[Middleware] Redirect param:", req.nextUrl.searchParams.get("redirect"));
+    
+    // Check if there's a redirect parameter
+    const redirectParam = req.nextUrl.searchParams.get("redirect");
+    if (redirectParam && redirectParam.startsWith("/") && !redirectParam.startsWith("//")) {
+      console.log("[Middleware] Redirecting to:", redirectParam);
+      return NextResponse.redirect(new URL(redirectParam, req.url));
+    }
+    console.log("[Middleware] Redirecting to /dashboard");
     return NextResponse.redirect(new URL("/dashboard", req.url));
   }
 

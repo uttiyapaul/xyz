@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 /**
- * CarbonIQ Platform — next.config.ts
+ * A2Z Carbon Solutions — next.config.ts
  * Banking-level security: CSP nonces, HSTS, X-Frame-Options, etc.
  * All headers follow OWASP Security Headers Project guidelines.
  */
@@ -138,14 +138,7 @@ const nextConfig: NextConfig = {
   // Redirects
   // ---------------------------------------------------------------------------
   async redirects() {
-    return [
-      {
-        source: "/",
-        destination: "/auth/login",
-        permanent: false,
-        has: [{ type: "cookie", key: "carboniq_session", missing: true }],
-      },
-    ];
+    return [];
   },
 
   // ---------------------------------------------------------------------------

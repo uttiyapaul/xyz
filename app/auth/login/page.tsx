@@ -1,9 +1,10 @@
 // app/auth/login/page.tsx
 "use client";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
+import { getUserPrimaryRole, isEmailVerified, resolveDashboardRouteForRole } from "@/lib/auth/role-routing";
 
 const MAX_ATTEMPTS = 5;
 const LOCKOUT_MS = 15 * 60 * 1000; // 15 minutes
@@ -55,7 +56,10 @@ export default function LoginPage() {
     }
 
     const validationError = validate();
-    if (validationError) { setError(validationError); return; }
+    if (validationError) { 
+      setError(validationError); 
+      return; 
+    }
 
     setLoading(true);
 
@@ -80,21 +84,34 @@ export default function LoginPage() {
       return;
     }
 
-    // SUCCESS — read role from JWT app_metadata and redirect
-    const meta = data.session?.user?.app_metadata ?? {};
-    const roles: string[] = Array.isArray(meta.roles) ? meta.roles : [];
-    const isPlatformAdmin = Boolean(meta.is_platform_admin) || roles.includes("platform_admin") || roles.includes("platform_superadmin");
+    // SUCCESS — check email verification first
+    const user = data.session?.user;
+    
+    if (!user) {
+      setError("Authentication failed. Please try again.");
+      return;
+    }
 
+    // Check email verification
+    if (!isEmailVerified(user)) {
+      router.replace("/auth/verify-email");
+      return;
+    }
+
+    // Get role from JWT metadata
+    const role = getUserPrimaryRole(user);
+    const dashboardRoute = resolveDashboardRouteForRole(role);
+
+    // Check for custom redirect param
     const redirect = safeRedirect(searchParams.get("redirect"));
 
-    if (isPlatformAdmin) {
-      router.replace("/admin");
-    } else if (redirect !== "/dashboard") {
-      router.replace(redirect);
+    // Use window.location.replace to avoid history issues
+    if (redirect !== "/dashboard") {
+      window.location.replace(redirect);
     } else {
-      router.replace("/dashboard");
+      window.location.replace(dashboardRoute);
     }
-  }, [email, password, attempts, lockedUntil, router, searchParams]);
+  }, [email, password, attempts, lockedUntil, searchParams]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") handleLogin();
@@ -109,7 +126,7 @@ export default function LoginPage() {
         Sign in to your account
       </h1>
       <p style={{ fontSize: "13px", color: "#6B7280", marginBottom: "28px" }}>
-        GHG emissions accounting platform
+        Your A2Z Carbon Solutions
       </p>
 
       {error && (

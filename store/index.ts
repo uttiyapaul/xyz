@@ -1,5 +1,5 @@
 /**
- * CarbonIQ Platform — store/index.ts
+ * A2Z Carbon Solutions — store/index.ts
  * Redux Toolkit store — enterprise configuration.
  * Features: RTK Query, audit middleware, error boundary middleware,
  *           session sync, selective persistence.
@@ -61,7 +61,7 @@ export function createStore(preloadedState?: Partial<RootState>) {
 
     devTools: process.env.NODE_ENV !== "production"
       ? {
-          name:            "CarbonIQ Platform",
+          name:            "A2Z Carbon Solutions",
           maxAge:          50,
           latency:         500,
           actionsBlacklist: [

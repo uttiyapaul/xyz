@@ -11,7 +11,9 @@ import { Provider }          from "react-redux";
 import { createStore }       from "../store";
 import type { AppStore }     from "../store";
 import { setUser, setSession, setCsrfToken } from "../store/slices/auth.slice";
-import { createClient } from "@supabase/supabase-js";
+import { setTheme } from "../store/slices/ui.slice";
+import { supabase } from "@/lib/supabase/client";  // Use the singleton client
+import { getUserPrimaryRole } from "@/lib/auth/role-routing";
 
 // ---------------------------------------------------------------------------
 // Redux provider — creates a store per server render (for SSR compat)
@@ -121,36 +123,46 @@ export function Providers({ children }: { children: React.ReactNode }) {
 function AuthSync({ children }: { children: React.ReactNode }) {
   // Dynamically import store hooks to avoid circular deps
   useEffect(() => {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    if (!supabaseUrl || !supabaseKey) return;
-
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
     // Read CSRF token from cookie
     const csrf = document.cookie
       .split("; ")
       .find((c) => c.startsWith("__csrf_token="))
       ?.split("=")[1] ?? null;
 
+    // Read saved theme
+    const savedTheme = localStorage.getItem("app-theme") as "dark" | "light" | null;
+
     // Initial session sync — import store dynamically to avoid SSR issues
     import("../store").then(({ store }) => {
       if (csrf) store.dispatch(setCsrfToken(csrf));
+      if (savedTheme) {
+        store.dispatch(setTheme(savedTheme));
+        document.documentElement.dataset.theme = savedTheme;
+      }
 
-      supabase.auth.getUser().then(({ data: { user } }) => {
-        if (user) {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session?.user) {
+          const role = getUserPrimaryRole(session.user);
+
           store.dispatch(setUser({
-            id:         user.id,
-            email:      user.email ?? "",
-            full_name:  (user.user_metadata?.full_name as string) ?? "",
-            avatar_url: (user.user_metadata?.avatar_url as string) ?? null,
-            role:       "client_admin",     // Default; override from DB profile
+            id:         session.user.id,
+            email:      session.user.email ?? "",
+            full_name:  (session.user.user_metadata?.full_name as string) ?? "",
+            avatar_url: (session.user.user_metadata?.avatar_url as string) ?? null,
+            role:       role as any,
             org_id:     null,
             org_name:   null,
             is_active:  true,
-            last_login: user.last_sign_in_at ?? null,
+            last_login: session.user.last_sign_in_at ?? null,
             mfa_enabled: false,
-            created_at: user.created_at,
+            created_at: session.user.created_at,
+          }));
+
+          store.dispatch(setSession({
+            user: session.user as any,
+            access_token: session.access_token,
+            refresh_token: session.refresh_token ?? "",
+            expires_at: new Date(session.expires_at ?? 0).getTime(),
           }));
         }
       });
@@ -161,12 +173,14 @@ function AuthSync({ children }: { children: React.ReactNode }) {
           store.dispatch(setUser(null));
           store.dispatch(setSession(null));
         } else if (session?.user) {
+          const role = getUserPrimaryRole(session.user);
+
           store.dispatch(setUser({
             id:         session.user.id,
             email:      session.user.email ?? "",
             full_name:  (session.user.user_metadata?.full_name as string) ?? "",
             avatar_url: (session.user.user_metadata?.avatar_url as string) ?? null,
-            role:       "client_admin",
+            role:       role as any,
             org_id:     null,
             org_name:   null,
             is_active:  true,

@@ -74,7 +74,7 @@ export default function RegisterPage() {
         Create your account
       </h1>
       <p style={{ fontSize: "13px", color: "#6B7280", marginBottom: "28px" }}>
-        Request access to the CarbonIQ platform
+        Request access to A2Z Carbon Solutions
       </p>
 
       {error && (

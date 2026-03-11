@@ -1,5 +1,5 @@
 /**
- * CarbonIQ Platform — store/slices/ui.slice.ts
+ * A2Z Carbon Solutions — store/slices/ui.slice.ts
  * Global UI state: toasts, modals, sidebar, theme, loading overlays.
  */
 
@@ -88,6 +88,12 @@ const uiSlice = createSlice({
     setBreadcrumbs(state, action: PayloadAction<Breadcrumb[]>) {
       state.breadcrumbs = action.payload;
     },
+    setTheme(state, action: PayloadAction<"dark" | "light">) {
+      state.theme = action.payload;
+    },
+    toggleTheme(state) {
+      state.theme = state.theme === "dark" ? "light" : "dark";
+    },
   },
 });
 
@@ -96,6 +102,7 @@ export const {
   openModal, closeModal,
   toggleSidebar, setSidebarCollapsed,
   setGlobalLoading, setBreadcrumbs,
+  setTheme, toggleTheme,
 } = uiSlice.actions;
 
 export const uiReducer = uiSlice.reducer;
@@ -107,3 +114,4 @@ export const selectModalData       = (s: { ui: UiState }) => s.ui.modalData;
 export const selectSidebarCollapsed = (s: { ui: UiState }) => s.ui.sidebarCollapsed;
 export const selectGlobalLoading   = (s: { ui: UiState }) => s.ui.globalLoading;
 export const selectBreadcrumbs     = (s: { ui: UiState }) => s.ui.breadcrumbs;
+export const selectTheme           = (s: { ui: UiState }) => s.ui.theme;

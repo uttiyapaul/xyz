@@ -77,7 +77,7 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
         {!collapsed && (
           <span style={{ fontSize: "14px", fontWeight: "700", color: "#FAFAF8",
             whiteSpace: "nowrap", overflow: "hidden" }}>
-            CarbonIQ
+            A2Z Carbon Solutions
           </span>
         )}
       </div>

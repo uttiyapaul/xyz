@@ -38,8 +38,8 @@ const API_WRITE_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 // Rate limit config — sliding window
 const RATE_LIMIT = {
   window_ms: 60_000,   // 1 minute
-  max_api:   120,      // API calls per window
-  max_auth:  10,       // Auth calls per window (stricter)
+  max_api: 120,      // API calls per window
+  max_auth: 10,       // Auth calls per window (stricter)
 };
 
 // ---------------------------------------------------------------------------
@@ -107,7 +107,7 @@ function buildCspWithNonce(nonce: string): string {
   const directives = [
     `default-src 'self'`,
     `script-src 'self' 'nonce-${nonce}'${isDev ? " 'unsafe-eval'" : ""}`,
-    `style-src 'self' 'nonce-${nonce}' 'unsafe-inline' https://fonts.googleapis.com`,
+    `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com`,
     `font-src 'self' https://fonts.gstatic.com data:`,
     `img-src 'self' data: blob: https:`,
     `connect-src 'self' https://${supabaseHost} wss://${supabaseHost} https://api.anthropic.com`,
@@ -141,15 +141,15 @@ export async function middleware(req: NextRequest): Promise<NextResponse> {
   const { pathname } = req.nextUrl;
 
   // 1. Generate per-request nonce + trace ID
-  const nonce   = generateNonce();
+  const nonce = generateNonce();
   const traceId = generateTraceId();
 
   // 2. Rate limiting
-  const ip         = req.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "unknown";
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "unknown";
   const isAuthPath = pathname.startsWith("/auth/");
-  const isApiPath  = pathname.startsWith("/api/");
-  const rlKey      = `${ip}:${isAuthPath ? "auth" : "api"}`;
-  const rlMax      = isAuthPath ? RATE_LIMIT.max_auth : RATE_LIMIT.max_api;
+  const isApiPath = pathname.startsWith("/api/");
+  const rlKey = `${ip}:${isAuthPath ? "auth" : "api"}`;
+  const rlMax = isAuthPath ? RATE_LIMIT.max_auth : RATE_LIMIT.max_api;
 
   if (isAuthPath || isApiPath) {
     const rl = checkRateLimit(rlKey, rlMax);
@@ -159,11 +159,11 @@ export async function middleware(req: NextRequest): Promise<NextResponse> {
         {
           status: 429,
           headers: {
-            "Content-Type":     "application/json",
-            "Retry-After":      String(Math.ceil((rl.resetMs - Date.now()) / 1000)),
-            "X-RateLimit-Limit":     String(rlMax),
+            "Content-Type": "application/json",
+            "Retry-After": String(Math.ceil((rl.resetMs - Date.now()) / 1000)),
+            "X-RateLimit-Limit": String(rlMax),
             "X-RateLimit-Remaining": "0",
-            "X-RateLimit-Reset":     String(rl.resetMs),
+            "X-RateLimit-Reset": String(rl.resetMs),
           },
         }
       );
@@ -183,16 +183,16 @@ export async function middleware(req: NextRequest): Promise<NextResponse> {
     request: {
       headers: new Headers({
         ...Object.fromEntries(req.headers.entries()),
-        "x-nonce":    nonce,    // Available in RSC via headers()
+        "x-nonce": nonce,    // Available in RSC via headers()
         "x-trace-id": traceId,  // Propagate through request chain
       }),
     },
   });
 
   // 5. Supabase auth session refresh
-  const supabaseUrl  = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const supabaseKey  = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-  let   isAuthed     = false;
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+  let isAuthed = false;
 
   if (supabaseUrl && supabaseKey) {
     const supabase = createServerClient(supabaseUrl, supabaseKey, {
@@ -203,10 +203,10 @@ export async function middleware(req: NextRequest): Promise<NextResponse> {
             req.cookies.set(name, value);
             response.cookies.set(name, value, {
               ...options,
-              httpOnly:  true,
-              secure:    process.env.NODE_ENV === "production",
-              sameSite:  "lax",
-              path:      "/",
+              httpOnly: true,
+              secure: process.env.NODE_ENV === "production",
+              sameSite: "lax",
+              path: "/",
             });
           });
         },
@@ -218,18 +218,18 @@ export async function middleware(req: NextRequest): Promise<NextResponse> {
 
     // Set user context headers for downstream use
     if (user) {
-      response.headers.set("x-user-id",    user.id);
+      response.headers.set("x-user-id", user.id);
       response.headers.set("x-user-email", user.email ?? "");
-      response.headers.set("x-user-role",  user.role ?? "authenticated");
+      response.headers.set("x-user-role", user.role ?? "authenticated");
     }
   }
 
   // 6. Auth guard
   const isPublic = PUBLIC_ROUTES.has(pathname) ||
-                   pathname.startsWith("/_next/") ||
-                   pathname.startsWith("/api/public/") ||
-                   pathname.startsWith("/debug-auth") ||
-                   pathname.match(/\.(ico|png|jpg|svg|webp|woff2?)$/) !== null;
+    pathname.startsWith("/_next/") ||
+    pathname.startsWith("/api/public/") ||
+    pathname.startsWith("/debug-auth") ||
+    pathname.match(/\.(ico|png|jpg|svg|webp|woff2?)$/) !== null;
 
   if (!isPublic && !isAuthed) {
     const loginUrl = new URL("/auth/login", req.url);
@@ -250,22 +250,22 @@ export async function middleware(req: NextRequest): Promise<NextResponse> {
   // 7. Inject security headers
   const csp = buildCspWithNonce(nonce);
   response.headers.set("Content-Security-Policy", csp);
-  response.headers.set("X-Nonce",                 nonce);
-  response.headers.set("X-Trace-Id",              traceId);
-  response.headers.set("X-Request-Id",            traceId);
-  response.headers.set("X-Frame-Options",         "DENY");
-  response.headers.set("X-Content-Type-Options",  "nosniff");
-  response.headers.set("Referrer-Policy",         "strict-origin-when-cross-origin");
+  response.headers.set("X-Nonce", nonce);
+  response.headers.set("X-Trace-Id", traceId);
+  response.headers.set("X-Request-Id", traceId);
+  response.headers.set("X-Frame-Options", "DENY");
+  response.headers.set("X-Content-Type-Options", "nosniff");
+  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
 
   // 8. Set/refresh CSRF token cookie (not httpOnly — JS must read it)
   if (!req.cookies.get("__csrf_token")) {
     const csrfToken = generateNonce();
     response.cookies.set("__csrf_token", csrfToken, {
       httpOnly: false,           // Must be JS-readable for double-submit pattern
-      secure:   process.env.NODE_ENV === "production",
+      secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
-      path:     "/",
-      maxAge:   3600,            // 1 hour
+      path: "/",
+      maxAge: 3600,            // 1 hour
     });
   }
 

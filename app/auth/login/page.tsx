@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
-import { getUserPrimaryRole, isEmailVerified, resolveDashboardRouteForRole } from "@/lib/auth/role-routing";
+import { getUserPrimaryRole, isEmailVerified, getRoleRoute } from "@/lib/auth/roles";
 
 const MAX_ATTEMPTS = 5;
 const LOCKOUT_MS = 15 * 60 * 1000; // 15 minutes
@@ -21,10 +21,10 @@ export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const [email, setEmail]       = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading]   = useState(false);
-  const [error, setError]       = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [attempts, setAttempts] = useState(0);
   const [lockedUntil, setLockedUntil] = useState<number | null>(null);
 
@@ -56,9 +56,9 @@ export default function LoginPage() {
     }
 
     const validationError = validate();
-    if (validationError) { 
-      setError(validationError); 
-      return; 
+    if (validationError) {
+      setError(validationError);
+      return;
     }
 
     setLoading(true);
@@ -86,7 +86,7 @@ export default function LoginPage() {
 
     // SUCCESS — check email verification first
     const user = data.session?.user;
-    
+
     if (!user) {
       setError("Authentication failed. Please try again.");
       return;
@@ -98,9 +98,8 @@ export default function LoginPage() {
       return;
     }
 
-    // Get role from JWT metadata
     const role = getUserPrimaryRole(user);
-    const dashboardRoute = resolveDashboardRouteForRole(role);
+    const dashboardRoute = getRoleRoute(role);
 
     // Check for custom redirect param
     const redirect = safeRedirect(searchParams.get("redirect"));
@@ -121,8 +120,10 @@ export default function LoginPage() {
 
   return (
     <div>
-      <h1 style={{ fontSize: "20px", fontWeight: "700", color: "#FAFAF8",
-        marginBottom: "6px", margin: "0 0 6px" }}>
+      <h1 style={{
+        fontSize: "20px", fontWeight: "700", color: "#FAFAF8",
+        marginBottom: "6px", margin: "0 0 6px"
+      }}>
         Sign in to your account
       </h1>
       <p style={{ fontSize: "13px", color: "#6B7280", marginBottom: "28px" }}>
@@ -141,8 +142,10 @@ export default function LoginPage() {
 
       {/* Email */}
       <div style={{ marginBottom: "16px" }}>
-        <label style={{ fontSize: "11px", color: "#6B7280", display: "block",
-          marginBottom: "6px", letterSpacing: "0.5px" }}>
+        <label style={{
+          fontSize: "11px", color: "#6B7280", display: "block",
+          marginBottom: "6px", letterSpacing: "0.5px"
+        }}>
           EMAIL ADDRESS
         </label>
         <input
@@ -162,8 +165,10 @@ export default function LoginPage() {
 
       {/* Password */}
       <div style={{ marginBottom: "8px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between",
-          alignItems: "center", marginBottom: "6px" }}>
+        <div style={{
+          display: "flex", justifyContent: "space-between",
+          alignItems: "center", marginBottom: "6px"
+        }}>
           <label style={{ fontSize: "11px", color: "#6B7280", letterSpacing: "0.5px" }}>
             PASSWORD
           </label>
@@ -205,8 +210,10 @@ export default function LoginPage() {
         {loading ? "Signing in…" : isLocked ? "Account locked" : "Sign in"}
       </button>
 
-      <p style={{ marginTop: "20px", fontSize: "13px", color: "#6B7280",
-        textAlign: "center" }}>
+      <p style={{
+        marginTop: "20px", fontSize: "13px", color: "#6B7280",
+        textAlign: "center"
+      }}>
         Don&apos;t have an account?{" "}
         <Link href="/auth/register" style={{ color: "#F59E0B", textDecoration: "none" }}>
           Request access

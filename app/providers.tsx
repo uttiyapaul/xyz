@@ -7,13 +7,13 @@
  */
 
 import { useRef, useEffect } from "react";
-import { Provider }          from "react-redux";
-import { createStore }       from "../store";
-import type { AppStore }     from "../store";
+import { Provider } from "react-redux";
+import { createStore } from "../store";
+import type { AppStore } from "../store";
 import { setUser, setSession, setCsrfToken } from "../store/slices/auth.slice";
 import { setTheme } from "../store/slices/ui.slice";
 import { supabase } from "@/lib/supabase/client";  // Use the singleton client
-import { getUserPrimaryRole } from "@/lib/auth/role-routing";
+import { getUserPrimaryRole } from "@/lib/auth/roles";
 
 // ---------------------------------------------------------------------------
 // Redux provider — creates a store per server render (for SSR compat)
@@ -102,6 +102,8 @@ class GlobalErrorBoundary extends Component<
   }
 }
 
+import { AuthProvider } from "@/context/AuthContext";
+
 // ---------------------------------------------------------------------------
 // Root Providers — compose all providers here
 // ---------------------------------------------------------------------------
@@ -109,9 +111,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <GlobalErrorBoundary>
       <ReduxProvider>
-        <AuthSync>
-          {children}
-        </AuthSync>
+        <AuthProvider>
+          <AuthSync>
+            {children}
+          </AuthSync>
+        </AuthProvider>
       </ReduxProvider>
     </GlobalErrorBoundary>
   );
@@ -145,14 +149,14 @@ function AuthSync({ children }: { children: React.ReactNode }) {
           const role = getUserPrimaryRole(session.user);
 
           store.dispatch(setUser({
-            id:         session.user.id,
-            email:      session.user.email ?? "",
-            full_name:  (session.user.user_metadata?.full_name as string) ?? "",
+            id: session.user.id,
+            email: session.user.email ?? "",
+            full_name: (session.user.user_metadata?.full_name as string) ?? "",
             avatar_url: (session.user.user_metadata?.avatar_url as string) ?? null,
-            role:       role as any,
-            org_id:     null,
-            org_name:   null,
-            is_active:  true,
+            role: role as any,
+            org_id: null,
+            org_name: null,
+            is_active: true,
             last_login: session.user.last_sign_in_at ?? null,
             mfa_enabled: false,
             created_at: session.user.created_at,
@@ -176,14 +180,14 @@ function AuthSync({ children }: { children: React.ReactNode }) {
           const role = getUserPrimaryRole(session.user);
 
           store.dispatch(setUser({
-            id:         session.user.id,
-            email:      session.user.email ?? "",
-            full_name:  (session.user.user_metadata?.full_name as string) ?? "",
+            id: session.user.id,
+            email: session.user.email ?? "",
+            full_name: (session.user.user_metadata?.full_name as string) ?? "",
             avatar_url: (session.user.user_metadata?.avatar_url as string) ?? null,
-            role:       role as any,
-            org_id:     null,
-            org_name:   null,
-            is_active:  true,
+            role: role as any,
+            org_id: null,
+            org_name: null,
+            is_active: true,
             last_login: session.user.last_sign_in_at ?? null,
             mfa_enabled: false,
             created_at: session.user.created_at,

@@ -1,7 +1,7 @@
 "use client";
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "../lib/supabase/client";
-import { getUserPrimaryRole } from "../lib/auth/role-routing";
+import { getUserPrimaryRole } from "../lib/auth/roles";
 import type { User, Session } from "@supabase/supabase-js";
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -53,10 +53,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     // Decode JWT to get live claims — NOT session.user.app_metadata
-    const jwtClaims  = decodeJwtClaims(session.access_token);
-    const meta       = (jwtClaims.app_metadata as Record<string, unknown>) ?? {};
+    const jwtClaims = decodeJwtClaims(session.access_token);
+    const meta = (jwtClaims.app_metadata as Record<string, unknown>) ?? {};
 
-    const roles: string[]  = Array.isArray(meta.roles) ? (meta.roles as string[]) : [];
+    const roles: string[] = Array.isArray(meta.roles) ? (meta.roles as string[]) : [];
     const orgIds: string[] = Array.isArray(meta.org_ids) ? (meta.org_ids as string[]) : [];
 
     // Build a patched user object with JWT claims so role-routing reads correctly
@@ -68,16 +68,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       },
     };
 
-    const primaryRole    = getUserPrimaryRole(patchedUser);
+    const primaryRole = getUserPrimaryRole(patchedUser);
     const isPlatformAdmin = Boolean(meta.is_platform_admin) ||
-                            primaryRole === "platform_superadmin" ||
-                            primaryRole === "platform_admin";
-    const isConsultant   = typeof meta.is_consultant === "boolean"
-                            ? (meta.is_consultant as boolean)
-                            : primaryRole.startsWith("consultant_");
+      primaryRole === "platform_superadmin" ||
+      primaryRole === "platform_admin";
+    const isConsultant = typeof meta.is_consultant === "boolean"
+      ? (meta.is_consultant as boolean)
+      : primaryRole.startsWith("consultant_");
 
     return {
-      user:    patchedUser,
+      user: patchedUser,
       session,
       orgIds,
       roles,

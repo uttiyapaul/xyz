@@ -1,0 +1,895 @@
+﻿
+<div class="bg-canvas" aria-hidden="true"><div class="bg-grid"></div></div>
+
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+     COOKIE CONSENT
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+<div id="cookie-banner" class="cookie-banner" role="dialog" aria-label="Cookie preferences" aria-modal="true">
+  <div class="cookie-inner">
+    <div class="cookie-title">We use cookies</div>
+    <p class="cookie-desc">We use cookies to keep the platform working, understand how visitors use our site, and show relevant content. Your data is handled per our <a href="/privacy">Privacy Policy</a> and <a href="/dpa">Data Processing Agreement</a>.</p>
+    <div class="cookie-toggles">
+      <div class="cookie-toggle">
+        <div class="ctog-text"><span class="ctog-label">Necessary</span><span class="ctog-sub">Always active</span></div>
+        <label class="toggle"><input type="checkbox" checked disabled><span class="toggle-track"></span></label>
+      </div>
+      <div class="cookie-toggle">
+        <div class="ctog-text"><span class="ctog-label">Analytics</span><span class="ctog-sub">Usage &amp; performance</span></div>
+        <label class="toggle"><input type="checkbox" id="ck-analytics" checked><span class="toggle-track"></span></label>
+      </div>
+      <div class="cookie-toggle">
+        <div class="ctog-text"><span class="ctog-label">Marketing</span><span class="ctog-sub">Personalised content</span></div>
+        <label class="toggle"><input type="checkbox" id="ck-marketing"><span class="toggle-track"></span></label>
+      </div>
+    </div>
+    <div class="cookie-actions">
+      <button class="btn btn-primary btn-sm" id="cookie-accept">Accept All</button>
+      <button class="btn btn-ghost btn-sm" id="cookie-save">Save Preferences</button>
+      <a href="/privacy" class="cookie-policy">Privacy Policy</a>
+    </div>
+  </div>
+</div>
+
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+     NAVBAR
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+<nav class="nav" id="main-nav" role="navigation" aria-label="Main navigation">
+  <a href="/" class="nav-logo" aria-label="XYZ-For-Now home">
+    <div class="nav-logo-mark" aria-hidden="true">XYZ</div>
+    XYZ-For-Now
+  </a>
+  <ul class="nav-links">
+    <li><a href="#solution">Platform</a></li>
+    <li><a href="#amine">Amine Products</a></li>
+    <li><a href="#ccs">CCS Projects</a></li>
+    <li><a href="#compliance">Compliance</a></li>
+    <li><a href="/calculator">CBAM Calculator</a></li>
+    <li><a href="#pricing">Pricing</a></li>
+  </ul>
+  <div class="nav-actions">
+    <a href="/auth/login" class="btn btn-ghost">Sign In</a>
+    <a href="#demo" class="btn btn-primary">Book a Demo</a>
+  </div>
+</nav>
+
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+     MOBILE BOTTOM TAB BAR
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+<nav class="bottom-tab-bar" role="navigation" aria-label="Mobile navigation" id="bottom-nav">
+  <div class="tab-items">
+    <a href="#home" class="tab-item active" id="tab-home" aria-label="Home">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      Home
+    </a>
+    <a href="#amine" class="tab-item" id="tab-amine" aria-label="Amine products">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="2"/><circle cx="6" cy="7" r="2"/><circle cx="18" cy="7" r="2"/><circle cx="6" cy="17" r="2"/><circle cx="18" cy="17" r="2"/><line x1="8" y1="8" x2="10" y2="11"/><line x1="16" y1="8" x2="14" y2="11"/><line x1="8" y1="16" x2="10" y2="13"/><line x1="16" y1="16" x2="14" y2="13"/></svg>
+      Amine
+    </a>
+    <a href="#ccs" class="tab-item" id="tab-ccs" aria-label="CCS projects">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      CCS
+    </a>
+    <a href="#solution" class="tab-item" id="tab-platform" aria-label="Platform">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      Platform
+    </a>
+    <a href="#demo" class="tab-cta" id="tab-demo" aria-label="Book a demo">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+      Demo
+    </a>
+  </div>
+</nav>
+
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+     HERO — CINEMATIC CANVAS
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+<main id="main" data-metrics-endpoint="/data/client-metrics.json" data-metrics-type="json">
+<section class="hero" id="home" aria-labelledby="hero-h1">
+  <canvas id="hero-canvas" aria-hidden="true"></canvas>
+  <div class="hero-fallback" id="hero-fallback" aria-hidden="true"></div>
+  <div class="hero-overlay" aria-hidden="true"></div>
+
+  <div class="container">
+    <div class="hero-text">
+      <h1 class="hero-title" id="hero-h1">
+        Automate<br>
+        <span class="accent">Carbon Compliance</span>
+      </h1>
+      <p class="hero-phase-sub" id="hero-phase-text">
+        Client demo: Tata emissions across 5 facilities (demo data shown).
+      </p>
+      <div class="hero-actions">
+        <a href="#demo" class="btn btn-primary btn-xl">Book a Demo</a>
+        <a href="#solution" class="btn btn-ghost btn-xl">Watch 3-min Demo</a>
+      </div>
+      <div class="hero-trust">SOC 2 | ISO 27001 | GDPR Compliant</div>
+      <div class="hero-three-pillars">
+        <div class="pillar"><div class="pillar-dot pillar-dot-measure" aria-hidden="true"></div>Measure GHG</div>
+        <div class="pillar"><div class="pillar-dot pillar-dot-capture" aria-hidden="true"></div>Capture Carbon</div>
+        <div class="pillar"><div class="pillar-dot pillar-dot-prove" aria-hidden="true"></div>Prove Compliance</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+     PROOF BAR
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+<div class="proof-bar" role="region" aria-label="Platform statistics">
+  <div class="container">
+    <div class="proof-bar-inner">
+      <div class="proof-label" id="proof-label">Client snapshot (demo until real data is shared)</div>
+      <div class="proof-logos" id="proof-logos" aria-label="Client and sector benchmarks">
+        <span>Client: Tata (demo)</span>
+        <span>Sector: Steel</span>
+        <span>Sector: Cement</span>
+        <span>Sector: Power</span>
+      </div>
+      <div class="proof-stats">
+        <div class="proof-stat">
+          <span class="proof-stat-num"><span class="counter" data-target="180" data-metric="proof.counters.facilities">0</span>+</span>
+          <span class="proof-stat-desc">Facilities Monitored</span>
+        </div>
+        <div class="proof-sep" aria-hidden="true"></div>
+        <div class="proof-stat">
+          <span class="proof-stat-num">€<span class="counter" data-target="2.4" data-dec="1" data-metric="proof.counters.penaltiesAvoided">0</span>M+</span>
+          <span class="proof-stat-desc">CBAM Penalties Avoided</span>
+        </div>
+        <div class="proof-sep" aria-hidden="true"></div>
+        <div class="proof-stat">
+          <span class="proof-stat-num"><span class="counter" data-target="48000" data-metric="proof.counters.captured">0</span>+ tCO₂e</span>
+          <span class="proof-stat-desc">Carbon Captured Annually</span>
+        </div>
+        <div class="proof-sep" aria-hidden="true"></div>
+        <div class="proof-stat">
+          <span class="proof-stat-num"><span class="counter" data-target="12" data-metric="proof.counters.countries">0</span></span>
+          <span class="proof-stat-desc">Countries Covered</span>
+        </div>
+        <div class="proof-sep" aria-hidden="true"></div>
+        <div class="proof-stat">
+          <span class="proof-stat-num"><span class="counter" data-target="99.9" data-dec="1" data-metric="proof.counters.auditIntegrity">0</span>%</span>
+          <span class="proof-stat-desc">Audit Log Integrity</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+     PROBLEM SECTION
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+<section class="problem" aria-labelledby="problem-h2">
+  <div class="container">
+    <div class="section-tag reveal">The Status Quo Is Broken</div>
+    <h2 class="section-title reveal reveal-d1 problem-title" id="problem-h2">
+      Spreadsheets cannot carry the weight of regulatory accountability
+    </h2>
+    <div class="problem-grid">
+      <div class="problem-left reveal">
+        <p class="lead">Every year, enterprises face rising CBAM obligations, BRSR mandates, and ISO 14064 verification requirements. Most are still managing GHG data in Excel with no audit trail, no version control, and no way to prove data integrity to third-party verifiers — while carbon capture stays an unsolved side conversation.</p>
+        <ul class="pain-list" role="list">
+          <li class="pain-item">
+            <div class="pain-icon" aria-hidden="true">!</div>
+            <div>
+              <strong>No tamper-evident audit trail</strong>
+              <p>Regulators cannot trust data that can be silently edited. You have no proof of who changed what, when.</p>
+            </div>
+          </li>
+          <li class="pain-item">
+            <div class="pain-icon" aria-hidden="true">TIME</div>
+            <div>
+              <strong>CBAM deadlines approaching fast</strong>
+              <p>From 2026, every tonne of steel, cement, and aluminium imported to the EU carries a verified carbon price. Unverified exporters pay the full penalty.</p>
+            </div>
+          </li>
+          <li class="pain-item">
+            <div class="pain-icon" aria-hidden="true">CO2</div>
+            <div>
+              <strong>No pathway to actual carbon reduction</strong>
+              <p>Reporting your emissions is step one. Without the chemistry and engineering to capture them, the number never moves.</p>
+            </div>
+          </li>
+        </ul>
+      </div>
+      <div class="before-after reveal reveal-d2" aria-label="Before and after comparison">
+        <div class="ba-card ba-before">
+        <div class="ba-label">Without XYZ-For-Now</div>
+          <ul class="ba-items" role="list">
+            <li>Manual Excel-based emission calculations</li>
+            <li>No version control or change audit trail</li>
+            <li>CBAM filing done from guesswork</li>
+            <li>Amine sourced from 4 different vendors, no consistency</li>
+            <li>Carbon capture projects stuck in RFQ phase for 18 months</li>
+            <li>ISO 14064 verification fails on data lineage</li>
+          </ul>
+        </div>
+        <div class="ba-card ba-after">
+        <div class="ba-label">With XYZ-For-Now</div>
+          <ul class="ba-items" role="list">
+            <li>Automated Scope 1–3 data ingestion from ERPs and meters</li>
+            <li>Cryptographic hash-chain audit trail — immutable</li>
+            <li>CBAM declaration generated in one click</li>
+            <li>Single-source industrial amine supply, certified purity</li>
+            <li>Turnkey CCS project from feasibility to commissioning</li>
+            <li>Third-party verifier access portal — audit-ready always</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+     INTERACTIVE DASHBOARD MOCKUP
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+<section class="solution" id="solution" aria-labelledby="solution-h2">
+  <div class="container">
+    <div class="solution-header reveal">
+      <div class="section-tag">Live Platform Demo</div>
+      <h2 class="section-title" id="solution-h2">Client Demo — Tata</h2>
+      <p class="section-sub" id="solution-sub">Scope 1, 2 and 3 emissions across 5 sites. Mixed conglomerate: steel, cement, power, chemicals, logistics.</p>
+    </div>
+
+    <div class="mockup-wrap reveal reveal-d1">
+      <div class="mockup-topbar">
+        <div class="mockup-dots" aria-hidden="true">
+          <div class="mdot mdot-r"></div><div class="mdot mdot-y"></div><div class="mdot mdot-g"></div>
+        </div>
+        <div class="mockup-org" id="mockup-org">Tata Client — Dashboard</div>
+        <div class="mockup-live">Live Data</div>
+      </div>
+
+      <div class="scope-tabs" role="tablist" aria-label="Emission scope selector">
+        <button class="scope-tab active" role="tab" aria-selected="true" data-scope="s1" aria-controls="scope-s1">Scope 1 - Direct</button>
+        <button class="scope-tab" role="tab" aria-selected="false" data-scope="s2" aria-controls="scope-s2">Scope 2 - Energy</button>
+        <button class="scope-tab" role="tab" aria-selected="false" data-scope="s3" aria-controls="scope-s3">Scope 3 - Value Chain</button>
+      </div>
+
+      <div class="scope-panels">
+
+        <!-- SCOPE 1 -->
+        <div class="scope-panel active" id="scope-s1" role="tabpanel">
+          <div class="kpi-row" data-scope="s1">
+            <div class="kpi-card"><div class="kpi-label">Total Scope 1</div><div class="kpi-val">19,500</div><div class="kpi-trend t-up">▲ 3.2% vs PY</div></div>
+            <div class="kpi-card"><div class="kpi-label">Verified Sites</div><div class="kpi-val">4 / 5</div><div class="kpi-trend t-flat">1 pending</div></div>
+            <div class="kpi-card"><div class="kpi-label">CBAM Exposure</div><div class="kpi-val">€847K</div><div class="kpi-trend t-up">2026 estimate</div></div>
+            <div class="kpi-card"><div class="kpi-label">Audit Integrity</div><div class="kpi-val">99.8%</div><div class="kpi-trend t-down">▲ hash chain</div></div>
+          </div>
+          <table class="dash-table" aria-label="Scope 1 emission data" id="scope1-table">
+            <thead><tr><th>Site</th><th>Source</th><th>Emissions (tCO₂e)</th><th>CBAM %</th><th>Status</th></tr></thead>
+            <tbody id="scope1-body">
+              <tr><td>Mumbai Steel Works</td><td>Blast Furnace</td><td class="mono">6,840</td><td class="mono">35%</td><td><span class="pill pill-v">Verified</span></td></tr>
+              <tr><td>Mumbai Steel Works</td><td>Power Generation</td><td class="mono">2,180</td><td class="mono">11%</td><td><span class="pill pill-v">Verified</span></td></tr>
+              <tr><td>Pune Cement Plant</td><td>Clinker Production</td><td class="mono">4,620</td><td class="mono">24%</td><td><span class="pill pill-v">Verified</span></td></tr>
+              <tr><td>Chennai Power Station</td><td>Natural Gas Combustion</td><td class="mono">3,920</td><td class="mono">20%</td><td><span class="pill pill-p">Pending</span></td></tr>
+              <tr><td>Kolkata Chemical Facility</td><td>Process Emissions</td><td class="mono">1,940</td><td class="mono">10%</td><td><span class="pill pill-v">Verified</span></td></tr>
+              <tr class="total-row"><td colspan="2"><strong>Total Scope 1</strong></td><td class="mono"><strong>19,500</strong></td><td class="mono"><strong>100%</strong></td><td><span class="pill pill-c">4/5 Complete</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- SCOPE 2 -->
+        <div class="scope-panel" id="scope-s2" role="tabpanel">
+          <div class="kpi-row" data-scope="s2">
+            <div class="kpi-card"><div class="kpi-label">Total Scope 2</div><div class="kpi-val">6,050</div><div class="kpi-trend t-down">▼ 12.4% vs PY</div></div>
+            <div class="kpi-card"><div class="kpi-label">RE Certificates</div><div class="kpi-val">2,400</div><div class="kpi-trend t-down">▼ tCO₂e offset</div></div>
+            <div class="kpi-card"><div class="kpi-label">Market-Based</div><div class="kpi-val">3,650</div><div class="kpi-trend t-flat">After RECs</div></div>
+            <div class="kpi-card"><div class="kpi-label">Grid Intensity</div><div class="kpi-val">0.71</div><div class="kpi-trend t-flat">kgCO₂/kWh IN avg</div></div>
+          </div>
+          <table class="dash-table" aria-label="Scope 2 emission data" id="scope2-table">
+            <thead><tr><th>Site</th><th>Source</th><th>Location-Based (tCO₂e)</th><th>Market-Based (tCO₂e)</th><th>Status</th></tr></thead>
+            <tbody id="scope2-body">
+              <tr><td>Mumbai Steel Works</td><td>Grid Electricity</td><td class="mono">1,840</td><td class="mono">640</td><td><span class="pill pill-v">Verified</span></td></tr>
+              <tr><td>Pune Cement Plant</td><td>Grid Electricity</td><td class="mono">2,260</td><td class="mono">1,880</td><td><span class="pill pill-v">Verified</span></td></tr>
+              <tr><td>Chennai Power Station</td><td>Purchased Steam</td><td class="mono">890</td><td class="mono">650</td><td><span class="pill pill-p">Pending</span></td></tr>
+              <tr><td>Kolkata Chemical</td><td>Grid Electricity</td><td class="mono">720</td><td class="mono">340</td><td><span class="pill pill-v">Verified</span></td></tr>
+              <tr><td>Delhi Logistics Hub</td><td>Grid Electricity</td><td class="mono">340</td><td class="mono">140</td><td><span class="pill pill-v">Verified</span></td></tr>
+              <tr class="total-row"><td colspan="2"><strong>Total Scope 2</strong></td><td class="mono"><strong>6,050</strong></td><td class="mono"><strong>3,650</strong></td><td><span class="pill pill-c">4/5 Complete</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- SCOPE 3 -->
+        <div class="scope-panel" id="scope-s3" role="tabpanel">
+          <div class="kpi-row" data-scope="s3">
+            <div class="kpi-card"><div class="kpi-label">Total Scope 3</div><div class="kpi-val">22,220</div><div class="kpi-trend t-down">▼ 1.8% vs PY</div></div>
+            <div class="kpi-card"><div class="kpi-label">Categories Tracked</div><div class="kpi-val">5 / 15</div><div class="kpi-trend t-flat">Material only</div></div>
+            <div class="kpi-card"><div class="kpi-label">Supplier Coverage</div><div class="kpi-val">68%</div><div class="kpi-trend t-down">▲ +14% this yr</div></div>
+            <div class="kpi-card"><div class="kpi-label">BRSR Category B</div><div class="kpi-val">Ready</div><div class="kpi-trend t-down">▼ Filing Nov 25</div></div>
+          </div>
+          <div class="s3-bars" id="scope3-bars" aria-label="Scope 3 categories bar chart">
+            <div class="s3-row"><div class="s3-label">Purchased Goods &amp; Services</div><div class="s3-track"><div class="s3-fill" data-width="38"></div></div><div class="s3-val">8,420 tCO₂e</div></div>
+            <div class="s3-row"><div class="s3-label">Use of Sold Products</div><div class="s3-track"><div class="s3-fill" data-width="29"></div></div><div class="s3-val">6,400 tCO₂e</div></div>
+            <div class="s3-row"><div class="s3-label">Downstream Transportation</div><div class="s3-track"><div class="s3-fill" data-width="23"></div></div><div class="s3-val">5,180 tCO₂e</div></div>
+            <div class="s3-row"><div class="s3-label">Business Travel</div><div class="s3-track"><div class="s3-fill" data-width="6"></div></div><div class="s3-val">1,240 tCO₂e</div></div>
+            <div class="s3-row"><div class="s3-label">Employee Commute</div><div class="s3-track"><div class="s3-fill" data-width="4"></div></div><div class="s3-val">980 tCO₂e</div></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+     FEATURES
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+<section class="features" id="features" aria-labelledby="features-h2">
+  <div class="container">
+    <div class="features-header reveal">
+      <div class="section-tag">Software Platform</div>
+      <h2 class="section-title" id="features-h2">Everything GHG compliance demands</h2>
+      <p class="section-sub section-sub-center">Built for the enterprise teams that cannot afford a compliance failure.</p>
+    </div>
+    <div class="features-grid">
+      <div class="feat-card reveal">
+        <div class="feat-icon" aria-hidden="true">AI</div>
+        <div class="feat-title">AI Anomaly Detection</div>
+        <p class="feat-desc">Automatically flags emission data that deviates from your facility baseline, supplier behaviour, or sector norms — before the data enters your report.</p>
+        <span class="feat-tag">AI-Powered</span>
+      </div>
+      <div class="feat-card reveal reveal-d1">
+        <div class="feat-icon" aria-hidden="true">HASH</div>
+        <div class="feat-title">Cryptographic Audit Log</div>
+        <p class="feat-desc">Every data entry, edit, and submission is hashed into an immutable chain. Regulators and third-party verifiers can inspect any change, forever.</p>
+        <span class="feat-tag">Tamper-Evident</span>
+      </div>
+      <div class="feat-card reveal reveal-d2">
+        <div class="feat-icon" aria-hidden="true">SYNC</div>
+        <div class="feat-title">ERP &amp; Meter Integration</div>
+        <p class="feat-desc">Connect SAP, Oracle, and IoT energy meters. Emission data flows in automatically — no manual entry, no spreadsheet exports, no reconciliation errors.</p>
+        <span class="feat-tag">Auto-Ingestion</span>
+      </div>
+      <div class="feat-card reveal">
+        <div class="feat-icon" aria-hidden="true">CBAM</div>
+        <div class="feat-title">CBAM Declaration Engine</div>
+        <p class="feat-desc">Generate EU CBAM declarations in the exact XML format required by the EU registry. Embedded emission factors, pre-verified by accredited verifiers.</p>
+        <span class="feat-tag">CBAM Ready</span>
+      </div>
+      <div class="feat-card reveal reveal-d1">
+        <div class="feat-icon" aria-hidden="true">KPI</div>
+        <div class="feat-title">Multi-Framework Reporting</div>
+        <p class="feat-desc">One data set. Reports auto-generated for BRSR, GRI, ISO 14064-3, TCFD, and CDP simultaneously. No duplicate entry, no reconciliation overhead.</p>
+        <span class="feat-tag">Multi-Framework</span>
+      </div>
+      <div class="feat-card reveal reveal-d2">
+        <div class="feat-icon" aria-hidden="true">AUDIT</div>
+        <div class="feat-title">Supply Chain Coverage</div>
+        <p class="feat-desc">Invite your Tier 1 and Tier 2 suppliers to report directly into your account. Scope 3 Category 1 becomes as rigorous as your own direct emissions.</p>
+        <span class="feat-tag">Scope 3</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+     AMINE PRODUCTS SECTION  (NEW)
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+<section class="amine-section" id="amine" aria-labelledby="amine-h2">
+  <div class="container">
+    <div class="amine-header reveal">
+      <div>
+        <div class="amine-header-badge">Industrial Chemistry</div>
+        <h2 class="section-title" id="amine-h2">
+          Industrial-Grade<br>
+          <span class="accent-capture">Carbon Capture Chemistry</span>
+        </h2>
+        <p class="amine-header-desc">We manufacture and supply precision amine solutions for post-combustion CO₂ scrubbing. Serving refineries, steel plants, cement producers, and power stations requiring consistent, certified purity at industrial volumes.</p>
+      </div>
+      <div class="amine-header-right">
+        <div class="amine-stat-row">
+          <div class="amine-stat"><span class="amine-stat-val">99.8%</span><div class="amine-stat-label">MEA Purity Grade</div></div>
+          <div class="amine-stat"><span class="amine-stat-val">500 MT</span><div class="amine-stat-label">Monthly Capacity</div></div>
+          <div class="amine-stat"><span class="amine-stat-val">ISO 9001</span><div class="amine-stat-label">Manufacturing QMS</div></div>
+        </div>
+        <div class="amine-process-note">
+          <strong>How amine scrubbing works:</strong> Flue gas from combustion is passed through an amine solvent column. CO₂ reacts selectively with the amine (e.g. MEA forms a carbamate), separating it from N₂ and H₂O. The rich solvent is regenerated in a stripper, releasing pure CO₂ for storage or utilisation, while the amine is recycled back into the absorber.
+        </div>
+      </div>
+    </div>
+
+    <div class="amine-cards">
+      <!-- MEA -->
+      <div class="amine-card reveal">
+        <div class="amine-formula-display" aria-label="MEA chemical formula">
+          <span class="chem-formula">HOCH<sub>2</sub>CH<sub>2</sub>NH<sub>2</sub></span>
+        </div>
+        <div class="amine-card-name">MEA</div>
+        <div class="amine-card-fullname">Monoethanolamine</div>
+        <p class="amine-card-desc">Industry standard for post-combustion capture. High CO₂ loading capacity, well-understood regeneration chemistry, cost-effective at scale.</p>
+        <div class="amine-specs">
+          <div class="amine-spec"><span class="amine-spec-key">Purity</span><span class="amine-spec-val">≥ 99.5%</span></div>
+          <div class="amine-spec"><span class="amine-spec-key">CO₂ Loading</span><span class="amine-spec-val">0.45–0.50 mol/mol</span></div>
+          <div class="amine-spec"><span class="amine-spec-key">Packing</span><span class="amine-spec-val">Bulk / IBC / Drum</span></div>
+          <div class="amine-spec"><span class="amine-spec-key">Typical Use</span><span class="amine-spec-val">Flue gas scrubbing</span></div>
+        </div>
+        <span class="amine-card-tag">Most Popular</span>
+      </div>
+
+      <!-- DEA -->
+      <div class="amine-card reveal reveal-d1">
+        <div class="amine-formula-display" aria-label="DEA chemical formula">
+          <span class="chem-formula">(HOCH<sub>2</sub>CH<sub>2</sub>)<sub>2</sub>NH</span>
+        </div>
+        <div class="amine-card-name">DEA</div>
+        <div class="amine-card-fullname">Diethanolamine</div>
+        <p class="amine-card-desc">Secondary amine with lower regeneration energy than MEA. Preferred for natural gas sweetening and moderate CO₂ partial pressure applications.</p>
+        <div class="amine-specs">
+          <div class="amine-spec"><span class="amine-spec-key">Purity</span><span class="amine-spec-val">≥ 99.0%</span></div>
+          <div class="amine-spec"><span class="amine-spec-key">CO₂ Loading</span><span class="amine-spec-val">0.35–0.42 mol/mol</span></div>
+          <div class="amine-spec"><span class="amine-spec-key">Packing</span><span class="amine-spec-val">Bulk / IBC</span></div>
+          <div class="amine-spec"><span class="amine-spec-key">Typical Use</span><span class="amine-spec-val">Gas sweetening</span></div>
+        </div>
+        <span class="amine-card-tag">Low Regen Energy</span>
+      </div>
+
+      <!-- MDEA -->
+      <div class="amine-card reveal reveal-d2">
+        <div class="amine-formula-display" aria-label="MDEA chemical formula">
+          <span class="chem-formula">(HOCH<sub>2</sub>CH<sub>2</sub>)<sub>2</sub>NCH<sub>3</sub></span>
+        </div>
+        <div class="amine-card-name">MDEA</div>
+        <div class="amine-card-fullname">Methyldiethanolamine</div>
+        <p class="amine-card-desc">Tertiary amine for high-pressure, high-CO₂ applications. Excellent selectivity over H₂S, lowest energy penalty of the standard amines, superior thermal stability.</p>
+        <div class="amine-specs">
+          <div class="amine-spec"><span class="amine-spec-key">Purity</span><span class="amine-spec-val">≥ 99.0%</span></div>
+          <div class="amine-spec"><span class="amine-spec-key">CO₂ Loading</span><span class="amine-spec-val">0.25–0.35 mol/mol</span></div>
+          <div class="amine-spec"><span class="amine-spec-key">Packing</span><span class="amine-spec-val">Bulk / ISO Tank</span></div>
+          <div class="amine-spec"><span class="amine-spec-key">Typical Use</span><span class="amine-spec-val">High-pressure CCS</span></div>
+        </div>
+        <span class="amine-card-tag">High Pressure</span>
+      </div>
+
+      <!-- Custom Blends -->
+      <div class="amine-card reveal reveal-d3">
+        <div class="amine-formula-display" aria-label="Custom blend icon">
+          <span class="amine-custom-label">Custom</span>
+        </div>
+        <div class="amine-card-name">Blends</div>
+        <div class="amine-card-fullname">Proprietary Amine Blends</div>
+        <p class="amine-card-desc">Process-specific blends combining MEA + MDEA or DEA + MDEA with corrosion inhibitors, antifoam agents, and degradation stabilisers. Formulated to your absorber column specifications.</p>
+        <div class="amine-specs">
+          <div class="amine-spec"><span class="amine-spec-key">Formulation</span><span class="amine-spec-val">Client-specific</span></div>
+          <div class="amine-spec"><span class="amine-spec-key">Lead Time</span><span class="amine-spec-val">4–6 weeks</span></div>
+          <div class="amine-spec"><span class="amine-spec-key">Min. Order</span><span class="amine-spec-val">500 kg</span></div>
+          <div class="amine-spec"><span class="amine-spec-key">Testing</span><span class="amine-spec-val">CoA + MSDS supplied</span></div>
+        </div>
+        <span class="amine-card-tag">Bespoke</span>
+      </div>
+    </div>
+
+    <div class="amine-footer reveal">
+      <a href="#demo" class="btn btn-capture">Request Amine Datasheet</a>
+      <a href="#demo" class="btn btn-outline-capture">Discuss Bulk Pricing</a>
+    </div>
+  </div>
+</section>
+
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+     CCS PROJECT SERVICES SECTION  (NEW)
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+<section class="ccs-section" id="ccs" aria-labelledby="ccs-h2">
+  <div class="container">
+    <div class="ccs-header-wrap reveal">
+      <div>
+        <div class="ccs-badge">End-to-End CCS Projects</div>
+        <h2 class="section-title" id="ccs-h2">
+          <span class="ccs-headline-accent">We don't just measure carbon.</span><br>
+          We remove it.
+        </h2>
+        <p class="ccs-header-desc">From feasibility study to commissioning and beyond — we design, supply amine chemistry, install, and operate carbon capture systems for industrial emitters, government mandates, and development bank-financed projects.</p>
+        <div class="ccs-metrics">
+          <div class="ccs-metric"><span class="ccs-metric-val">48,000+</span><div class="ccs-metric-label">tCO₂e Captured Annually</div></div>
+          <div class="ccs-metric"><span class="ccs-metric-val">14</span><div class="ccs-metric-label">CCS Projects Completed</div></div>
+          <div class="ccs-metric"><span class="ccs-metric-val">18 mo</span><div class="ccs-metric-label">Avg. Deployment Timeline</div></div>
+        </div>
+      </div>
+      <div class="ccs-capability-card">
+        <div class="ccs-capability-title">Our CCS Project Capability</div>
+        <div class="ccs-capability-list">
+          <div class="ccs-capability-item"><span class="ccs-capability-arrow">-&gt;</span>Feasibility studies and FEED for greenfield and brownfield sites</div>
+          <div class="ccs-capability-item"><span class="ccs-capability-arrow">-&gt;</span>Amine absorber and stripper column engineering</div>
+          <div class="ccs-capability-item"><span class="ccs-capability-arrow">-&gt;</span>CO2 compression, transport, and storage interface</div>
+          <div class="ccs-capability-item"><span class="ccs-capability-arrow">-&gt;</span>Carbon credit generation, verification, and market placement</div>
+          <div class="ccs-capability-item"><span class="ccs-capability-arrow">-&gt;</span>MRV integration with our GHG platform for real-time capture data</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CCS Process Flow -->
+    <div class="ccs-process reveal" role="list" aria-label="CCS project delivery process">
+      <div class="ccs-step" role="listitem">
+        <div class="ccs-step-num">01</div>
+        <div class="ccs-step-label">Feasibility</div>
+        <div class="ccs-step-sub">Site assessment, emission profile, capture economics</div>
+      </div>
+      <div class="ccs-step" role="listitem">
+        <div class="ccs-step-num">02</div>
+        <div class="ccs-step-label">FEED Design</div>
+        <div class="ccs-step-sub">Process engineering, amine selection, column sizing</div>
+      </div>
+      <div class="ccs-step" role="listitem">
+        <div class="ccs-step-num">03</div>
+        <div class="ccs-step-label">Amine Supply</div>
+        <div class="ccs-step-sub">First fill + ongoing replenishment from our plant</div>
+      </div>
+      <div class="ccs-step" role="listitem">
+        <div class="ccs-step-num">04</div>
+        <div class="ccs-step-label">Installation</div>
+        <div class="ccs-step-sub">EPC coordination, commissioning, performance testing</div>
+      </div>
+      <div class="ccs-step" role="listitem">
+        <div class="ccs-step-num">05</div>
+        <div class="ccs-step-label">MRV + Credits</div>
+        <div class="ccs-step-sub">Capture data into GHG platform, carbon credits generated</div>
+      </div>
+    </div>
+
+    <!-- CCS Service Cards -->
+    <div class="ccs-cards">
+      <div class="ccs-card reveal">
+        <div class="ccs-card-icon" aria-hidden="true">PCC</div>
+        <div class="ccs-card-title">Post-Combustion Capture</div>
+        <p class="ccs-card-desc">Retrofit amine-based CO₂ scrubbing to existing flue gas stacks in steel, cement, power, and chemical plants. Minimal process disruption.</p>
+        <div class="ccs-detail">
+          <div class="ccs-detail-row"><span class="ccs-detail-key">Capture Rate</span><span class="ccs-detail-val">85–95%</span></div>
+          <div class="ccs-detail-row"><span class="ccs-detail-key">Scale</span><span class="ccs-detail-val">5,000–500,000 tCO₂/yr</span></div>
+          <div class="ccs-detail-row"><span class="ccs-detail-key">Timeline</span><span class="ccs-detail-val">12–24 months</span></div>
+        </div>
+      </div>
+      <div class="ccs-card reveal reveal-d1">
+        <div class="ccs-card-icon" aria-hidden="true">DAC</div>
+        <div class="ccs-card-title">Direct Air Capture</div>
+        <p class="ccs-card-desc">Modular DAC units for corporate net-zero strategies, offsetting residual emissions that cannot be reduced at the source. Verified carbon removals.</p>
+        <div class="ccs-detail">
+          <div class="ccs-detail-row"><span class="ccs-detail-key">Capture Rate</span><span class="ccs-detail-val">400 ppm atmospheric</span></div>
+          <div class="ccs-detail-row"><span class="ccs-detail-key">Scale</span><span class="ccs-detail-val">100–10,000 tCO₂/yr</span></div>
+          <div class="ccs-detail-row"><span class="ccs-detail-key">Timeline</span><span class="ccs-detail-val">6–12 months</span></div>
+        </div>
+      </div>
+      <div class="ccs-card reveal reveal-d2">
+        <div class="ccs-card-icon" aria-hidden="true">EPC</div>
+        <div class="ccs-card-title">Turnkey CCS Projects</div>
+        <p class="ccs-card-desc">Full EPC responsibility from FEED through commissioning. We source, engineer, install, and hand over a fully operational capture system with performance guarantees.</p>
+        <div class="ccs-detail">
+          <div class="ccs-detail-row"><span class="ccs-detail-key">Contract Type</span><span class="ccs-detail-val">Lump-sum EPC</span></div>
+          <div class="ccs-detail-row"><span class="ccs-detail-key">Guarantee</span><span class="ccs-detail-val">Performance bond</span></div>
+          <div class="ccs-detail-row"><span class="ccs-detail-key">Clients</span><span class="ccs-detail-val">Enterprise + Govt.</span></div>
+        </div>
+      </div>
+      <div class="ccs-card reveal reveal-d3">
+        <div class="ccs-card-icon" aria-hidden="true">MRV</div>
+        <div class="ccs-card-title">Carbon Credit Generation</div>
+        <p class="ccs-card-desc">We handle the full MRV lifecycle — from capture measurement to third-party verification and issuance on Verra, Gold Standard, or sovereign registries.</p>
+        <div class="ccs-detail">
+          <div class="ccs-detail-row"><span class="ccs-detail-key">Standards</span><span class="ccs-detail-val">Verra VCS, GS, CORSIA</span></div>
+          <div class="ccs-detail-row"><span class="ccs-detail-key">Vintage</span><span class="ccs-detail-val">Annual issuance</span></div>
+          <div class="ccs-detail-row"><span class="ccs-detail-key">Offtake</span><span class="ccs-detail-val">Market placement opt.</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ccs-cards-footer reveal">
+      <a href="#demo" class="btn btn-primary btn-xl">Discuss Your CCS Project</a>
+      <a href="#demo" class="btn btn-ghost">Download CCS Brochure</a>
+    </div>
+  </div>
+</section>
+
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+     COMPLIANCE FRAMEWORKS
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+<section class="compliance" id="compliance" aria-labelledby="compliance-h2">
+  <div class="container">
+    <div class="compliance-header reveal">
+      <div class="section-tag">Regulatory Coverage</div>
+      <h2 class="section-title" id="compliance-h2">Every mandate. Every framework. One platform.</h2>
+      <p class="section-sub section-sub-center">We track regulatory changes in real time so you never miss a filing window or an amended emission factor.</p>
+    </div>
+    <div class="compliance-grid">
+      <div class="cf-card reveal"><span class="cf-badge cf-cbam">CBAM</span><div class="cf-title">EU Carbon Border Adjustment Mechanism</div><p class="cf-desc">Mandatory for all exporters to the EU of steel, cement, aluminium, fertilisers, electricity, and hydrogen. Phased in from 2026 with full financial obligation by 2034.</p></div>
+      <div class="cf-card reveal reveal-d1"><span class="cf-badge cf-iso">ISO 14064-3</span><div class="cf-title">GHG Verification &amp; Validation</div><p class="cf-desc">Third-party verifier access portal built into the platform. Verifiers audit your data without needing file exports — directly in the hash-chain interface.</p></div>
+      <div class="cf-card reveal reveal-d2"><span class="cf-badge cf-brsr">BRSR Core</span><div class="cf-title">SEBI Business Responsibility Report</div><p class="cf-desc">Mandatory for top-1000 listed Indian companies. Our platform generates the full BRSR Principle 6 (Environmental) section from the same underlying emission dataset.</p></div>
+      <div class="cf-card reveal"><span class="cf-badge cf-gri">GRI 305</span><div class="cf-title">GRI Standards — Emissions</div><p class="cf-desc">GRI 305-1 (Scope 1), 305-2 (Scope 2), and 305-3 (Scope 3) reports generated automatically. Mappable to TCFD and CDP disclosures in the same workflow.</p></div>
+      <div class="cf-card reveal reveal-d1"><span class="cf-badge cf-ghg">GHG Protocol</span><div class="cf-title">Corporate Accounting Standard</div><p class="cf-desc">Our emission factors library follows GHG Protocol hierarchy: activity data x emission factor. Supports location-based and market-based Scope 2 calculations.</p></div>
+      <div class="cf-card reveal reveal-d2"><span class="cf-badge cf-sebi">SBTi Alignment</span><div class="cf-title">Science Based Targets Initiative</div><p class="cf-desc">Track your reduction trajectory against 1.5°C pathways. SBTi near-term and net-zero targets integrations with automatic progress monitoring and alert when off-track.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+     CASE STUDY / RESULTS
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+<section class="results" aria-labelledby="results-h2">
+  <div class="container">
+    <div class="section-tag reveal">Client Results</div>
+    <div class="results-inner reveal reveal-d1">
+      <div class="results-tag" id="results-tag">Tata (client demo) — Mumbai, Maharashtra</div>
+      <p class="results-quote" id="results-h2">"Demo scenario for Tata (client): CBAM preparation drops from 6 weeks to 4 hours, €1.2M in penalties is avoided, and export reputation is protected. When real client data is shared, these metrics update automatically."</p>
+      <div class="results-author"><span id="results-author">Compliance Lead</span> <span id="results-author-org">— Tata (client demo)</span></div>
+      <div class="results-stats" id="results-stats" role="list">
+        <div role="listitem"><span class="rstat-val">94%</span><span class="rstat-label">Reduction in CBAM prep time</span></div>
+        <div role="listitem"><span class="rstat-val">€1.2M</span><span class="rstat-label">CBAM penalties avoided in Y1</span></div>
+        <div role="listitem"><span class="rstat-val">24,000 tCO₂e</span><span class="rstat-label">Captured via our CCS project at Pune</span></div>
+        <div role="listitem"><span class="rstat-val">100%</span><span class="rstat-label">Verifier confidence &amp; brand trust</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+     PRICING
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+<section class="pricing" id="pricing" aria-labelledby="pricing-h2">
+  <div class="container">
+    <div class="pricing-header reveal">
+      <div class="section-tag">Pricing</div>
+      <h2 class="section-title" id="pricing-h2">Start measuring. Scale to capture.</h2>
+      <p class="section-sub section-sub-center section-sub-tight">Platform pricing. Amine and CCS projects quoted separately based on process specifications.</p>
+    </div>
+    <div class="pricing-cards">
+      <div class="price-card reveal">
+        <div class="price-tier">Starter</div>
+        <div class="price-name">Measure</div>
+        <div class="price-amount"><span class="price-sym">₹</span><span class="price-num">49,999</span><span class="price-period">/mo</span></div>
+        <p class="price-desc">For small enterprises beginning their GHG reporting journey. Up to 5 facilities.</p>
+        <ul class="price-feats">
+          <li>Scope 1 &amp; 2 tracking (5 facilities)</li>
+          <li>GHG Protocol &amp; BRSR reporting</li>
+          <li>Basic audit log</li>
+          <li>CBAM exposure estimate</li>
+          <li class="na">Scope 3 tracking</li>
+          <li class="na">Verifier access portal</li>
+          <li class="na">ERP integration</li>
+        </ul>
+        <a href="#demo" class="btn btn-ghost btn-block">Get Started</a>
+      </div>
+      <div class="price-card featured reveal reveal-d1">
+        <div class="price-popular">Most Popular</div>
+        <div class="price-tier">Enterprise</div>
+        <div class="price-name">Measure + Prove</div>
+        <div class="price-amount"><span class="price-sym">₹</span><span class="price-num">1,99,999</span><span class="price-period">/mo</span></div>
+        <p class="price-desc">For listed companies with BRSR obligations and CBAM exposure. Up to 25 facilities.</p>
+        <ul class="price-feats">
+          <li>Scope 1, 2 &amp; 3 tracking (25 facilities)</li>
+          <li>All reporting frameworks (BRSR, GRI, CBAM, TCFD)</li>
+          <li>Cryptographic audit log + verifier portal</li>
+          <li>CBAM declaration engine</li>
+          <li>ERP &amp; meter integration (SAP, Oracle)</li>
+          <li>AI anomaly detection</li>
+          <li>Supplier data collection portal</li>
+        </ul>
+        <a href="#demo" class="btn btn-primary btn-block">Book a Demo</a>
+      </div>
+      <div class="price-card reveal reveal-d2">
+        <div class="price-tier">Full Stack</div>
+        <div class="price-name">Measure + Capture + Prove</div>
+        <div class="price-amount"><span class="price-sym price-sym-accent">Custom</span></div>
+        <p class="price-desc">Platform + amine supply agreement + CCS project services. Designed for large industrial emitters pursuing verified net-zero.</p>
+        <ul class="price-feats">
+          <li>Everything in Enterprise, unlimited facilities</li>
+          <li>Dedicated amine supply contract (MEA/MDEA/blends)</li>
+          <li>CCS project feasibility + FEED study included</li>
+          <li>Carbon credit generation &amp; market placement</li>
+          <li>Dedicated carbon accounting team</li>
+          <li>White-glove ISO 14064-3 verification support</li>
+          <li>SLA: 4-hour support response</li>
+        </ul>
+        <a href="#demo" class="btn btn-capture btn-block">Discuss Full Stack</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+     BOOK A DEMO FORM
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+<section class="demo" id="demo" aria-labelledby="demo-h2">
+  <div class="container">
+    <div class="demo-inner">
+      <div class="demo-info reveal">
+        <div class="section-tag">Book a Demo</div>
+        <h2 class="section-title" id="demo-h2">See the full carbon stack in 30 minutes</h2>
+        <p class="demo-sub">Talk to one of our carbon engineers. We'll show you the platform live, discuss your amine requirements, or scope a CCS project — whichever is most relevant to your situation.</p>
+        <ul class="demo-bullets">
+          <li>Live walkthrough of your emission data scenarios (we prep with your sector before the call)</li>
+          <li>CBAM exposure estimate calculated on the call for your product mix</li>
+          <li>Amine chemistry recommendation based on your flue gas composition</li>
+          <li>CCS project rough-order-of-magnitude cost if relevant</li>
+          <li>No sales pressure — if we're not the right fit, we'll say so</li>
+        </ul>
+      </div>
+      <div class="demo-form-wrap reveal reveal-d1">
+        <form id="demo-form" class="demo-form" novalidate>
+          <div class="form-title">Book your demo</div>
+          <p class="form-subtitle">We typically respond within 2 business hours.</p>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label" for="df-name">Full Name *</label><input id="df-name" class="form-input" type="text" placeholder="Anika Sharma" autocomplete="name" required></div>
+            <div class="form-group"><label class="form-label" for="df-email">Work Email *</label><input id="df-email" class="form-input" type="email" placeholder="anika@tata.demo" autocomplete="email" required></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label" for="df-company">Company *</label><input id="df-company" class="form-input" type="text" placeholder="Tata (client)" required></div>
+            <div class="form-group"><label class="form-label" for="df-phone">Phone</label><input id="df-phone" class="form-input" type="tel" placeholder="+91 98765 43210" autocomplete="tel"></div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="df-interest">Primary Interest *</label>
+            <select id="df-interest" class="form-input" required>
+              <option value="" disabled selected>Select what matters most to you</option>
+              <option>GHG Tracking &amp; Compliance Software</option>
+              <option>CBAM Filing &amp; Declarations</option>
+              <option>Industrial Amine Supply (MEA / MDEA / DEA)</option>
+              <option>Carbon Capture Project (Post-Combustion)</option>
+              <option>Direct Air Capture Project</option>
+              <option>Full Carbon Stack (Software + Amine + CCS)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="df-message">Brief context (optional)</label>
+            <textarea id="df-message" class="form-input" placeholder="e.g. We're a steel plant in Maharashtra exporting to Germany. We need CBAM compliance by Q1 2026 and are interested in amine pricing for ~8,000 tCO₂/year capture."></textarea>
+          </div>
+          <div class="form-submit-row">
+            <button id="demo-submit-btn" class="btn btn-primary form-submit" type="submit">
+              <span id="demo-btn-text">Book My Demo</span>
+            </button>
+          </div>
+          <p class="form-note">By submitting you agree to our <a href="/privacy">Privacy Policy</a>. We never share your data with third parties.</p>
+        </form>
+        <div class="form-success" id="demo-success">
+          <div class="success-emoji">Success</div>
+          <div class="success-title">Demo booked! Check your inbox.</div>
+          <p class="success-desc">We've sent you a calendar invite for your 30-minute session. A carbon engineer will prep your sector data before the call. See you soon.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+     FAQ
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+<section class="faq" id="faq" aria-labelledby="faq-h2">
+  <div class="container">
+    <div class="faq-header reveal">
+      <div class="section-tag">FAQ</div>
+      <h2 class="section-title" id="faq-h2">Common questions</h2>
+    </div>
+    <div class="faq-grid" role="list">
+      <div class="faq-item" role="listitem">
+        <div class="faq-q">What is CBAM and when does it apply to us?
+          <svg class="faq-chevron" viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="faq-a">The EU Carbon Border Adjustment Mechanism requires exporters of steel, cement, aluminium, fertilisers, hydrogen, and electricity to the EU to declare the embedded carbon emissions in their products. From January 2026, CBAM certificates must be purchased for the carbon that isn't priced in the country of origin. By 2034 the full carbon cost applies. If you export to the EU in these sectors, you are affected now.</div>
+      </div>
+      <div class="faq-item" role="listitem">
+        <div class="faq-q">How is your amine different from what I can buy from a commodity supplier?
+          <svg class="faq-chevron" viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="faq-a">Commodity amine is sold at technical grade, which carries higher impurities (degradation products, heat-stable salts) that foul your absorber faster and increase your solvent make-up costs. Our amines are process-grade with Certificate of Analysis on every batch. We also offer long-term supply agreements with price stability — critical for CCS project economics that span 15–20 years.</div>
+      </div>
+      <div class="faq-item" role="listitem">
+        <div class="faq-q">Can I use the platform without your amine or CCS services?
+          <svg class="faq-chevron" viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="faq-a">Absolutely. The GHG platform is a standalone SaaS product. You can track emissions, generate CBAM declarations, manage BRSR filings, and give verifier access — all without needing our amine or project services. The Full Carbon Stack is an option, not a requirement.</div>
+      </div>
+      <div class="faq-item" role="listitem">
+        <div class="faq-q">How long does a carbon capture project take to deliver?
+          <svg class="faq-chevron" viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="faq-a">For a standard post-combustion retrofit on an existing industrial flue gas stack, the typical timeline is 12–24 months from feasibility study sign-off to first CO₂ captured. Modular DAC units can be installed in 6–12 months. Greenfield CCS integrated into new plant construction is 24–36 months from FEED.</div>
+      </div>
+      <div class="faq-item" role="listitem">
+        <div class="faq-q">Does the platform integrate with SAP or Oracle?
+          <svg class="faq-chevron" viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="faq-a">Yes. We have pre-built connectors for SAP S/4HANA (PM, MM, and Energy Management modules) and Oracle Fusion. For other ERPs, we offer a flat-file API and a webhook-based integration layer. Most enterprise integrations go live within 4–6 weeks of project kick-off.</div>
+      </div>
+      <div class="faq-item" role="listitem">
+        <div class="faq-q">Is my emission data secure and private?
+          <svg class="faq-chevron" viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="faq-a">Yes. All data is encrypted at rest (AES-256) and in transit (TLS 1.3). Each organisation's data is logically isolated in separate database schemas. We never use one client's data to train models or inform another client's benchmarks. Role-based access control means your data is only visible to the users you explicitly authorise.</div>
+      </div>
+      <div class="faq-item" role="listitem">
+        <div class="faq-q">Can we generate carbon credits from our CCS project?
+          <svg class="faq-chevron" viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="faq-a">Yes, if your capture is independently verified. We handle the full MRV cycle from capture measurement through third-party verification to credit issuance on Verra VCS, Gold Standard, or sovereign registries. We can also facilitate offtake agreements with corporate buyers if you want to monetise the credits rather than retire them against your own net-zero targets.</div>
+      </div>
+      <div class="faq-item" role="listitem">
+        <div class="faq-q">How does your BRSR reporting work for SEBI compliance?
+          <svg class="faq-chevron" viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="faq-a">The platform auto-generates the BRSR Core Principle 6 (Environmental) section including P6-E1 through E9 from your underlying emission data. The output is a structured BRSR-format report that can be submitted directly to your board and included in the Annual Report. We also support BRSR Reasonable Assurance (Category B) for companies that need third-party verification.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+     FINAL CTA
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+<section class="final-cta" aria-labelledby="final-cta-h2">
+  <div class="container">
+    <div class="section-tag reveal section-tag-center">From Molecule to Mandate</div>
+    <h2 class="section-title reveal reveal-d1" id="final-cta-h2">
+      Measure it. Capture it.<br>
+      <span class="accent">Prove it.</span>
+    </h2>
+    <p class="reveal reveal-d2">The only platform that covers the complete carbon lifecycle — GHG tracking, industrial amine supply, turnkey CCS projects, and regulatory reporting.</p>
+    <div class="final-cta-btns reveal reveal-d3">
+      <a href="#demo" class="btn btn-primary btn-xl">Book a Demo</a>
+      <a href="/calculator" class="btn btn-ghost btn-xl">Free CBAM Calculator</a>
+    </div>
+    <div class="final-trust reveal reveal-d4">
+      <div class="ftrust-item">GDPR Compliant</div>
+      <div class="ftrust-item">ISO 14064-3 Ready</div>
+      <div class="ftrust-item">AES-256 Encrypted</div>
+      <div class="ftrust-item">99.9% Uptime SLA</div>
+      <div class="ftrust-item">SOC 2 Pursuing</div>
+    </div>
+  </div>
+</section>
+
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+     FOOTER
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+</main>
+
+<footer class="footer" role="contentinfo">
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <div class="footer-brand-name">XYZ-For-Now</div>
+        <p class="footer-tagline">The full carbon stack — GHG compliance software, industrial amine supply, and end-to-end carbon capture project services.</p>
+        <div class="footer-certs">
+          <span class="fcert">GDPR</span>
+          <span class="fcert">ISO 14064</span>
+          <span class="fcert">CBAM</span>
+          <span class="fcert">GHG Protocol</span>
+          <span class="fcert">BRSR</span>
+        </div>
+      </div>
+      <div>
+        <div class="footer-col-title">Platform</div>
+        <ul class="footer-links">
+          <li><a href="#solution">GHG Dashboard</a></li>
+          <li><a href="#solution">CBAM Engine</a></li>
+          <li><a href="#solution">Audit Log</a></li>
+          <li><a href="#solution">Verifier Portal</a></li>
+          <li><a href="/calculator">CBAM Calculator</a></li>
+        </ul>
+      </div>
+      <div>
+        <div class="footer-col-title">Products &amp; Services</div>
+        <ul class="footer-links">
+          <li><a href="#amine">MEA Supply</a></li>
+          <li><a href="#amine">DEA / MDEA</a></li>
+          <li><a href="#amine">Custom Blends</a></li>
+          <li><a href="#ccs">Post-Combustion CCS</a></li>
+          <li><a href="#ccs">Direct Air Capture</a></li>
+          <li><a href="#ccs">Carbon Credits</a></li>
+        </ul>
+      </div>
+      <div>
+        <div class="footer-col-title">Legal</div>
+        <ul class="footer-links">
+          <li><a href="/privacy">Privacy Policy</a></li>
+          <li><a href="/terms">Terms of Service</a></li>
+          <li><a href="/dpa">Data Processing Agreement</a></li>
+          <li><a href="/cookies">Cookie Policy</a></li>
+          <li><a href="/security">Security</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div class="footer-legal">© 2026 XYZ-For-Now. All rights reserved. | <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a></div>
+      <div class="footer-legal">All data encrypted at rest and in transit.</div>
+      <div class="footer-legal">Registered in India · CIN: DEMO-000000</div>
+    </div>
+  </div>
+</footer>
+
+
+
+

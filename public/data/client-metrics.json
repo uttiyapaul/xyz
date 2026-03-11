@@ -1,0 +1,145 @@
+{
+  "client": {
+    "solutionTitle": "Client Demo — Tata",
+    "solutionSub": "Scope 1, 2 and 3 emissions across 5 sites. Mixed conglomerate: steel, cement, power, chemicals, logistics.",
+    "mockupOrg": "Tata Client — Dashboard"
+  },
+  "proof": {
+    "label": "Client snapshot (demo until real data is shared)",
+    "logos": ["Client: Tata (demo)", "Sector: Steel", "Sector: Cement", "Sector: Power"],
+    "counters": {
+      "facilities": 180,
+      "penaltiesAvoided": 2.4,
+      "captured": 48000,
+      "countries": 12,
+      "auditIntegrity": 99.9
+    }
+  },
+  "scope1": {
+    "kpis": [
+      { "label": "Total Scope 1", "value": "19,500", "trend": "▲ 3.2% vs PY", "trendClass": "t-up" },
+      { "label": "Verified Sites", "value": "4 / 5", "trend": "1 pending", "trendClass": "t-flat" },
+      { "label": "CBAM Exposure", "value": "€847K", "trend": "2026 estimate", "trendClass": "t-up" },
+      { "label": "Audit Integrity", "value": "99.8%", "trend": "▲ hash chain", "trendClass": "t-down" }
+    ],
+    "rows": [
+      {
+        "site": "Mumbai Steel Works",
+        "source": "Blast Furnace",
+        "emissions": "6,840",
+        "cbamPct": "35%",
+        "status": "Verified"
+      },
+      {
+        "site": "Mumbai Steel Works",
+        "source": "Power Generation",
+        "emissions": "2,180",
+        "cbamPct": "11%",
+        "status": "Verified"
+      },
+      {
+        "site": "Pune Cement Plant",
+        "source": "Clinker Production",
+        "emissions": "4,620",
+        "cbamPct": "24%",
+        "status": "Verified"
+      },
+      {
+        "site": "Chennai Power Station",
+        "source": "Natural Gas Combustion",
+        "emissions": "3,920",
+        "cbamPct": "20%",
+        "status": "Pending"
+      },
+      {
+        "site": "Kolkata Chemical Facility",
+        "source": "Process Emissions",
+        "emissions": "1,940",
+        "cbamPct": "10%",
+        "status": "Verified"
+      }
+    ],
+    "total": {
+      "emissions": "19,500",
+      "cbamPct": "100%",
+      "status": "4/5 Complete"
+    }
+  },
+  "scope2": {
+    "kpis": [
+      { "label": "Total Scope 2", "value": "6,050", "trend": "▼ 12.4% vs PY", "trendClass": "t-down" },
+      { "label": "RE Certificates", "value": "2,400", "trend": "▼ tCO₂e offset", "trendClass": "t-down" },
+      { "label": "Market-Based", "value": "3,650", "trend": "After RECs", "trendClass": "t-flat" },
+      { "label": "Grid Intensity", "value": "0.71", "trend": "kgCO₂/kWh IN avg", "trendClass": "t-flat" }
+    ],
+    "rows": [
+      {
+        "site": "Mumbai Steel Works",
+        "source": "Grid Electricity",
+        "locationBased": "1,840",
+        "marketBased": "640",
+        "status": "Verified"
+      },
+      {
+        "site": "Pune Cement Plant",
+        "source": "Grid Electricity",
+        "locationBased": "2,260",
+        "marketBased": "1,880",
+        "status": "Verified"
+      },
+      {
+        "site": "Chennai Power Station",
+        "source": "Purchased Steam",
+        "locationBased": "890",
+        "marketBased": "650",
+        "status": "Pending"
+      },
+      {
+        "site": "Kolkata Chemical",
+        "source": "Grid Electricity",
+        "locationBased": "720",
+        "marketBased": "340",
+        "status": "Verified"
+      },
+      {
+        "site": "Delhi Logistics Hub",
+        "source": "Grid Electricity",
+        "locationBased": "340",
+        "marketBased": "140",
+        "status": "Verified"
+      }
+    ],
+    "total": {
+      "locationBased": "6,050",
+      "marketBased": "3,650",
+      "status": "4/5 Complete"
+    }
+  },
+  "scope3": {
+    "kpis": [
+      { "label": "Total Scope 3", "value": "22,220", "trend": "▼ 1.8% vs PY", "trendClass": "t-down" },
+      { "label": "Categories Tracked", "value": "5 / 15", "trend": "Material only", "trendClass": "t-flat" },
+      { "label": "Supplier Coverage", "value": "68%", "trend": "▲ +14% this yr", "trendClass": "t-down" },
+      { "label": "BRSR Category B", "value": "Ready", "trend": "▼ Filing Nov 25", "trendClass": "t-down" }
+    ],
+    "bars": [
+      { "label": "Purchased Goods & Services", "value": "8,420 tCO₂e", "width": 38 },
+      { "label": "Use of Sold Products", "value": "6,400 tCO₂e", "width": 29 },
+      { "label": "Downstream Transportation", "value": "5,180 tCO₂e", "width": 23 },
+      { "label": "Business Travel", "value": "1,240 tCO₂e", "width": 6 },
+      { "label": "Employee Commute", "value": "980 tCO₂e", "width": 4 }
+    ]
+  },
+  "results": {
+    "tag": "Tata (client demo) — Mumbai, Maharashtra",
+    "quote": "Demo scenario for Tata (client): CBAM preparation drops from 6 weeks to 4 hours, €1.2M in penalties is avoided, and export reputation is protected. When real client data is shared, these metrics update automatically.",
+    "author": "Compliance Lead",
+    "authorOrg": "— Tata (client demo)",
+    "stats": [
+      { "value": "94%", "label": "Reduction in CBAM prep time" },
+      { "value": "€1.2M", "label": "CBAM penalties avoided in Y1" },
+      { "value": "24,000 tCO₂e", "label": "Captured via our CCS project at Pune" },
+      { "value": "100%", "label": "Verifier confidence & brand trust" }
+    ]
+  }
+}

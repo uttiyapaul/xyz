@@ -6,9 +6,9 @@ import Link from "next/link";
 
 interface Organization {
   id: string;
-  name: string;
-  industry: string | null;
-  country: string | null;
+  legal_name: string;
+  industry_segment: string | null;
+  country_code: string | null;
   created_at: string;
 }
 
@@ -29,24 +29,30 @@ export default function PlatformSuperAdminDashboard() {
 
   async function loadDashboardData() {
     try {
-      // Load organizations
+      // Load organizations from correct table
       const { data: orgData } = await supabase
-        .from("organizations")
-        .select("*")
+        .from("client_organizations")
+        .select("id, legal_name, industry_segment, country_code, created_at")
+        .is("deleted_at", null)
         .order("created_at", { ascending: false })
         .limit(10);
 
       if (orgData) setOrgs(orgData);
 
-      // Load user stats (simplified - adjust based on your schema)
-      const { data: userData } = await supabase
-        .from("profiles")
-        .select("is_active");
+      // Load user stats from user_organization_roles
+      const { data: roleData } = await supabase
+        .from("user_organization_roles")
+        .select("user_id, is_active, platform_roles(role_name)")
+        .is("deleted_at", null);
 
-      if (userData) {
-        const total = userData.length;
-        const active = userData.filter((u: any) => u.is_active).length;
-        const pending = total - active;
+      if (roleData) {
+        // Count unique users
+        const uniqueUsers = new Set(roleData.map((r: any) => r.user_id));
+        const total = uniqueUsers.size;
+        const active = roleData.filter((r: any) => r.is_active).length;
+        const pending = roleData.filter((r: any) => 
+          r.platform_roles?.role_name === "pending_approval"
+        ).length;
         setUserStats({ total, active, pending });
       }
     } catch (error) {
@@ -261,13 +267,13 @@ export default function PlatformSuperAdminDashboard() {
                 {orgs.map((org) => (
                   <tr key={org.id} style={{ borderBottom: "1px solid #1A1A24" }}>
                     <td style={{ padding: "16px", color: "#FAFAF8" }}>
-                      {org.name}
+                      {org.legal_name}
                     </td>
                     <td style={{ padding: "16px", color: "#9CA3AF" }}>
-                      {org.industry || "—"}
+                      {org.industry_segment || "—"}
                     </td>
                     <td style={{ padding: "16px", color: "#9CA3AF" }}>
-                      {org.country || "—"}
+                      {org.country_code || "—"}
                     </td>
                     <td style={{ padding: "16px", color: "#9CA3AF" }}>
                       {new Date(org.created_at).toLocaleDateString()}

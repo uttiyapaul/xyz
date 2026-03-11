@@ -56,8 +56,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const jwtClaims  = decodeJwtClaims(session.access_token);
     const meta       = (jwtClaims.app_metadata as Record<string, unknown>) ?? {};
 
-    console.log("✅ JWT app_metadata:", meta);
-
     const roles: string[]  = Array.isArray(meta.roles) ? (meta.roles as string[]) : [];
     const orgIds: string[] = Array.isArray(meta.org_ids) ? (meta.org_ids as string[]) : [];
 
@@ -98,7 +96,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Listen for auth changes — SIGNED_IN event fires with fresh JWT after login
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        console.log("🔄 Auth event:", event);
         setState(extractFromSession(session));
       }
     );

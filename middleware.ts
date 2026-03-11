@@ -194,9 +194,6 @@ export async function middleware(req: NextRequest): Promise<NextResponse> {
   const supabaseKey  = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
   let   isAuthed     = false;
 
-  console.log("[Middleware] Checking auth for:", pathname);
-  console.log("[Middleware] Cookies:", req.cookies.getAll().map(c => c.name));
-
   if (supabaseUrl && supabaseKey) {
     const supabase = createServerClient(supabaseUrl, supabaseKey, {
       cookies: {
@@ -216,9 +213,7 @@ export async function middleware(req: NextRequest): Promise<NextResponse> {
       },
     });
 
-    const { data: { user }, error } = await supabase.auth.getUser();
-    console.log("[Middleware] User:", user?.email ?? "none");
-    console.log("[Middleware] Error:", error?.message ?? "none");
+    const { data: { user } } = await supabase.auth.getUser();
     isAuthed = !!user;
 
     // Set user context headers for downstream use
@@ -228,8 +223,6 @@ export async function middleware(req: NextRequest): Promise<NextResponse> {
       response.headers.set("x-user-role",  user.role ?? "authenticated");
     }
   }
-
-  console.log("[Middleware] isAuthed:", isAuthed);
 
   // 6. Auth guard
   const isPublic = PUBLIC_ROUTES.has(pathname) ||
@@ -246,16 +239,11 @@ export async function middleware(req: NextRequest): Promise<NextResponse> {
 
   // Redirect authenticated users away from auth pages
   if (isAuthed && AUTH_ROUTES.has(pathname)) {
-    console.log("[Middleware] User is authenticated on auth page, should redirect");
-    console.log("[Middleware] Redirect param:", req.nextUrl.searchParams.get("redirect"));
-    
     // Check if there's a redirect parameter
     const redirectParam = req.nextUrl.searchParams.get("redirect");
     if (redirectParam && redirectParam.startsWith("/") && !redirectParam.startsWith("//")) {
-      console.log("[Middleware] Redirecting to:", redirectParam);
       return NextResponse.redirect(new URL(redirectParam, req.url));
     }
-    console.log("[Middleware] Redirecting to /dashboard");
     return NextResponse.redirect(new URL("/dashboard", req.url));
   }
 

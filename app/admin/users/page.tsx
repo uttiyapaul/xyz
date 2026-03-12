@@ -34,7 +34,11 @@ export default async function ManageUsersPage() {
                     {error}
                 </div>
             ) : (
-                <UsersClient users={users || []} organizations={orgs} roles={roles} />
+                <UsersClient 
+                    users={(users || []).map(u => ({ ...u, email: u.email || "", last_sign_in_at: u.last_sign_in_at || null }))} 
+                    organizations={orgs} 
+                    roles={roles} 
+                />
             )}
         </div>
     );

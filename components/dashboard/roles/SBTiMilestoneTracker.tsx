@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getTargetsProgress } from "../../lib/supabase/queries";
+import { getTargetsProgress } from "@/lib/supabase/queries";
 
 interface Props {
   orgId: string;

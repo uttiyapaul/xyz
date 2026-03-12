@@ -31,6 +31,8 @@ function FallbackDashboard({ role }: { role: string }) {
   );
 }
 
+import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
+
 export default function DashboardPage() {
   const { user, isLoading } = useAuth();
   const [mounted, setMounted] = useState(false);
@@ -40,13 +42,7 @@ export default function DashboardPage() {
   }, []);
 
   if (!mounted || isLoading) {
-    return (
-      <div style={{ padding: "80px", textAlign: "center", color: "#6B7280", fontFamily: "system-ui", background: "#050508", minHeight: "100vh" }}>
-        <div className="spinner" style={{ margin: "0 auto 16px", width: "24px", height: "24px", border: "2px solid #1A1A24", borderTopColor: "#06B6D4", borderRadius: "50%", animation: "spin 1s linear infinite" }}></div>
-        <p style={{ fontSize: "14px" }}>Loading Dashboard Profile...</p>
-        <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   const primaryRole = getUserPrimaryRole(user);

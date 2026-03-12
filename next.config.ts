@@ -155,7 +155,7 @@ const nextConfig: NextConfig = {
   // TypeScript and ESLint
   // ---------------------------------------------------------------------------
   typescript: { ignoreBuildErrors: false },
-  eslint:     { ignoreDuringBuilds: false },
+
 };
 
 export default nextConfig;

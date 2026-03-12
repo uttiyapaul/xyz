@@ -57,14 +57,14 @@ export function createStore(preloadedState?: Partial<RootState>) {
       })
         .concat(ghgApi.middleware)
         .concat(auditMiddleware)
-        .concat(securityMiddleware),
+        .concat(securityMiddleware) as any,
 
-    devTools: process.env.NODE_ENV !== "production"
+    devTools: (typeof process !== 'undefined' && process.env && process.env.NODE_ENV !== "production")
       ? {
           name:            "A2Z Carbon Solutions",
           maxAge:          50,
           latency:         500,
-          actionsBlacklist: [
+          actionsDenylist: [
             "ui/setToast",     // Too noisy
             ghgApi.reducerPath + "/executeQuery",
           ],

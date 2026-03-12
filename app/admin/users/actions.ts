@@ -12,10 +12,10 @@ export async function fetchAdminUsers() {
         return { error: "Failed to fetch users" };
     }
 
-    // Fetch roles from user_organization_roles
+    // Fetch roles from user_organization_roles without joining client_orgs dynamically
     const { data: roleData, error: roleError } = await supabaseAdmin
         .from("user_organization_roles")
-        .select("user_id, is_active, platform_roles(role_name), client_organizations(legal_name)")
+        .select("user_id, is_active, organization_id, platform_roles(role_name)")
         .is("deleted_at", null);
 
     if (roleError) {
@@ -23,17 +23,23 @@ export async function fetchAdminUsers() {
         return { error: "Failed to fetch user roles" };
     }
 
+    // Fetch orgs separately
+    const { data: orgData } = await supabaseAdmin
+        .from("client_organizations")
+        .select("id, legal_name");
+
     // Merge the data
     const merged = authData.users.map((u) => {
         const roleRecord = roleData.find((r: any) => r.user_id === u.id);
+        const orgRecord = orgData?.find((o: any) => o.id === roleRecord?.organization_id);
         return {
             id: u.id,
             email: u.email,
             full_name: u.user_metadata?.full_name || "—",
             last_sign_in_at: u.last_sign_in_at,
             created_at: u.created_at,
-            role: roleRecord?.platform_roles?.role_name || "pending_approval",
-            org_name: roleRecord?.client_organizations?.legal_name || "—",
+            role: (roleRecord?.platform_roles as any)?.role_name || "pending_approval",
+            org_name: orgRecord?.legal_name || "—",
             is_active: roleRecord?.is_active ?? false,
         };
     });

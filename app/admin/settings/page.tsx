@@ -49,7 +49,7 @@ export default function SystemSettingsPage() {
                 <div style={{ fontSize: "12px", color: "#6B7280" }}>{desc}</div>
             </div>
             <label style={{ display: "inline-flex", alignItems: "center", cursor: "pointer", position: "relative" }}>
-                <input type="checkbox" name={name} checked={checked} onChange={handleChange} style={{ srOnly: true, position: "absolute", opacity: 0 }} />
+                <input type="checkbox" name={name} checked={checked} onChange={handleChange} style={{ position: "absolute", opacity: 0 }} />
                 <div style={{
                     width: "44px", height: "24px", background: checked ? "#00D4FF" : "rgba(255,255,255,0.1)",
                     borderRadius: "999px", position: "relative", transition: "all 0.3s"

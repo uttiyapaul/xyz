@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "../../lib/supabase/client";
-import { usePermission } from "../../lib/hooks/usePermission";
+import { supabase } from "@/lib/supabase/client";
+import { usePermission } from "@/lib/hooks/usePermission";
 
 interface Props {
   orgId: string;

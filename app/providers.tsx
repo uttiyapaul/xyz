@@ -54,7 +54,7 @@ class GlobalErrorBoundary extends Component<
 
   componentDidCatch(error: Error, info: ErrorInfo) {
     // In production: send to monitoring (Sentry, etc.)
-    if (process.env.NODE_ENV === "development") {
+    if (typeof process !== 'undefined' && process.env && process.env.NODE_ENV === "development") {
       console.error("[GlobalErrorBoundary]", error, info);
     }
   }

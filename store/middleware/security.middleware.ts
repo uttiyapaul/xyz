@@ -74,7 +74,7 @@ function sanitizeDeep(value: unknown, depth = 0): unknown {
 }
 
 export const securityMiddleware: Middleware<Record<string, never>, RootState> =
-  () => (next) => (action: AnyAction) => {
+  () => (next) => (action: any) => {
     // 1. Payload size check
     if (action.payload !== undefined) {
       const size = getPayloadSize(action.payload);

@@ -34,7 +34,7 @@ const config: Config = {
     "types/**/*.ts",
     "!**/*.d.ts",
   ],
-  coverageThresholds: {
+  coverageThreshold: {
     global: {
       branches:   80,
       functions:  85,

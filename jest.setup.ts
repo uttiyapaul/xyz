@@ -7,7 +7,10 @@
 process.env.NEXT_PUBLIC_SUPABASE_URL      = "https://test.supabase.co";
 process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "test-anon-key";
 process.env.NEXT_PUBLIC_APP_VERSION       = "0.0.0-test";
-process.env.NODE_ENV                      = "test";
+Object.defineProperty(process, 'env', {
+  value: { ...process.env, NODE_ENV: 'test' },
+  writable: true
+});
 
 // Mock crypto.randomUUID for test environments
 if (typeof globalThis.crypto === "undefined") {

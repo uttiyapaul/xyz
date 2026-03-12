@@ -1,1 +1,3 @@
-import { getUserPrimaryRole } from "@/lib/auth/roles";
+export default function DebugStatusPage() {
+  return <div>Debug Status Page</div>;
+}

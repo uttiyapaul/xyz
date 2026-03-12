@@ -1,1 +1,5 @@
-import { getUserPrimaryRole, fetchUserRoleFromDB } from "@/lib/auth/roles";
+
+
+export default function DebugAuthPage() {
+  return <div>Debug Auth Page</div>;
+}

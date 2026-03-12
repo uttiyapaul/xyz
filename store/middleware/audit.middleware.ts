@@ -77,7 +77,7 @@ async function flushAuditBuffer(userId: string | null): Promise<void> {
 }
 
 export const auditMiddleware: Middleware<Record<string, never>, RootState> =
-  (store) => (next) => (action: AnyAction) => {
+  (store) => (next) => (action: any) => {
     // Skip redacted actions
     if (REDACTED_ACTIONS.has(action.type)) return next(action);
 

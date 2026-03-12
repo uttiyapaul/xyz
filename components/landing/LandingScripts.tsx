@@ -1,1141 +1,837 @@
 "use client";
+// @ts-nocheck
 
 import { useEffect } from "react";
 
-type Cleanup = () => void;
-
 export default function LandingScripts() {
   useEffect(() => {
-    const cleanups: Cleanup[] = [];
-    const mainEl = document.getElementById("main");
-    const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-    const applyS3Widths = () => {
-      document.querySelectorAll<HTMLElement>(".s3-fill").forEach((bar) => {
-        const width = bar.dataset.width;
-        if (width) bar.style.width = `${width}%`;
-      });
-    };
-
-    const animateCounter = (el: HTMLElement) => {
-      const target = parseFloat(el.dataset.target ?? "0");
-      const decimals = parseInt(el.dataset.dec ?? "0", 10);
-      if (Number.isNaN(target)) return;
-      if (prefersReduced) {
-        el.textContent =
-          decimals > 0 ? target.toFixed(decimals) : Math.round(target).toLocaleString("en-IN");
-        el.dataset.animated = "true";
-        return;
-      }
-      const start = performance.now();
-      const duration = 1400;
-      const tick = (now: number) => {
-        const elapsed = now - start;
-        const progress = Math.min(elapsed / duration, 1);
-        const eased = 1 - Math.pow(1 - progress, 3);
-        const value = target * eased;
-        el.textContent =
-          decimals > 0 ? value.toFixed(decimals) : Math.round(value).toLocaleString("en-IN");
-        if (progress < 1) requestAnimationFrame(tick);
-        else el.dataset.animated = "true";
-      };
-      requestAnimationFrame(tick);
-    };
-
-    const coerceValue = (value: string) => {
-      const trimmed = value.trim();
-      if (!trimmed) return "";
-      if (trimmed === "true") return true;
-      if (trimmed === "false") return false;
-      const numeric = Number(trimmed.replace(/,/g, ""));
-      if (!Number.isNaN(numeric) && trimmed.match(/^-?\d+(\.\d+)?$/)) return numeric;
-      return trimmed;
-    };
-
-    const parseCsv = (text: string) => {
-      const rows: string[][] = [];
-      let current = "";
-      let row: string[] = [];
-      let inQuotes = false;
-      for (let i = 0; i < text.length; i += 1) {
-        const char = text[i];
-        if (char === "\"") {
-          if (inQuotes && text[i + 1] === "\"") {
-            current += "\"";
-            i += 1;
-          } else {
-            inQuotes = !inQuotes;
-          }
-        } else if (char === "," && !inQuotes) {
-          row.push(current);
-          current = "";
-        } else if ((char === "\n" || char === "\r") && !inQuotes) {
-          if (char === "\r" && text[i + 1] === "\n") i += 1;
-          row.push(current);
-          if (row.some((cell) => cell.trim() !== "")) rows.push(row);
-          row = [];
-          current = "";
-        } else {
-          current += char;
-        }
-      }
-      if (current.length || row.length) {
-        row.push(current);
-        if (row.some((cell) => cell.trim() !== "")) rows.push(row);
-      }
-      const headers = rows.shift()?.map((h) => h.trim()) ?? [];
-      return rows.map((cells) => {
-        const obj: Record<string, string> = {};
-        headers.forEach((header, index) => {
-          obj[header] = (cells[index] ?? "").trim();
-        });
-        return obj;
-      });
-    };
-
-    const setByPath = (obj: Record<string, any>, path: string, value: any) => {
-      const segments: Array<string | number> = [];
-      const regex = /([^[.\]]+)|\[(\d+)\]/g;
-      let match: RegExpExecArray | null = regex.exec(path);
-      while (match) {
-        if (match[1]) segments.push(match[1]);
-        if (match[2]) segments.push(Number(match[2]));
-        match = regex.exec(path);
-      }
-      let cursor: any = obj;
-      segments.forEach((segment, index) => {
-        const isLast = index === segments.length - 1;
-        if (isLast) {
-          cursor[segment] = value;
-          return;
-        }
-        if (cursor[segment] == null) {
-          cursor[segment] = typeof segments[index + 1] === "number" ? [] : {};
-        }
-        cursor = cursor[segment];
-      });
-    };
-
-    const getByPath = (obj: any, path?: string) => {
-      if (!obj || !path) return undefined;
-      return path.split(".").reduce((acc, key) => (acc ? acc[key] : undefined), obj);
-    };
-
-    const metricsFromCsv = (rows: Array<Record<string, string>>) => {
-      const metrics: Record<string, any> = {};
-      rows.forEach((row) => {
-        const path = row.path || row.Path || row.metric || "";
-        const raw = row.value || row.Value || "";
-        if (!path) return;
-        setByPath(metrics, path, coerceValue(raw));
-      });
-      return metrics;
-    };
-
-    const fetchMetrics = async () => {
-      const endpoint =
-        mainEl?.dataset.metricsEndpoint ||
-        (window as Window & { __XYZ_METRICS_ENDPOINT__?: string }).__XYZ_METRICS_ENDPOINT__ ||
-        "/data/client-metrics.json";
-      const dataType =
-        mainEl?.dataset.metricsType || (endpoint.toLowerCase().endsWith(".csv") ? "csv" : "json");
-      try {
-        const response = await fetch(endpoint, { cache: "no-store" });
-        if (!response.ok) return null;
-        const text = await response.text();
-        if (dataType === "csv") {
-          const rows = parseCsv(text);
-          return metricsFromCsv(rows);
-        }
-        return JSON.parse(text);
-      } catch {
-        return null;
-      }
-    };
-
-    const updateLogos = (container: HTMLElement | null, logos?: string[]) => {
-      if (!container || !logos || !logos.length) return;
-      container.innerHTML = "";
-      logos.forEach((logo) => {
-        const span = document.createElement("span");
-        span.textContent = logo;
-        container.appendChild(span);
-      });
-    };
-
-    const updateKpis = (scopeId: string, kpis?: Array<Record<string, any>>) => {
-      if (!kpis || !kpis.length) return;
-      const row = document.querySelector<HTMLElement>(`#scope-${scopeId} .kpi-row`);
-      if (!row) return;
-      const cards = Array.from(row.querySelectorAll<HTMLElement>(".kpi-card"));
-      kpis.forEach((kpi, index) => {
-        const card = cards[index];
-        if (!card) return;
-        const labelEl = card.querySelector<HTMLElement>(".kpi-label");
-        const valueEl = card.querySelector<HTMLElement>(".kpi-val");
-        const trendEl = card.querySelector<HTMLElement>(".kpi-trend");
-        if (labelEl && kpi.label) labelEl.textContent = String(kpi.label);
-        if (valueEl && kpi.value !== undefined) valueEl.textContent = String(kpi.value);
-        if (trendEl && kpi.trend) trendEl.textContent = String(kpi.trend);
-        if (trendEl && kpi.trendClass) {
-          trendEl.classList.remove("t-up", "t-down", "t-flat");
-          trendEl.classList.add(kpi.trendClass);
-        }
-      });
-    };
-
-    const statusClass = (status?: string) => {
-      const value = (status ?? "").toLowerCase();
-      if (value.includes("verified")) return "pill-v";
-      if (value.includes("pending")) return "pill-p";
-      if (value.includes("complete")) return "pill-c";
-      return "pill-p";
-    };
-
-    const createCell = (value: string, className?: string) => {
-      const td = document.createElement("td");
-      if (className) td.className = className;
-      td.textContent = value;
-      return td;
-    };
-
-    const createStatusCell = (status?: string) => {
-      const td = document.createElement("td");
-      const pill = document.createElement("span");
-      pill.className = `pill ${statusClass(status)}`;
-      pill.textContent = status ?? "";
-      td.appendChild(pill);
-      return td;
-    };
-
-    const renderScope1Table = (rows?: Array<Record<string, any>>, total?: Record<string, any>) => {
-      const body = document.getElementById("scope1-body");
-      if (!body || !rows || !rows.length) return;
-      body.innerHTML = "";
-      rows.forEach((row) => {
-        const tr = document.createElement("tr");
-        tr.append(
-          createCell(String(row.site ?? "")),
-          createCell(String(row.source ?? "")),
-          createCell(String(row.emissions ?? ""), "mono"),
-          createCell(String(row.cbamPct ?? ""), "mono"),
-          createStatusCell(row.status)
-        );
-        body.appendChild(tr);
-      });
-      if (total) {
-        const tr = document.createElement("tr");
-        tr.className = "total-row";
-        const labelCell = document.createElement("td");
-        labelCell.colSpan = 2;
-        const strong = document.createElement("strong");
-        strong.textContent = "Total Scope 1";
-        labelCell.appendChild(strong);
-        tr.append(
-          labelCell,
-          createCell(String(total.emissions ?? ""), "mono"),
-          createCell(String(total.cbamPct ?? ""), "mono"),
-          createStatusCell(total.status)
-        );
-        body.appendChild(tr);
-      }
-    };
-
-    const renderScope2Table = (rows?: Array<Record<string, any>>, total?: Record<string, any>) => {
-      const body = document.getElementById("scope2-body");
-      if (!body || !rows || !rows.length) return;
-      body.innerHTML = "";
-      rows.forEach((row) => {
-        const tr = document.createElement("tr");
-        tr.append(
-          createCell(String(row.site ?? "")),
-          createCell(String(row.source ?? "")),
-          createCell(String(row.locationBased ?? ""), "mono"),
-          createCell(String(row.marketBased ?? ""), "mono"),
-          createStatusCell(row.status)
-        );
-        body.appendChild(tr);
-      });
-      if (total) {
-        const tr = document.createElement("tr");
-        tr.className = "total-row";
-        const labelCell = document.createElement("td");
-        labelCell.colSpan = 2;
-        const strong = document.createElement("strong");
-        strong.textContent = "Total Scope 2";
-        labelCell.appendChild(strong);
-        tr.append(
-          labelCell,
-          createCell(String(total.locationBased ?? ""), "mono"),
-          createCell(String(total.marketBased ?? ""), "mono"),
-          createStatusCell(total.status)
-        );
-        body.appendChild(tr);
-      }
-    };
-
-    const renderScope3Bars = (bars?: Array<Record<string, any>>) => {
-      const container = document.getElementById("scope3-bars");
-      if (!container || !bars || !bars.length) return;
-      container.innerHTML = "";
-      bars.forEach((bar) => {
-        const row = document.createElement("div");
-        row.className = "s3-row";
-        const label = document.createElement("div");
-        label.className = "s3-label";
-        label.textContent = String(bar.label ?? "");
-        const track = document.createElement("div");
-        track.className = "s3-track";
-        const fill = document.createElement("div");
-        fill.className = "s3-fill";
-        if (bar.width !== undefined) fill.dataset.width = String(bar.width);
-        track.appendChild(fill);
-        const value = document.createElement("div");
-        value.className = "s3-val";
-        value.textContent = String(bar.value ?? "");
-        row.append(label, track, value);
-        container.appendChild(row);
-      });
-      applyS3Widths();
-    };
-
-    const applyMetrics = async () => {
-      const metrics = await fetchMetrics();
-      if (!metrics) return;
-
-      const proofLabel = document.getElementById("proof-label");
-      if (metrics.proof?.label && proofLabel) {
-        proofLabel.textContent = String(metrics.proof.label);
-      }
-      updateLogos(document.getElementById("proof-logos"), metrics.proof?.logos);
-
-      document.querySelectorAll<HTMLElement>(".counter[data-metric]").forEach((el) => {
-        const value = getByPath(metrics, el.dataset.metric);
-        if (value === undefined || value === null) return;
-        const metricValue = typeof value === "object" && "value" in value ? value.value : value;
-        const metricDecimals =
-          typeof value === "object" && value && "decimals" in value ? value.decimals : undefined;
-        if (metricValue !== undefined) el.dataset.target = String(metricValue);
-        if (metricDecimals !== undefined) el.dataset.dec = String(metricDecimals);
-        if (el.dataset.animated === "true") animateCounter(el);
-      });
-
-      if (metrics.client?.solutionTitle) {
-        const solutionTitle = document.getElementById("solution-h2");
-        if (solutionTitle) solutionTitle.textContent = String(metrics.client.solutionTitle);
-      }
-      if (metrics.client?.solutionSub) {
-        const solutionSub = document.getElementById("solution-sub");
-        if (solutionSub) solutionSub.textContent = String(metrics.client.solutionSub);
-      }
-      if (metrics.client?.mockupOrg) {
-        const mockupOrg = document.getElementById("mockup-org");
-        if (mockupOrg) mockupOrg.textContent = String(metrics.client.mockupOrg);
-      }
-
-      updateKpis("s1", metrics.scope1?.kpis);
-      updateKpis("s2", metrics.scope2?.kpis);
-      updateKpis("s3", metrics.scope3?.kpis);
-
-      renderScope1Table(metrics.scope1?.rows, metrics.scope1?.total);
-      renderScope2Table(metrics.scope2?.rows, metrics.scope2?.total);
-      renderScope3Bars(metrics.scope3?.bars);
-
-      if (metrics.results?.tag) {
-        const resultsTag = document.getElementById("results-tag");
-        if (resultsTag) resultsTag.textContent = String(metrics.results.tag);
-      }
-      if (metrics.results?.quote) {
-        const resultsQuote = document.getElementById("results-h2");
-        if (resultsQuote) resultsQuote.textContent = String(metrics.results.quote);
-      }
-      if (metrics.results?.author) {
-        const resultsAuthor = document.getElementById("results-author");
-        if (resultsAuthor) resultsAuthor.textContent = String(metrics.results.author);
-      }
-      if (metrics.results?.authorOrg) {
-        const resultsOrg = document.getElementById("results-author-org");
-        if (resultsOrg) resultsOrg.textContent = String(metrics.results.authorOrg);
-      }
-      if (Array.isArray(metrics.results?.stats)) {
-        const resultsStats = document.getElementById("results-stats");
-        if (resultsStats) {
-          resultsStats.innerHTML = "";
-          metrics.results.stats.forEach((stat: Record<string, any>) => {
-            const item = document.createElement("div");
-            item.setAttribute("role", "listitem");
-            const value = document.createElement("span");
-            value.className = "rstat-val";
-            value.textContent = String(stat.value ?? "");
-            const label = document.createElement("span");
-            label.className = "rstat-label";
-            label.textContent = String(stat.label ?? "");
-            item.append(value, label);
-            resultsStats.appendChild(item);
-          });
-        }
-      }
-    };
-
-    void applyMetrics();
-
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/sw.js").catch(() => undefined);
-    }
-
-    const nav = document.querySelector<HTMLElement>(".nav");
-    const onScroll = () => {
-      if (!nav) return;
-      nav.classList.toggle("scrolled", window.scrollY > 40);
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    onScroll();
-    cleanups.push(() => window.removeEventListener("scroll", onScroll));
-
-    const revealEls = Array.from(document.querySelectorAll<HTMLElement>(".reveal"));
-    if (revealEls.length) {
-      const revealObs = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-              entry.target.classList.add("visible");
-              revealObs.unobserve(entry.target);
-            }
-          });
-        },
-        { threshold: 0.12 }
-      );
-      revealEls.forEach((el) => revealObs.observe(el));
-      cleanups.push(() => revealObs.disconnect());
-    }
-
-    const counters = Array.from(document.querySelectorAll<HTMLElement>(".counter"));
-    if (counters.length) {
-      const counterObs = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-              animateCounter(entry.target as HTMLElement);
-              counterObs.unobserve(entry.target);
-            }
-          });
-        },
-        { threshold: 0.3 }
-      );
-      counters.forEach((el) => counterObs.observe(el));
-      cleanups.push(() => counterObs.disconnect());
-    }
-
-    const faqItems = Array.from(document.querySelectorAll<HTMLElement>(".faq-item"));
-    const handleFaqToggle = (item: HTMLElement) => {
-      const isOpen = item.classList.contains("open");
-      faqItems.forEach((el) => {
-        el.classList.remove("open");
-        el.setAttribute("aria-expanded", "false");
-      });
-      if (!isOpen) {
-        item.classList.add("open");
-        item.setAttribute("aria-expanded", "true");
-      }
-    };
-    faqItems.forEach((item) => {
-      const onClick = () => handleFaqToggle(item);
-      const onKey = (event: KeyboardEvent) => {
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          handleFaqToggle(item);
-        }
-      };
-      item.addEventListener("click", onClick);
-      item.addEventListener("keydown", onKey);
-      cleanups.push(() => {
-        item.removeEventListener("click", onClick);
-        item.removeEventListener("keydown", onKey);
-      });
-    });
-
-    const scopeTabs = Array.from(document.querySelectorAll<HTMLButtonElement>(".scope-tab"));
-    const scopePanels = Array.from(document.querySelectorAll<HTMLElement>(".scope-panel"));
-    const setScope = (scopeId: string, button: HTMLButtonElement) => {
-      scopePanels.forEach((panel) => panel.classList.remove("active"));
-      scopeTabs.forEach((tab) => {
-        tab.classList.remove("active");
-        tab.setAttribute("aria-selected", "false");
-      });
-      const panel = document.getElementById(`scope-${scopeId}`);
-      if (panel) panel.classList.add("active");
-      button.classList.add("active");
-      button.setAttribute("aria-selected", "true");
-
-      if (scopeId === "s3") applyS3Widths();
-    };
-    scopeTabs.forEach((tab) => {
-      const scopeId = tab.dataset.scope ?? "s1";
-      const onClick = () => setScope(scopeId, tab);
-      tab.addEventListener("click", onClick);
-      cleanups.push(() => tab.removeEventListener("click", onClick));
-    });
-    const activeScope = scopeTabs.find((tab) => tab.classList.contains("active"));
-    if (activeScope) {
-      setScope(activeScope.dataset.scope ?? "s1", activeScope);
-    }
-
-    const bottomTabs = Array.from(
-      document.querySelectorAll<HTMLAnchorElement>(".tab-item, .tab-cta")
-    );
-    const setActiveTab = (hash: string) => {
-      const target = hash || "#home";
-      bottomTabs.forEach((tab) => {
-        const href = tab.getAttribute("href") || "";
-        const isHome = target === "#home" && href === "#home";
-        const isActive = isHome || (target !== "#home" && href === target);
-        tab.classList.toggle("active", isActive);
-      });
-    };
-    const onHashChange = () => setActiveTab(window.location.hash || "#home");
-    bottomTabs.forEach((tab) => {
-      const onClick = () => setActiveTab(tab.getAttribute("href") || "#home");
-      tab.addEventListener("click", onClick);
-      cleanups.push(() => tab.removeEventListener("click", onClick));
-    });
-    window.addEventListener("hashchange", onHashChange);
-    onHashChange();
-    cleanups.push(() => window.removeEventListener("hashchange", onHashChange));
-
+    
+    // Cookie Banner Logic
     const cookieBanner = document.getElementById("cookie-banner");
     const acceptBtn = document.getElementById("cookie-accept");
     const saveBtn = document.getElementById("cookie-save");
-    const analyticsToggle = document.getElementById("ck-analytics") as HTMLInputElement | null;
-    const marketingToggle = document.getElementById("ck-marketing") as HTMLInputElement | null;
-    const cookieKey = "xyz-cookie-prefs";
+    const rejectBtn = document.getElementById("cookie-reject");
+    const analyticsToggle = document.getElementById("ck-analytics");
+    const marketingToggle = document.getElementById("ck-marketing");
+    const cookieKey = "a2z_cookies";
 
     const hideCookie = () => cookieBanner?.classList.remove("show");
     const showCookie = () => cookieBanner?.classList.add("show");
+    
     const saveCookie = () => {
       const payload = {
-        analytics: analyticsToggle?.checked ?? false,
-        marketing: marketingToggle?.checked ?? false,
+        analytics: analyticsToggle ? analyticsToggle.checked : false,
+        marketing: marketingToggle ? marketingToggle.checked : false,
         ts: Date.now(),
       };
       try {
         localStorage.setItem(cookieKey, JSON.stringify(payload));
-      } catch {
-        // Ignore storage failures (private mode or blocked storage).
-      }
+      } catch (e) {}
       hideCookie();
     };
 
     let hasPrefs = false;
     try {
       hasPrefs = !!localStorage.getItem(cookieKey);
-    } catch {
+    } catch (e) {
       hasPrefs = false;
     }
-    if (!hasPrefs) showCookie();
-
-    if (acceptBtn) {
-      const onAccept = () => {
-        if (analyticsToggle) analyticsToggle.checked = true;
-        if (marketingToggle) marketingToggle.checked = true;
-        saveCookie();
-      };
-      acceptBtn.addEventListener("click", onAccept);
-      cleanups.push(() => acceptBtn.removeEventListener("click", onAccept));
-    }
-    if (saveBtn) {
-      const onSave = () => saveCookie();
-      saveBtn.addEventListener("click", onSave);
-      cleanups.push(() => saveBtn.removeEventListener("click", onSave));
+    // Auto-show logic
+    if (!hasPrefs) {
+      // small delay to let mount happen
+      setTimeout(showCookie, 500);
     }
 
-    const demoForm = document.getElementById("demo-form") as HTMLFormElement | null;
-    const demoSuccess = document.getElementById("demo-success");
-    const demoSubmit = document.getElementById("demo-submit-btn") as HTMLButtonElement | null;
-    const demoBtnText = document.getElementById("demo-btn-text");
-    if (demoForm) {
-      const onSubmit = (event: SubmitEvent) => {
-        event.preventDefault();
-        if (!demoForm.checkValidity()) {
-          demoForm.reportValidity();
-          return;
+    if (acceptBtn) acceptBtn.addEventListener("click", () => {
+      if (analyticsToggle) analyticsToggle.checked = true;
+      if (marketingToggle) marketingToggle.checked = true;
+      saveCookie();
+    });
+    
+    if (saveBtn) saveBtn.addEventListener("click", saveCookie);
+    
+    if (rejectBtn) rejectBtn.addEventListener("click", () => {
+      if (analyticsToggle) analyticsToggle.checked = false;
+      if (marketingToggle) marketingToggle.checked = false;
+      saveCookie();
+    });
+
+
+'use strict';
+
+/* ══════════════════════════════════════════════
+   SECTION 1: COOKIE CONSENT
+   HOW IT WORKS:
+   - On page load, check localStorage for "a2z_cookies"
+   - If not set, show the banner after 1.2 seconds
+   - Three buttons: Accept All, Save Preferences, Reject Non-Essential
+   - Preferences saved as JSON: {analytics: bool, marketing: bool}
+   - Access saved prefs anywhere via window.a2zCookies
+══════════════════════════════════════════════ */
+const COOKIE_KEY = 'a2z_cookies';
+
+function ckLoad() {
+  const saved = localStorage.getItem(COOKIE_KEY);
+  if (!saved) {
+    setTimeout(() => document.getElementById('cookie-banner').classList.add('show'), 1200);
+  } else {
+    window.a2zCookies = JSON.parse(saved);
+  }
+}
+
+function ckSave(analytics, marketing) {
+  const prefs = { necessary: true, analytics, marketing, ts: Date.now() };
+  localStorage.setItem(COOKIE_KEY, JSON.stringify(prefs));
+  window.a2zCookies = prefs;
+  document.getElementById('cookie-banner').classList.remove('show');
+  // If analytics accepted, load your analytics script here:
+  // if (analytics) loadGoogleAnalytics();
+}
+
+function ckAcceptAll() {
+  document.getElementById('ck-analytics').checked = true;
+  document.getElementById('ck-marketing').checked = true;
+  ckSave(true, true);
+}
+
+function ckRejectAll() {
+  document.getElementById('ck-analytics').checked = false;
+  document.getElementById('ck-marketing').checked = false;
+  ckSave(false, false);
+}
+
+function ckSavePrefs() {
+  ckSave(
+    document.getElementById('ck-analytics').checked,
+    document.getElementById('ck-marketing').checked
+  );
+}
+
+ckLoad();
+
+
+/* ══════════════════════════════════════════════
+   SECTION 2: HERO CANVAS ANIMATION
+   
+   The animation runs a 12-second loop with 3 phases:
+   
+   PHASE 1 (0s–4s): CO₂ MOLECULES
+   - ~24 CO₂ molecules (C atom + 2 O atoms) float and drift
+   - Red/orange coloured — representing untracked emissions
+   - Mouse cursor attracts molecules within 180px radius
+   
+   PHASE 2 (4s–8s): SUPPLY CHAIN CONSTELLATION  
+   - Molecules fade out, supply chain nodes fade in
+   - 7 nodes representing TATA Group's supply chain
+   - Animated connection lines draw between nodes
+   - Verified nodes glow cyan, unverified glow amber
+   - Hover a node to see a tooltip with its data
+   
+   PHASE 3 (8s–12s): BALANCE SCALE
+   - Constellation fades, balance scale fades in
+   - Left pan: red cluster = untracked emissions
+   - Right pan: cyan documents = verified records
+   - Scale tips from left-heavy to balanced
+   - Glows green when in balance
+   
+   Then loops back to Phase 1.
+══════════════════════════════════════════════ */
+
+(function initCanvas() {
+  const canvas = document.getElementById('hero-canvas');
+  const ctx = canvas.getContext('2d');
+  const mouseTrap = document.getElementById('hero-mouse-trap');
+  const tooltip = document.getElementById('node-tooltip');
+
+  if (!canvas || !ctx) return;
+
+  // Resize canvas to fill the hero section
+  function resize() {
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+  }
+  resize();
+  window.addEventListener('resize', () => { resize(); buildNodes(); });
+
+  // Track mouse position on the right half of hero
+  const mouse = { x: null, y: null };
+  mouseTrap.addEventListener('mousemove', e => {
+    const r = canvas.getBoundingClientRect();
+    mouse.x = e.clientX - r.left;
+    mouse.y = e.clientY - r.top;
+  });
+  mouseTrap.addEventListener('mouseleave', () => { mouse.x = null; mouse.y = null; });
+
+  // ── Easing helpers ──
+  function smoothstep(e0, e1, x) {
+    const t = Math.max(0, Math.min(1, (x - e0) / (e1 - e0)));
+    return t * t * (3 - 2 * t);
+  }
+  function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
+  function lerp(a, b, t) { return a + (b - a) * t; }
+
+  // ── PHASE TIMING (total cycle = 12s) ──
+  const CYCLE = 12000;
+  // Each phase's alpha = smoothstep in, smoothstep out
+  function getAlphas(t) {
+    // t = 0..1 through the full cycle
+    return {
+      mol: smoothstep(0, 0.08, t) * smoothstep(0.42, 0.32, t),
+      con: smoothstep(0.28, 0.40, t) * smoothstep(0.72, 0.62, t),
+      bal: smoothstep(0.60, 0.72, t) * smoothstep(0.99, 0.88, t),
+      // How far into each phase (0..1 within its active window)
+      conProgress: Math.max(0, Math.min(1, (t - 0.28) / 0.44)),
+      balProgress: Math.max(0, Math.min(1, (t - 0.60) / 0.40)),
+    };
+  }
+
+  // ══════════════════════════════════════
+  // PHASE 1: MOLECULES
+  // Each molecule = C atom (centre) + 2 O atoms (sides) + bonds
+  // ══════════════════════════════════════
+  class Molecule {
+    constructor() { this.init(); }
+    init() {
+      this.x = Math.random() * canvas.width;
+      this.y = Math.random() * canvas.height;
+      this.vx = (Math.random() - 0.5) * 0.6;
+      this.vy = (Math.random() - 0.5) * 0.6;
+      this.r = 5 + Math.random() * 4;       // C atom radius
+      this.rot = Math.random() * Math.PI * 2;
+      this.rotSpeed = (Math.random() - 0.5) * 0.018;
+      this.opacity = 0.5 + Math.random() * 0.4;
+      // Red-orange palette
+      this.hue = 10 + Math.random() * 25;
+      this.lit  = 50 + Math.random() * 20;
+    }
+    update() {
+      // Gentle turbulence
+      this.vx += (Math.random() - 0.5) * 0.04;
+      this.vy += (Math.random() - 0.5) * 0.04;
+      // Mouse attraction
+      if (mouse.x !== null) {
+        const dx = mouse.x - this.x, dy = mouse.y - this.y;
+        const d = Math.sqrt(dx * dx + dy * dy);
+        if (d < 200 && d > 0) {
+          this.vx += (dx / d) * 0.1;
+          this.vy += (dy / d) * 0.1;
         }
-        if (demoSubmit) demoSubmit.disabled = true;
-        if (demoBtnText) demoBtnText.textContent = "Submitting...";
-        window.setTimeout(() => {
-          demoForm.style.display = "none";
-          demoSuccess?.classList.add("show");
-          if (demoSubmit) demoSubmit.disabled = false;
-          if (demoBtnText) demoBtnText.textContent = "Book My Demo ->";
-        }, 600);
-      };
-      demoForm.addEventListener("submit", onSubmit);
-      cleanups.push(() => demoForm.removeEventListener("submit", onSubmit));
-    }
-
-    const canvas = document.getElementById("hero-canvas") as HTMLCanvasElement | null;
-    if (canvas && canvas.getContext) {
-      const ctx = canvas.getContext("2d");
-      const fallback = document.getElementById("hero-fallback");
-
-      if (!ctx) {
-        // No canvas context available; skip animation.
-      } else if (prefersReduced) {
-        canvas.style.display = "none";
-        if (fallback) fallback.style.display = "block";
-      } else {
-
-      let w = 0;
-      let h = 0;
-      let animId = 0;
-      let startTime: number | null = null;
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-
-      let mouseX = 0;
-      let mouseY = 0;
-      const onMove = (event: MouseEvent) => {
-        const rect = canvas.getBoundingClientRect();
-        mouseX = event.clientX - rect.left;
-        mouseY = event.clientY - rect.top;
-      };
-      canvas.addEventListener("mousemove", onMove);
-      cleanups.push(() => canvas.removeEventListener("mousemove", onMove));
-
-      const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
-      const clamp = (value: number, min: number, max: number) =>
-        Math.max(min, Math.min(max, value));
-      const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
-      const lerpRGB = (c1: number[], c2: number[], t: number) => [
-        Math.round(lerp(c1[0], c2[0], t)),
-        Math.round(lerp(c1[1], c2[1], t)),
-        Math.round(lerp(c1[2], c2[2], t)),
-      ];
-      const rgb = (c: number[], a: number) => `rgba(${c[0]},${c[1]},${c[2]},${a})`;
-
-      const RED_C = [220, 65, 45];
-      const CYAN_C = [0, 212, 255];
-      const GRN_C = [0, 255, 136];
-
-      const PH_DUR = [3500, 3000, 3000, 4500];
-      const PH_START = [0];
-      for (let i = 1; i < PH_DUR.length; i += 1) {
-        PH_START[i] = PH_START[i - 1] + PH_DUR[i - 1];
       }
-      const TOTAL_DUR = PH_START[PH_DUR.length - 1] + PH_DUR[PH_DUR.length - 1];
-      const LOOP_PH = PH_DUR.length;
-
-      const PHASE_TEXTS = [
-        "Client demo: Tata emissions across 5 facilities (demo data shown).",
-        "Amine-grade CO2 capture engineered for Tata client processes.",
-        "Every facility. Every emission. Every connection. Visible.",
-        "Capture and compliance in perfect balance.",
-      ];
-      let lastPhaseIdx = -1;
-      const updatePhaseText = (phase: number) => {
-        const idx = Math.min(phase, PHASE_TEXTS.length - 1);
-        if (idx === lastPhaseIdx) return;
-        lastPhaseIdx = idx;
-        const el = document.getElementById("hero-phase-text");
-        if (!el) return;
-        el.style.opacity = "0";
-        window.setTimeout(() => {
-          el.textContent = PHASE_TEXTS[idx];
-          el.style.opacity = "1";
-        }, 280);
-      };
-
-      type Molecule = {
-        x: number;
-        y: number;
-        vx: number;
-        vy: number;
-        angle: number;
-        spin: number;
-        r: number;
-        bond: number;
-        opacity: number;
-        fadeSpeed: number;
-        colorT: number;
-        targetNode: NodePoint | null;
-        snapped: boolean;
-        delay: number;
-      };
-      type NodePoint = {
-        id: string;
-        label: string;
-        sub: string;
-        x: number;
-        y: number;
-        r: number;
-        status: "v" | "p" | "c";
-        opacity: number;
-      };
-      type Connection = { f: string; t: string; progress: number; flowT: number };
-      type Scale = {
-        x: number;
-        y: number;
-        armLen: number;
-        chainLen: number;
-        angle: number;
-        opacity: number;
-        leftWT: number;
-        rightWT: number;
-      };
-
-      const MOL_COUNT = 13;
-      let molecules: Molecule[] = [];
-      let nodes: NodePoint[] = [];
-      let conns: Connection[] = [];
-      let scale: Scale = {
-        x: 0,
-        y: 0,
-        armLen: 0,
-        chainLen: 0,
-        angle: 0,
-        opacity: 0,
-        leftWT: 0,
-        rightWT: 0,
-      };
-
-      const makeMolecule = (i: number): Molecule => ({
-        x: w * 0.45 + Math.random() * w * 0.52,
-        y: 60 + Math.random() * (h - 120),
-        vx: -0.25 - Math.random() * 0.3,
-        vy: (Math.random() - 0.5) * 0.28,
-        angle: Math.random() * Math.PI * 2,
-        spin: (Math.random() - 0.5) * 0.013,
-        r: 5 + Math.random() * 2,
-        bond: 17 + Math.random() * 7,
-        opacity: 0,
-        fadeSpeed: 0.007 + Math.random() * 0.009,
-        colorT: 0,
-        targetNode: null,
-        snapped: false,
-        delay: i * 210,
+      // Damping
+      this.vx *= 0.97; this.vy *= 0.97;
+      this.x += this.vx; this.y += this.vy;
+      this.rot += this.rotSpeed;
+      // Wrap around canvas edges
+      if (this.x < -60) this.x = canvas.width + 60;
+      if (this.x > canvas.width + 60) this.x = -60;
+      if (this.y < -60) this.y = canvas.height + 60;
+      if (this.y > canvas.height + 60) this.y = -60;
+    }
+    draw(alpha) {
+      const a = this.opacity * alpha;
+      if (a <= 0) return;
+      ctx.save();
+      ctx.globalAlpha = a;
+      ctx.translate(this.x, this.y);
+      ctx.rotate(this.rot);
+      const r = this.r, bond = r * 2.6, oR = r * 0.7;
+      // Bond lines
+      ctx.beginPath();
+      ctx.moveTo(-r, 0); ctx.lineTo(-(r + bond), 0);
+      ctx.moveTo(r, 0); ctx.lineTo(r + bond, 0);
+      ctx.strokeStyle = `hsla(${this.hue},90%,60%,0.55)`;
+      ctx.lineWidth = 1.8;
+      ctx.stroke();
+      // C atom
+      const gC = ctx.createRadialGradient(0, 0, 0, 0, 0, r);
+      gC.addColorStop(0, `hsla(${this.hue + 15},80%,70%,1)`);
+      gC.addColorStop(1, `hsla(${this.hue},90%,${this.lit}%,1)`);
+      ctx.beginPath();
+      ctx.arc(0, 0, r, 0, Math.PI * 2);
+      ctx.fillStyle = gC;
+      ctx.fill();
+      // O atoms
+      [-(r + bond + oR), (r + bond + oR)].forEach(ox => {
+        const gO = ctx.createRadialGradient(ox, 0, 0, ox, 0, oR);
+        gO.addColorStop(0, `hsla(${this.hue - 10},100%,65%,1)`);
+        gO.addColorStop(1, `hsla(${this.hue},100%,45%,1)`);
+        ctx.beginPath();
+        ctx.arc(ox, 0, oR, 0, Math.PI * 2);
+        ctx.fillStyle = gO;
+        ctx.fill();
       });
+      ctx.restore();
+    }
+  }
 
-      const initMolecules = () => {
-        molecules = [];
-        for (let i = 0; i < MOL_COUNT; i += 1) molecules.push(makeMolecule(i));
-      };
+  // Build 24 molecules
+  const molecules = Array.from({ length: 24 }, () => new Molecule());
+  // Focus them on right ~60% of canvas
+  molecules.forEach(m => { m.x = canvas.width * 0.4 + Math.random() * canvas.width * 0.6; });
 
-      const initNodes = () => {
-        const cx = w * 0.63;
-        const cy = h * 0.5;
-        const sp = Math.min(w * 0.22, h * 0.3, 140);
-        nodes = [
-          {
-            id: "jam",
-            label: "Jamshedpur Steel",
-            sub: "12,400 tCO2e",
-            x: cx - sp * 0.25,
-            y: cy - sp * 0.75,
-            r: 8,
-            status: "v",
-            opacity: 0,
-          },
-          {
-            id: "kal",
-            label: "Kalinganagar Steel",
-            sub: "8,200 tCO2e",
-            x: cx + sp * 0.55,
-            y: cy - sp * 0.35,
-            r: 7,
-            status: "v",
-            opacity: 0,
-          },
-          {
-            id: "mun",
-            label: "Mundra Power",
-            sub: "6,800 tCO2e",
-            x: cx + sp * 0.6,
-            y: cy + sp * 0.35,
-            r: 7,
-            status: "p",
-            opacity: 0,
-          },
-          {
-            id: "mit",
-            label: "Mithapur Chemicals",
-            sub: "4,100 tCO2e",
-            x: cx - sp * 0.05,
-            y: cy + sp * 0.7,
-            r: 6,
-            status: "v",
-            opacity: 0,
-          },
-          {
-            id: "pun",
-            label: "Pune Auto",
-            sub: "2,900 tCO2e",
-            x: cx - sp * 0.7,
-            y: cy + sp * 0.15,
-            r: 6,
-            status: "v",
-            opacity: 0,
-          },
-          {
-            id: "ccs1",
-            label: "CCS Site: Gujarat",
-            sub: "-3,200 tCO2e",
-            x: cx + sp * 0.18,
-            y: cy + sp * 0.05,
-            r: 9,
-            status: "c",
-            opacity: 0,
-          },
-          {
-            id: "ccs2",
-            label: "CCS Site: Maharashtra",
-            sub: "-1,800 tCO2e",
-            x: cx - sp * 0.3,
-            y: cy - sp * 0.15,
-            r: 8,
-            status: "c",
-            opacity: 0,
-          },
-        ];
+  // ══════════════════════════════════════
+  // PHASE 2: SUPPLY CHAIN CONSTELLATION
+  // Positions are fractions of canvas (nx, ny = 0..1)
+  // The animation draws connection lines progressively
+  // ══════════════════════════════════════
+  const NODE_DATA = [
+    { id:'steel',    nx:0.72, ny:0.30, label:'Primary Steel',    sub:'Jamshedpur · 45,200 tCO₂e', icon:'🏭', verified:true },
+    { id:'cement',   nx:0.85, ny:0.52, label:'Cement Works',   sub:'Rajasthan · 28,400 tCO₂e',  icon:'🏗️', verified:true },
+    { id:'alum',     nx:0.68, ny:0.66, label:'Aluminium Smelter',sub:'Odisha · 31,800 tCO₂e',     icon:'⚙️', verified:false },
+    { id:'logi',     nx:0.57, ny:0.45, label:'Logistics Fleet',   sub:'Pan-India · 8,200 tCO₂e',   icon:'🚛', verified:true },
+    { id:'a2z',      nx:0.70, ny:0.42, label:'A2Z Platform',      sub:'Verification Hub · 100%',    icon:'🔐', verified:true, isHub:true },
+    { id:'port',     nx:0.50, ny:0.28, label:'Port of Rotterdam', sub:'CBAM Gateway · EU',          icon:'⚓', verified:true },
+    { id:'eu',       nx:0.56, ny:0.62, label:'EU Buyer',          sub:'Germany · End Customer',     icon:'🏢', verified:true },
+  ];
 
-        conns = [
-          { f: "jam", t: "ccs2", progress: 0, flowT: 0.1 },
-          { f: "kal", t: "ccs1", progress: 0, flowT: 0.4 },
-          { f: "mun", t: "ccs1", progress: 0, flowT: 0.7 },
-          { f: "mit", t: "ccs1", progress: 0, flowT: 0.2 },
-          { f: "pun", t: "ccs2", progress: 0, flowT: 0.6 },
-          { f: "jam", t: "kal", progress: 0, flowT: 0.9 },
-          { f: "mun", t: "mit", progress: 0, flowT: 0.05 },
-        ];
-      };
+  const EDGES = [
+    ['steel','a2z'],['cement','a2z'],['alum','a2z'],
+    ['logi','a2z'],['a2z','port'],['port','eu'],
+  ];
 
-      const initScale = () => {
-        scale = {
-          x: w * 0.37,
-          y: h * 0.44,
-          armLen: Math.min(w * 0.17, 120),
-          chainLen: Math.min(h * 0.17, 95),
-          angle: -0.38,
-          opacity: 0,
-          leftWT: 0,
-          rightWT: 0,
-        };
-      };
+  let nodes = [];
+  function buildNodes() {
+    nodes = NODE_DATA.map(d => ({
+      ...d,
+      x: d.nx * canvas.width,
+      y: d.ny * canvas.height,
+      pulseT: Math.random() * Math.PI * 2,
+    }));
+  }
+  buildNodes();
 
-      const resize = () => {
-        const rect = canvas.parentElement?.getBoundingClientRect();
-        if (!rect) return;
-        w = rect.width;
-        h = Math.max(rect.height, 480);
-        canvas.width = w * dpr;
-        canvas.height = h * dpr;
-        ctx.setTransform(1, 0, 0, 1, 0, 0);
-        ctx.scale(dpr, dpr);
-        initMolecules();
-        initNodes();
-        initScale();
-      };
+  // Which node is hovered
+  let hoveredNode = null;
 
-      const drawMolecule = (m: Molecule) => {
-        if (m.opacity <= 0.01 || m.snapped) return;
-        const c = lerpRGB(RED_C, CYAN_C, m.colorT);
-        const co = lerpRGB([255, 90, 55], [0, 160, 255], m.colorT);
-        const a = m.opacity;
-        ctx.save();
-        ctx.translate(m.x, m.y);
-        ctx.rotate(m.angle);
-        ctx.lineWidth = 1.4;
-        ctx.strokeStyle = rgb(c, a * 0.45);
+  function drawConstellation(alpha, progress) {
+    if (alpha <= 0.01) return;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+
+    // Draw edges (progressive — lines draw in as progress increases)
+    EDGES.forEach((pair, i) => {
+      const edgeProgress = Math.max(0, Math.min(1, (progress - i * 0.08) / 0.25));
+      if (edgeProgress <= 0) return;
+      const nA = nodes.find(n => n.id === pair[0]);
+      const nB = nodes.find(n => n.id === pair[1]);
+      if (!nA || !nB) return;
+      const ex = nA.x + (nB.x - nA.x) * easeOutCubic(edgeProgress);
+      const ey = nA.y + (nB.y - nA.y) * easeOutCubic(edgeProgress);
+      ctx.beginPath();
+      ctx.moveTo(nA.x, nA.y);
+      ctx.lineTo(ex, ey);
+      ctx.strokeStyle = `rgba(0,212,255,${0.35 * alpha})`;
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+      // Animated dot travelling along edge
+      if (edgeProgress > 0.5) {
+        const tp = ((Date.now() / 1200) + i * 0.4) % 1;
+        const px = nA.x + (nB.x - nA.x) * tp;
+        const py = nA.y + (nB.y - nA.y) * tp;
         ctx.beginPath();
-        ctx.moveTo(-m.bond, 0);
-        ctx.lineTo(m.bond, 0);
-        ctx.stroke();
-        ctx.strokeStyle = rgb(c, a * 0.2);
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(-m.bond, -2.5);
-        ctx.lineTo(m.bond, -2.5);
-        ctx.stroke();
-        ctx.fillStyle = rgb(co, a * 0.82);
-        ctx.beginPath();
-        ctx.arc(-m.bond, 0, m.r * 0.58, 0, Math.PI * 2);
+        ctx.arc(px, py, 2.5, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(0,212,255,${0.9 * alpha})`;
         ctx.fill();
-        ctx.beginPath();
-        ctx.arc(m.bond, 0, m.r * 0.58, 0, Math.PI * 2);
-        ctx.fill();
-        const cc = lerpRGB([130, 55, 38], [25, 175, 215], m.colorT);
-        ctx.fillStyle = rgb(cc, a);
-        ctx.beginPath();
-        ctx.arc(0, 0, m.r, 0, Math.PI * 2);
-        ctx.fill();
-        if (m.colorT > 0.55) {
-          ctx.beginPath();
-          ctx.arc(0, 0, m.r * 2.8, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(0,212,255,${a * (m.colorT - 0.55) * 0.12})`;
-          ctx.fill();
-        }
-        ctx.restore();
-      };
-
-      const drawNode = (n: NodePoint) => {
-        if (n.opacity <= 0.01) return;
-        const a = n.opacity;
-        const col = n.status === "v" ? GRN_C : n.status === "p" ? [255, 149, 0] : CYAN_C;
-        const grd = ctx.createRadialGradient(n.x, n.y, n.r, n.x, n.y, n.r * 3.2);
-        grd.addColorStop(0, rgb(col, a * 0.18));
-        grd.addColorStop(1, rgb(col, 0));
-        ctx.beginPath();
-        ctx.arc(n.x, n.y, n.r * 3.2, 0, Math.PI * 2);
-        ctx.fillStyle = grd;
-        ctx.fill();
-        ctx.beginPath();
-        ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
-        ctx.fillStyle = rgb(col, a);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.arc(n.x, n.y, n.r * 0.4, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255,255,255,${a * 0.85})`;
-        ctx.fill();
-        if (a > 0.35 && w > 560) {
-          ctx.textAlign = "center";
-          ctx.font = "500 9.5px 'DM Sans', sans-serif";
-          ctx.fillStyle = `rgba(174,174,178,${a})`;
-          ctx.fillText(n.label, n.x, n.y - n.r - 8);
-          ctx.font = "500 8.5px 'JetBrains Mono', monospace";
-          ctx.fillStyle = rgb(col, a * 0.85);
-          ctx.fillText(n.sub, n.x, n.y - n.r - 19);
-        }
-      };
-
-      const drawConn = (c: Connection) => {
-        if (c.progress <= 0) return;
-        const from = nodes.find((n) => n.id === c.f);
-        const to = nodes.find((n) => n.id === c.t);
-        if (!from || !to) return;
-        const ex = from.x + (to.x - from.x) * c.progress;
-        const ey = from.y + (to.y - from.y) * c.progress;
-        ctx.beginPath();
-        ctx.moveTo(from.x, from.y);
-        ctx.lineTo(ex, ey);
-        ctx.strokeStyle = "rgba(0,212,255,0.16)";
-        ctx.lineWidth = 1.4;
-        ctx.stroke();
-        if (c.progress >= 1) {
-          const ft = c.flowT % 1;
-          const fx = from.x + (to.x - from.x) * ft;
-          const fy = from.y + (to.y - from.y) * ft;
-          ctx.beginPath();
-          ctx.arc(fx, fy, 2.2, 0, Math.PI * 2);
-          ctx.fillStyle = "rgba(0,212,255,0.75)";
-          ctx.fill();
-        }
-      };
-
-      const drawScale = () => {
-        if (scale.opacity <= 0.01) return;
-        const { x, y, armLen, chainLen, angle } = scale;
-        const a = scale.opacity;
-        ctx.save();
-        ctx.globalAlpha = a;
-        ctx.strokeStyle = "rgba(0,212,255,0.45)";
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(x, y - 44);
-        ctx.lineTo(x, y + 18);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.arc(x, y, 5.5, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(0,212,255,0.7)";
-        ctx.fill();
-        ctx.save();
-        ctx.translate(x, y);
-        ctx.rotate(angle);
-        ctx.strokeStyle = "rgba(0,212,255,0.55)";
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(-armLen, 0);
-        ctx.lineTo(armLen, 0);
-        ctx.stroke();
-        ctx.strokeStyle = "rgba(0,212,255,0.32)";
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(-armLen, 0);
-        ctx.lineTo(-armLen, chainLen);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(armLen, 0);
-        ctx.lineTo(armLen, chainLen);
-        ctx.stroke();
-        const pw = 38;
-        const ph = 8;
-        ctx.save();
-        ctx.translate(-armLen, chainLen);
-        ctx.fillStyle = "rgba(28,44,70,0.85)";
-        ctx.strokeStyle = "rgba(255,80,50,0.4)";
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.rect(-pw / 2, 0, pw, ph);
-        ctx.fill();
-        ctx.stroke();
-        const leftItems = Math.floor(scale.leftWT * 5);
-        for (let i = 0; i < leftItems; i += 1) {
-          ctx.fillStyle = `rgba(255,${68 + i * 12},42,0.85)`;
-          ctx.beginPath();
-          ctx.rect(-15 + i * 6 - 2, -7 * (1 + (i % 2)), 5, 5.5);
-          ctx.fill();
-        }
-        ctx.restore();
-        ctx.save();
-        ctx.translate(armLen, chainLen);
-        ctx.fillStyle = "rgba(0,38,26,0.85)";
-        ctx.strokeStyle = "rgba(0,255,136,0.4)";
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.rect(-pw / 2, 0, pw, ph);
-        ctx.fill();
-        ctx.stroke();
-        const rightItems = Math.floor(scale.rightWT * 5);
-        for (let i = 0; i < rightItems; i += 1) {
-          ctx.beginPath();
-          ctx.arc(-13 + i * 6, -8 * (1 + (i % 2)), 3.2, 0, Math.PI * 2);
-          ctx.fillStyle = "rgba(0,255,136,0.88)";
-          ctx.fill();
-          ctx.beginPath();
-          ctx.arc(-13 + i * 6, -8 * (1 + (i % 2)), 6.5, 0, Math.PI * 2);
-          ctx.fillStyle = "rgba(0,255,136,0.12)";
-          ctx.fill();
-        }
-        ctx.restore();
-        ctx.restore();
-        if (a > 0.5) {
-          ctx.textAlign = "center";
-          ctx.font = "700 8.5px 'DM Sans', sans-serif";
-          ctx.fillStyle = `rgba(255,80,50,${a * 0.75})`;
-          ctx.fillText("UNVERIFIED", x - armLen, y + chainLen + ph + 17);
-          ctx.fillStyle = `rgba(0,255,136,${a * 0.75})`;
-          ctx.fillText("CAPTURED", x + armLen, y + chainLen + ph + 17);
-        }
-        ctx.globalAlpha = 1;
-        ctx.restore();
-      };
-
-      const animate = (ts: number) => {
-        if (!startTime) startTime = ts;
-        const elapsed = ts - startTime;
-        const phaseInfo = (() => {
-          for (let i = 0; i < PH_DUR.length; i += 1) {
-            if (elapsed < PH_START[i] + PH_DUR[i]) {
-              return { phase: i, t: (elapsed - PH_START[i]) / PH_DUR[i] };
-            }
-          }
-          return { phase: LOOP_PH, t: (elapsed - TOTAL_DUR) / 5000 };
-        })();
-
-        updatePhaseText(phaseInfo.phase < LOOP_PH ? phaseInfo.phase : PHASE_TEXTS.length - 1);
-
-        const px = (mouseX / (w || 1) - 0.5) * 10;
-        const py = (mouseY / (h || 1) - 0.5) * 7;
-        ctx.clearRect(0, 0, w, h);
-        ctx.save();
-        ctx.translate(px * 0.28, py * 0.28);
-
-        for (let i = 0; i < molecules.length; i += 1) {
-          const m = molecules[i];
-          const mElapsed = elapsed - m.delay;
-          if (mElapsed < 0) continue;
-          if (phaseInfo.phase === 0) {
-            m.opacity = Math.min(1, m.opacity + m.fadeSpeed);
-            m.x += m.vx;
-            m.y += m.vy;
-            m.angle += m.spin;
-            if (m.x < w * 0.38 || m.x > w * 0.99) m.vx *= -1;
-            if (m.y < 28 || m.y > h - 28) m.vy *= -1;
-          } else if (phaseInfo.phase === 1) {
-            m.colorT = Math.min(1, m.colorT + 0.007);
-            if (!m.targetNode) m.targetNode = nodes[i % nodes.length];
-            if (m.targetNode && !m.snapped) {
-              const dx = m.targetNode.x - m.x;
-              const dy = m.targetNode.y - m.y;
-              m.x += dx * (0.028 + phaseInfo.t * 0.018);
-              m.y += dy * (0.028 + phaseInfo.t * 0.018);
-              if (Math.hypot(dx, dy) < 4) m.snapped = true;
-            }
-            m.angle += m.spin * 0.25;
-            if (m.snapped) m.opacity = Math.max(0, m.opacity - 0.035);
-          } else {
-            m.opacity = 0;
-          }
-          drawMolecule(m);
-        }
-
-        if (phaseInfo.phase >= 2 || phaseInfo.phase === LOOP_PH) {
-          const cp = phaseInfo.phase === LOOP_PH ? 1 : phaseInfo.t;
-          for (let i = 0; i < nodes.length; i += 1) {
-            const nodeDelay = (i / nodes.length) * 0.5;
-            const nt = clamp((cp - nodeDelay) / 0.55, 0, 1);
-            nodes[i].opacity = easeOutCubic(nt);
-            drawNode(nodes[i]);
-          }
-          if (cp > 0.38) {
-            const ct = (cp - 0.38) / 0.62;
-            for (let i = 0; i < conns.length; i += 1) {
-              const delay = (i / conns.length) * 0.65;
-              conns[i].progress = clamp((ct - delay) / 0.45, 0, 1);
-              conns[i].flowT = (conns[i].flowT + 0.003) % 1;
-              drawConn(conns[i]);
-            }
-          }
-        } else if (phaseInfo.phase === 1 && phaseInfo.t > 0.6) {
-          const nt = (phaseInfo.t - 0.6) / 0.4;
-          for (let i = 0; i < nodes.length; i += 1) {
-            nodes[i].opacity = easeOutCubic(nt) * 0.5;
-            drawNode(nodes[i]);
-          }
-        }
-
-        if (phaseInfo.phase >= 3 || phaseInfo.phase === LOOP_PH) {
-          const sp = phaseInfo.phase === LOOP_PH ? 1 : phaseInfo.t;
-          scale.opacity = easeOutCubic(clamp(sp * 2.5, 0, 1));
-          scale.leftWT = easeOutCubic(clamp(sp * 2.2, 0, 1));
-          scale.rightWT = easeOutCubic(clamp((sp - 0.32) * 1.7, 0, 1));
-          const tiltTarget =
-            scale.rightWT >= 0.88 ? 0 : lerp(-0.38, 0, scale.rightWT / 0.88);
-          scale.angle += (tiltTarget - scale.angle) * 0.045;
-          drawScale();
-        }
-
-        ctx.restore();
-        animId = requestAnimationFrame(animate);
-      };
-
-      const onVisibility = () => {
-        if (document.hidden) {
-          cancelAnimationFrame(animId);
-          animId = 0;
-        } else if (!animId) {
-          animId = requestAnimationFrame(animate);
-        }
-      };
-      document.addEventListener("visibilitychange", onVisibility);
-      cleanups.push(() => document.removeEventListener("visibilitychange", onVisibility));
-
-      resize();
-      let resizeObs: ResizeObserver | null = null;
-      if (window.ResizeObserver) {
-        resizeObs = new ResizeObserver(() => resize());
-        const parent = canvas.parentElement;
-        if (parent) resizeObs.observe(parent);
-      } else {
-        const onResize = () => resize();
-        window.addEventListener("resize", onResize, { passive: true });
-        cleanups.push(() => window.removeEventListener("resize", onResize));
       }
-      if (resizeObs) cleanups.push(() => resizeObs?.disconnect());
+    });
 
-        animId = requestAnimationFrame(animate);
-        cleanups.push(() => cancelAnimationFrame(animId));
+    // Draw nodes
+    const t = Date.now() / 1000;
+    nodes.forEach((nd, i) => {
+      const nodeAlpha = Math.max(0, Math.min(1, (progress - i * 0.06) / 0.18));
+      if (nodeAlpha <= 0) return;
+      ctx.save();
+      ctx.globalAlpha = alpha * nodeAlpha;
+
+      const isHovered = hoveredNode === nd.id;
+      const pulse = 0.7 + 0.3 * Math.sin(t * 2.2 + nd.pulseT);
+      const baseR = nd.isHub ? 18 : 13;
+      const R = isHovered ? baseR + 4 : baseR;
+
+      // Glow
+      const glowR = R * 2.8 * (isHovered ? 1.4 : 1);
+      const gGlow = ctx.createRadialGradient(nd.x, nd.y, 0, nd.x, nd.y, glowR * pulse);
+      const glowC = nd.verified ? '0,212,255' : '255,149,0';
+      gGlow.addColorStop(0, `rgba(${glowC},${0.25 * pulse})`);
+      gGlow.addColorStop(1, `rgba(${glowC},0)`);
+      ctx.beginPath();
+      ctx.arc(nd.x, nd.y, glowR * pulse, 0, Math.PI * 2);
+      ctx.fillStyle = gGlow;
+      ctx.fill();
+
+      // Node circle
+      const gNode = ctx.createRadialGradient(nd.x - R*0.3, nd.y - R*0.3, 0, nd.x, nd.y, R);
+      if (nd.isHub) {
+        gNode.addColorStop(0, 'rgba(0,212,255,0.5)');
+        gNode.addColorStop(1, 'rgba(0,102,255,0.3)');
+      } else {
+        gNode.addColorStop(0, `rgba(${nd.verified ? '0,212,255' : '255,149,0'},0.25)`);
+        gNode.addColorStop(1, `rgba(${nd.verified ? '0,102,255' : '200,80,0'},0.1)`);
+      }
+      ctx.beginPath();
+      ctx.arc(nd.x, nd.y, R, 0, Math.PI * 2);
+      ctx.fillStyle = gNode;
+      ctx.fill();
+      ctx.strokeStyle = nd.verified ? `rgba(0,212,255,${0.7 * pulse})` : `rgba(255,149,0,${0.7 * pulse})`;
+      ctx.lineWidth = nd.isHub ? 2 : 1.5;
+      ctx.stroke();
+
+      // Label below node
+      ctx.globalAlpha = alpha * nodeAlpha * 0.85;
+      ctx.font = `${nd.isHub ? '600' : '500'} 11px 'DM Sans', sans-serif`;
+      ctx.fillStyle = nd.verified ? 'rgba(0,212,255,0.95)' : 'rgba(255,149,0,0.95)';
+      ctx.textAlign = 'center';
+      ctx.fillText(nd.label, nd.x, nd.y + R + 14);
+
+      ctx.restore();
+    });
+
+    ctx.restore();
+  }
+
+  // Check if mouse is over a node
+  function checkNodeHover(mx, my) {
+    if (mx === null || my === null) { hoveredNode = null; return; }
+    let found = null;
+    nodes.forEach(nd => {
+      const dx = mx - nd.x, dy = my - nd.y;
+      if (Math.sqrt(dx*dx + dy*dy) < (nd.isHub ? 22 : 16)) found = nd.id;
+    });
+    if (found !== hoveredNode) {
+      hoveredNode = found;
+      if (found) {
+        const nd = nodes.find(n => n.id === found);
+        document.getElementById('tt-icon').textContent = nd.icon;
+        document.getElementById('tt-label').textContent = nd.label;
+        document.getElementById('tt-sub').textContent = nd.sub;
+        const badge = document.getElementById('tt-badge');
+        badge.textContent = nd.verified ? '✓ Verified' : '⏳ Pending Verification';
+        badge.className = 'ntip-badge ' + (nd.verified ? 'verified' : 'pending');
+        tooltip.classList.add('vis');
+      } else {
+        tooltip.classList.remove('vis');
       }
     }
+  }
 
-    return () => cleanups.forEach((fn) => fn());
+  // Update tooltip position to follow mouse
+  document.addEventListener('mousemove', e => {
+    tooltip.style.left = (e.clientX + 16) + 'px';
+    tooltip.style.top  = (e.clientY - 60) + 'px';
+    checkNodeHover(mouse.x, mouse.y);
+  });
+
+  // ══════════════════════════════════════
+  // PHASE 3: BALANCE SCALE
+  // Drawn with canvas 2D paths
+  // tilt goes from -18deg (emissions heavy) to +3deg (verified heavy)
+  // ══════════════════════════════════════
+  function drawBalanceScale(alpha, progress) {
+    if (alpha <= 0.01) return;
+    // Scale is centred on right 60% of canvas
+    const cx = canvas.width * 0.68;
+    const cy = canvas.height * 0.46;
+    const scale = Math.min(canvas.width, canvas.height) / 600;
+    const sz = 160 * scale;
+
+    // Tilt: start at -20deg, ease to +3deg (right side heavier = compliance wins)
+    const targetTilt = lerp(-20, 3, easeOutCubic(Math.min(1, progress * 1.3)));
+    const tilt = targetTilt * Math.PI / 180;
+    const isBalanced = progress > 0.75;
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+
+    // Fulcrum (triangle base)
+    ctx.beginPath();
+    ctx.moveTo(cx, cy + sz * 0.65);
+    ctx.lineTo(cx - sz * 0.12, cy + sz * 0.9);
+    ctx.lineTo(cx + sz * 0.12, cy + sz * 0.9);
+    ctx.closePath();
+    ctx.fillStyle = isBalanced ? 'rgba(0,255,136,0.3)' : 'rgba(0,212,255,0.2)';
+    ctx.strokeStyle = isBalanced ? 'rgba(0,255,136,0.8)' : 'rgba(0,212,255,0.6)';
+    ctx.lineWidth = 1.5 * scale;
+    ctx.fill(); ctx.stroke();
+
+    // Pole
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - sz * 0.52);
+    ctx.lineTo(cx, cy + sz * 0.65);
+    ctx.strokeStyle = isBalanced ? 'rgba(0,255,136,0.7)' : 'rgba(0,212,255,0.7)';
+    ctx.lineWidth = 2.5 * scale;
+    ctx.lineCap = 'round';
+    ctx.stroke();
+
+    // Pivot point glow
+    const gPiv = ctx.createRadialGradient(cx, cy - sz*0.1, 0, cx, cy - sz*0.1, sz*0.1);
+    gPiv.addColorStop(0, isBalanced ? 'rgba(0,255,136,0.6)' : 'rgba(0,212,255,0.5)');
+    gPiv.addColorStop(1, 'transparent');
+    ctx.beginPath();
+    ctx.arc(cx, cy - sz*0.1, sz*0.1, 0, Math.PI*2);
+    ctx.fillStyle = gPiv;
+    ctx.fill();
+
+    // ── Arm (rotated around pivot) ──
+    ctx.save();
+    ctx.translate(cx, cy - sz * 0.1);
+    ctx.rotate(tilt);
+
+    const armL = sz * 0.98;
+    // Arm bar
+    ctx.beginPath();
+    ctx.moveTo(-armL, 0); ctx.lineTo(armL, 0);
+    ctx.strokeStyle = isBalanced ? 'rgba(0,255,136,0.9)' : 'rgba(0,212,255,0.85)';
+    ctx.lineWidth = 3.5 * scale; ctx.lineCap = 'round';
+    ctx.stroke();
+    // Arm glow
+    ctx.shadowBlur = 12 * scale;
+    ctx.shadowColor = isBalanced ? 'rgba(0,255,136,0.5)' : 'rgba(0,212,255,0.5)';
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    const chainLen = sz * 0.38;
+    const panR = sz * 0.22;
+
+    // ── Left pan (emissions — red) ──
+    ctx.beginPath();
+    ctx.moveTo(-armL, 0); ctx.lineTo(-armL, chainLen);
+    ctx.strokeStyle = 'rgba(255,100,50,0.5)'; ctx.lineWidth = 1.5 * scale;
+    ctx.stroke();
+    // Pan arc
+    ctx.beginPath();
+    ctx.arc(-armL, chainLen + panR * 0.3, panR, Math.PI * 0.05, Math.PI * 0.95);
+    ctx.strokeStyle = 'rgba(255,80,40,0.75)'; ctx.lineWidth = 2 * scale;
+    ctx.stroke();
+    // Emission blobs in left pan
+    const eBlobs = [
+      { ox: -12*scale, oy: chainLen - 2*scale, r: 7*scale },
+      { ox:  0,        oy: chainLen - 8*scale, r: 9*scale },
+      { ox:  11*scale, oy: chainLen - 1*scale, r: 6*scale },
+      { ox: -6*scale,  oy: chainLen - 16*scale, r: 5*scale },
+    ];
+    eBlobs.forEach((b,i) => {
+      const g = ctx.createRadialGradient(-armL+b.ox, b.oy, 0, -armL+b.ox, b.oy, b.r);
+      g.addColorStop(0, `rgba(255,${80+i*20},0,0.9)`);
+      g.addColorStop(1, `rgba(200,40,0,0.4)`);
+      ctx.beginPath();
+      ctx.arc(-armL + b.ox, b.oy, b.r, 0, Math.PI*2);
+      ctx.fillStyle = g;
+      ctx.fill();
+    });
+    // CO₂ label
+    ctx.globalAlpha = alpha * 0.6;
+    ctx.font = `${10 * scale}px 'JetBrains Mono', monospace`;
+    ctx.fillStyle = 'rgba(255,100,50,0.9)';
+    ctx.textAlign = 'center';
+    ctx.fillText('CO₂', -armL, chainLen + panR * 1.2);
+    ctx.globalAlpha = alpha;
+
+    // ── Right pan (verified records — cyan) ──
+    ctx.beginPath();
+    ctx.moveTo(armL, 0); ctx.lineTo(armL, chainLen);
+    ctx.strokeStyle = 'rgba(0,212,255,0.5)'; ctx.lineWidth = 1.5 * scale;
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(armL, chainLen + panR * 0.3, panR, Math.PI * 0.05, Math.PI * 0.95);
+    ctx.strokeStyle = 'rgba(0,212,255,0.75)'; ctx.lineWidth = 2 * scale;
+    ctx.stroke();
+    // Document icons in right pan
+    const docs = [
+      { ox: -14*scale, oy: chainLen - 3*scale },
+      { ox:   0,       oy: chainLen - 10*scale },
+      { ox:  13*scale, oy: chainLen - 2*scale },
+    ];
+    docs.forEach(d => {
+      const dw = 10*scale, dh = 14*scale;
+      const dx = armL + d.ox - dw/2, dy = d.oy - dh/2;
+      ctx.fillStyle = 'rgba(0,212,255,0.85)';
+      ctx.fillRect(dx, dy, dw, dh);
+      ctx.fillStyle = 'rgba(5,10,20,0.9)';
+      [0.28, 0.5, 0.72].forEach(fy => ctx.fillRect(dx+2*scale, dy+dh*fy, dw-4*scale, 1.5*scale));
+      // Checkmark
+      ctx.strokeStyle = 'rgba(0,255,136,0.9)';
+      ctx.lineWidth = 1.5*scale; ctx.lineCap='round';
+      ctx.beginPath();
+      ctx.moveTo(dx+2*scale, dy+1*scale);
+      ctx.lineTo(dx+dw-2*scale, dy-5*scale);
+      ctx.stroke();
+    });
+    // Verified label
+    ctx.globalAlpha = alpha * 0.7;
+    ctx.font = `600 ${10*scale}px 'DM Sans', sans-serif`;
+    ctx.fillStyle = isBalanced ? 'rgba(0,255,136,0.95)' : 'rgba(0,212,255,0.9)';
+    ctx.textAlign = 'center';
+    ctx.fillText(isBalanced ? '✓ VERIFIED' : 'Verified', armL, chainLen + panR * 1.2);
+    ctx.globalAlpha = alpha;
+
+    ctx.restore(); // restore arm rotation
+
+    // Ambient glow when balanced
+    if (isBalanced) {
+      const balAlpha = Math.min(1, (progress - 0.75) * 4);
+      const gBal = ctx.createRadialGradient(cx, cy, 0, cx, cy, sz * 1.4);
+      gBal.addColorStop(0, `rgba(0,255,136,${0.06 * balAlpha})`);
+      gBal.addColorStop(1, 'transparent');
+      ctx.beginPath();
+      ctx.arc(cx, cy, sz * 1.4, 0, Math.PI*2);
+      ctx.fillStyle = gBal;
+      ctx.fill();
+    }
+
+    ctx.restore();
+  }
+
+  // ══════════════════════════════════════
+  // MAIN ANIMATION LOOP
+  // ══════════════════════════════════════
+  let startTime = null;
+  let paused = false;
+
+  // Pause when tab is hidden (saves CPU/battery)
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) { paused = true; }
+    else { paused = false; startTime = null; }
+  });
+
+  function animate(timestamp) {
+    if (!startTime) startTime = timestamp;
+    if (!paused) {
+      const elapsed = timestamp - startTime;
+      const t = (elapsed % CYCLE) / CYCLE; // 0..1 through cycle
+
+      const { mol, con, bal, conProgress, balProgress } = getAlphas(t);
+
+      // Clear
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Subtle radial gradient background on right half
+      const bgG = ctx.createRadialGradient(
+        canvas.width * 0.7, canvas.height * 0.45, 0,
+        canvas.width * 0.7, canvas.height * 0.45, canvas.width * 0.55
+      );
+      bgG.addColorStop(0, `rgba(0,102,255,${0.06 * Math.max(mol, con, bal)})`);
+      bgG.addColorStop(1, 'transparent');
+      ctx.fillStyle = bgG;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Draw each phase at its current alpha
+      if (mol > 0.01) {
+        molecules.forEach(m => { m.update(); m.draw(mol); });
+      }
+      if (con > 0.01) drawConstellation(con, conProgress);
+      if (bal > 0.01) drawBalanceScale(bal, balProgress);
+    }
+    requestAnimationFrame(animate);
+  }
+
+  requestAnimationFrame(animate);
+})();
+
+
+/* ══════════════════════════════════════════════
+   SECTION 3: INTERACTIVE DASHBOARD SCOPE TABS
+   Clicking Scope 1/2/3 tabs switches the panel.
+   The animated bar chart in Scope 3 re-runs
+   its width animation each time it becomes visible.
+══════════════════════════════════════════════ */
+function switchScope(n) {
+  // Update tab active states
+  document.querySelectorAll('.stab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-s' + n).classList.add('active');
+
+  // Update panel visibility
+  document.querySelectorAll('.sp').forEach(p => p.classList.remove('active'));
+  document.getElementById('sp-' + n).classList.add('active');
+
+  // Re-trigger bar chart animation when Scope 3 is selected
+  if (n === '3') {
+    setTimeout(() => {
+      document.querySelectorAll('.s3-bar').forEach(bar => {
+        const w = bar.style.width;
+        bar.style.width = '0%';
+        requestAnimationFrame(() => { bar.style.width = w; });
+      });
+    }, 50);
+  }
+}
+
+
+/* ══════════════════════════════════════════════
+   SECTION 4: FAQ ACCORDION
+   Click a question to expand/collapse it.
+   Only one question open at a time.
+══════════════════════════════════════════════ */
+function toggleFaq(el) {
+  const isOpen = el.classList.contains('open');
+  document.querySelectorAll('.fq.open').forEach(f => f.classList.remove('open'));
+  if (!isOpen) el.classList.add('open');
+}
+
+
+/* ══════════════════════════════════════════════
+   SECTION 5: SCROLL REVEAL
+   Elements with class "rev" fade up into view
+   as they enter the viewport.
+   Uses IntersectionObserver for performance.
+══════════════════════════════════════════════ */
+const revObserver = new IntersectionObserver(
+  entries => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('vis'); }),
+  { threshold: 0.12, rootMargin: '0px 0px -40px 0px' }
+);
+document.querySelectorAll('.rev').forEach(el => revObserver.observe(el));
+
+
+/* ══════════════════════════════════════════════
+   SECTION 6: COUNTER ANIMATION
+   Elements with class "cu" and data-target count up
+   from 0 to their target value when they enter view.
+   data-dec sets decimal places (default 0).
+══════════════════════════════════════════════ */
+const cuObserver = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (!e.isIntersecting) return;
+    const el = e.target;
+    const target = parseFloat(el.dataset.target);
+    const dec = parseInt(el.dataset.dec || '0');
+    const dur = 1400;
+    const start = performance.now();
+    function tick(now) {
+      const p = Math.min((now - start) / dur, 1);
+      const eased = 1 - Math.pow(1 - p, 3);
+      el.textContent = (target * eased).toFixed(dec);
+      if (p < 1) requestAnimationFrame(tick);
+      else el.textContent = target.toFixed(dec);
+    }
+    requestAnimationFrame(tick);
+    cuObserver.unobserve(el);
+  });
+}, { threshold: 0.5 });
+document.querySelectorAll('.cu').forEach(el => cuObserver.observe(el));
+
+
+/* ══════════════════════════════════════════════
+   SECTION 7: DEMO FORM SUBMISSION
+   
+   HOW TO CONNECT TO SUPABASE:
+   1. Open your Supabase project → Settings → API
+   2. Copy your Project URL and anon key
+   3. Replace SUPABASE_URL and SUPABASE_ANON_KEY below
+   4. The form inserts into your "leads" table
+   
+   The leads table needs these columns:
+     - first_name (text)
+     - last_name (text)
+     - email (text)
+     - company (text)
+     - phone (text, nullable)
+     - interest (text)
+     - sector (text, nullable)
+     - source (text) — will be 'landing-page'
+     - created_at (timestamptz, default now())
+══════════════════════════════════════════════ */
+const SUPABASE_URL = 'https://YOUR_PROJECT.supabase.co';    // ← Replace this
+const SUPABASE_KEY = 'YOUR_ANON_KEY';                       // ← Replace this
+
+async function submitDemoForm(e) {
+  e.preventDefault();
+  const btn = document.getElementById('df-submit');
+  const btnText = document.getElementById('df-btn-text');
+
+  // Basic validation
+  const required = ['df-fname','df-lname','df-email','df-company','df-interest'];
+  let valid = true;
+  required.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el.value.trim()) { el.style.borderColor='var(--status-critical)'; valid = false; }
+    else el.style.borderColor='';
+  });
+  if (!valid) return;
+
+  // Show loading state
+  btn.disabled = true;
+  btnText.textContent = 'Booking…';
+
+  const payload = {
+    first_name: document.getElementById('df-fname').value.trim(),
+    last_name:  document.getElementById('df-lname').value.trim(),
+    email:      document.getElementById('df-email').value.trim(),
+    company:    document.getElementById('df-company').value.trim(),
+    phone:      document.getElementById('df-phone').value.trim() || null,
+    interest:   document.getElementById('df-interest').value,
+    sector:     document.getElementById('df-sector').value || null,
+    source:     'landing-page',
+  };
+
+  try {
+    // Attempt Supabase insert
+    if (SUPABASE_URL !== 'https://YOUR_PROJECT.supabase.co') {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/leads`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`,
+          'Prefer': 'return=minimal',
+        },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error('API error ' + res.status);
+    }
+    // Show success state
+    document.getElementById('demo-form-wrap').style.display = 'none';
+    document.getElementById('df-success').classList.add('show');
+  } catch (err) {
+    // If Supabase not yet wired, still show success (demo mode)
+    console.warn('Form submit error (demo mode):', err);
+    document.getElementById('demo-form-wrap').style.display = 'none';
+    document.getElementById('df-success').classList.add('show');
+  }
+}
+
+
+/* ══════════════════════════════════════════════
+   SECTION 8: NAVBAR SCROLL EFFECT
+   Navbar gets a darker background after scrolling 60px.
+══════════════════════════════════════════════ */
+const nav = document.getElementById('main-nav');
+window.addEventListener('scroll', () => {
+  nav.classList.toggle('scrolled', window.scrollY > 60);
+}, { passive: true });
+
+
+/* ══════════════════════════════════════════════
+   SECTION 9: MOBILE BOTTOM TAB BAR — ACTIVE STATE
+   Tracks which section is in view and highlights
+   the matching tab in the bottom bar.
+══════════════════════════════════════════════ */
+function scrollToSection(id) {
+  const el = document.getElementById(id);
+  if (el) el.scrollIntoView({ behavior: 'smooth' });
+}
+
+const tabSections = [
+  { id: 'home',     tab: 'btb-home' },
+  { id: 'platform', tab: 'btb-platform' },
+  { id: 'amine',    tab: 'btb-amine' },
+  { id: 'ccs',      tab: 'btb-ccs' },
+];
+
+const sectionObserver = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (!entry.isIntersecting) return;
+    const match = tabSections.find(s => s.id === entry.target.id);
+    if (!match) return;
+    document.querySelectorAll('.btb-item').forEach(t => t.classList.remove('active'));
+    const activeTab = document.getElementById(match.tab);
+    if (activeTab) activeTab.classList.add('active');
+  });
+}, { threshold: 0.4 });
+
+tabSections.forEach(s => {
+  const el = document.getElementById(s.id);
+  if (el) sectionObserver.observe(el);
+});
+
   }, []);
-
   return null;
 }

@@ -137,7 +137,7 @@ function generateTraceId(): string {
 // ---------------------------------------------------------------------------
 // Main middleware
 // ---------------------------------------------------------------------------
-export async function middleware(req: NextRequest): Promise<NextResponse> {
+export async function proxy(req: NextRequest): Promise<NextResponse> {
   const { pathname } = req.nextUrl;
 
   // 1. Generate per-request nonce + trace ID
@@ -198,7 +198,7 @@ export async function middleware(req: NextRequest): Promise<NextResponse> {
     const supabase = createServerClient(supabaseUrl, supabaseKey, {
       cookies: {
         getAll: () => req.cookies.getAll(),
-        setAll: (cookiesToSet) => {
+        setAll: (cookiesToSet: { name: string; value: string; options: any }[]) => {
           cookiesToSet.forEach(({ name, value, options }) => {
             req.cookies.set(name, value);
             response.cookies.set(name, value, {

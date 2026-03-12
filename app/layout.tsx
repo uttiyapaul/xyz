@@ -1,5 +1,5 @@
 // app/layout.tsx
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
@@ -22,7 +22,6 @@ export const metadata: Metadata = {
     "Demo experience tailored to Tata client use cases.",
   applicationName: "XYZ-For-Now",
   manifest: "/manifest.webmanifest",
-  themeColor: "#050A14",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
@@ -37,6 +36,10 @@ export const metadata: Metadata = {
     apple: [{ url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" }],
   },
   robots: { index: false, follow: false },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#050A14",
 };
 
 export default async function RootLayout({

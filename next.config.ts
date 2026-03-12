@@ -156,6 +156,15 @@ const nextConfig: NextConfig = {
   // ---------------------------------------------------------------------------
   typescript: { ignoreBuildErrors: false },
 
+  // ---------------------------------------------------------------------------
+  // Turbopack root — pins workspace root to this project directory.
+  // Required because there are stray package.json files on the Desktop which
+  // Next.js 16 Turbopack incorrectly detects as the workspace root.
+  // ---------------------------------------------------------------------------
+  turbopack: {
+    root: __dirname,
+  },
+
 };
 
 export default nextConfig;

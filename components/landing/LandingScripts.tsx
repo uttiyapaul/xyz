@@ -1,5 +1,5 @@
-"use client";
 // @ts-nocheck
+"use client";
 
 import { useEffect } from "react";
 
@@ -11,8 +11,8 @@ export default function LandingScripts() {
     const acceptBtn = document.getElementById("cookie-accept");
     const saveBtn = document.getElementById("cookie-save");
     const rejectBtn = document.getElementById("cookie-reject");
-    const analyticsToggle = document.getElementById("ck-analytics");
-    const marketingToggle = document.getElementById("ck-marketing");
+    const analyticsToggle = document.getElementById("ck-analytics") as HTMLInputElement | null;
+    const marketingToggle = document.getElementById("ck-marketing") as HTMLInputElement | null;
     const cookieKey = "a2z_cookies";
 
     const hideCookie = () => cookieBanner?.classList.remove("show");
@@ -20,8 +20,8 @@ export default function LandingScripts() {
     
     const saveCookie = () => {
       const payload = {
-        analytics: analyticsToggle ? analyticsToggle.checked : false,
-        marketing: marketingToggle ? marketingToggle.checked : false,
+        analytics: analyticsToggle ? (analyticsToggle as HTMLInputElement).checked : false,
+        marketing: marketingToggle ? (marketingToggle as HTMLInputElement).checked : false,
         ts: Date.now(),
       };
       try {

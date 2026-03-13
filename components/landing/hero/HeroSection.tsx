@@ -156,111 +156,137 @@ export default function HeroSection() {
     <section
       id="hero"
       aria-labelledby="hero-heading"
-      style={{ background: "#010812", position: "relative", width: "100%", overflow: "hidden" }}
+      style={{ position: "relative", width: "100%", height: "100svh", minHeight: 580, overflow: "hidden", background: "#010812" }}
     >
-      {/* Subtle data streams — left edge only, 28px wide */}
+
+      {/* ── 1. FULL-BLEED GLOBE + STARS ─── z:0, behind everything */}
+      <div style={{ position: "absolute", inset: 0, zIndex: 0 }}>
+        <GlobeCanvas year={year} showFlights={showFlights} showTrades={showTrades} />
+      </div>
+
+      {/* ── 2. DATA STREAM ─── left edge, z:1 */}
       <DataStreamCanvas />
 
-      {/* ── 3-COLUMN HERO GRID ── */}
+      {/* ── 3. GRADIENT OVERLAYS ─── stars visible, text readable */}
+      {/* Left: darkens text column */}
+      <div aria-hidden="true" className="a2z-left-overlay" style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: "44%", zIndex: 1, background: "linear-gradient(90deg, rgba(1,8,18,0.88) 0%, rgba(1,8,18,0.7) 55%, transparent 100%)", pointerEvents: "none" }} />
+      {/* Right: darkens panel */}
+      <div aria-hidden="true" className="a2z-right-overlay" style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: "22%", zIndex: 1, background: "linear-gradient(270deg, rgba(1,8,18,0.9) 0%, rgba(1,8,18,0.72) 55%, transparent 100%)", pointerEvents: "none" }} />
+      {/* Radial depth vignette */}
+      <div aria-hidden="true" style={{ position: "absolute", inset: 0, zIndex: 1, background: "radial-gradient(ellipse 80% 90% at 50% 50%, transparent 35%, rgba(1,8,18,0.32) 100%)", pointerEvents: "none" }} />
+
+      {/* ── 4. 3-COLUMN GRID ─── z:2, transparent, full height */}
       <div
         className="a2z-hero-grid"
         style={{
-          display: "grid",
-          gridTemplateColumns: "38% 1fr 16%",
-          minHeight: "clamp(480px, 82svh, 700px)",
-          paddingTop: 68, // reserve space for fixed navbar above
           position: "relative",
           zIndex: 2,
+          display: "grid",
+          gridTemplateColumns: "38% 1fr 16%",
+          height: "100%",
+          paddingTop: 68,    /* clear fixed navbar */
+          paddingBottom: 52, /* clear proof bar */
         }}
       >
-        {/* ── COL 1: TEXT ── */}
         <TextColumn />
 
-        {/* ── COL 2: GLOBE ── */}
-        <div
-          className="a2z-globe-col"
-          style={{ display: "flex", alignItems: "center", justifyContent: "center", position: "relative", padding: "16px 0" }}
-        >
-          <GlobeCanvas year={year} showFlights={showFlights} showTrades={showTrades} />
-
-          {/* Controls — compact pill pinned to bottom of globe column */}
-          <CompactControls
-            year={year}
-            onYearChange={setYear}
-            showFlights={showFlights}
-            onToggleFlights={setShowFlights}
-            showTrades={showTrades}
-            onToggleTrades={setShowTrades}
-          />
-
-          {/* Scroll indicator — links to last section */}
+        {/* Centre col: transparent — globe shows through, scroll cue only */}
+        <div className="a2z-centre-col" style={{ position: "relative", display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
           <ScrollCue />
         </div>
 
-        {/* ── COL 3: LIVE DATA PANEL ── */}
         <LiveDataPanel />
       </div>
 
-      {/* ── PROOF BAR ── */}
-      <ProofBar />
+      {/* ── 5. CONTROLS ─── bottom-centre, above proof bar */}
+      <div style={{ position: "absolute", bottom: 54, left: "50%", transform: "translateX(-50%)", zIndex: 3 }}>
+        <CompactControls
+          year={year} onYearChange={setYear}
+          showFlights={showFlights} onToggleFlights={setShowFlights}
+          showTrades={showTrades}   onToggleTrades={setShowTrades}
+        />
+      </div>
 
-      {/* ── RESPONSIVE OVERRIDES ── */}
+      {/* ── 6. PROOF BAR ─── absolute bottom of section */}
+      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, zIndex: 3 }}>
+        <ProofBar />
+      </div>
+
+      {/* ── RESPONSIVE + KEYFRAMES ─────────────────────────────────────────── */}
       <style>{`
-        /* Tablet: hide panel, stack globe below text */
+        /* TABLET */
         @media (max-width: 900px) {
-          .a2z-hero-grid {
-            grid-template-columns: 1fr 1fr !important;
-          }
-          .a2z-panel-col {
-            display: none !important;
-          }
+          .a2z-hero-grid { grid-template-columns: 52% 1fr !important; }
+          .a2z-panel-col  { display: none !important; }
+          .a2z-right-overlay { width: 4% !important; }
         }
-        /* Mobile / PWA */
+
+        /* MOBILE — entire hero in 100svh, globe full-bleed behind */
         @media (max-width: 640px) {
           .a2z-hero-grid {
             grid-template-columns: 1fr !important;
-            min-height: auto !important;
+            padding-top: 64px !important;
+            padding-bottom: 44px !important;
+            align-items: flex-start !important;
+            height: 100% !important;
           }
-          .a2z-globe-col {
-            height: 300px;
-            min-height: 260px;
+          /* Full-width dark overlay so text is readable over globe */
+          .a2z-left-overlay {
+            width: 100% !important;
+            background: linear-gradient(180deg,
+              rgba(1,8,18,0.84) 0%,
+              rgba(1,8,18,0.62) 45%,
+              rgba(1,8,18,0.25) 100%
+            ) !important;
           }
-          .a2z-proof-bar {
-            flex-wrap: wrap;
-            gap: 0;
+          .a2z-right-overlay { display: none !important; }
+          .a2z-centre-col    { display: none !important; }
+          .a2z-panel-col     { display: none !important; }
+
+          /* Text column: compact */
+          .a2z-text-col {
+            padding: 6px 20px 10px !important;
+            justify-content: flex-start !important;
           }
-          .a2z-proof-stat {
-            padding: 6px 10px;
+          /* Hide sub-paragraph to save space */
+          .a2z-sub-para { display: none !important; }
+
+          /* CTA buttons: full-width column */
+          .a2z-cta-row { flex-direction: column !important; gap: 6px !important; }
+          .a2z-cta-primary, .a2z-cta-ghost { width: 100% !important; justify-content: center !important; }
+
+          /* Controls: smaller, keep visible */
+          .a2z-controls { padding: 4px 10px !important; }
+
+          /* Proof bar: 3 stats only, no context labels */
+          .a2z-proof-stat-3,
+          .a2z-proof-stat-4,
+          .a2z-proof-stat-5 { display: none !important; }
+          .a2z-proof-ctx    { display: none !important; }
+          .a2z-proof-bar    {
+            padding: 5px 12px !important;
+            justify-content: space-around !important;
           }
-          .a2z-proof-ctx {
-            display: none;
-          }
+          .a2z-proof-label  { display: none !important; }
+          .a2z-proof-num    { font-size: 12px !important; }
+          .a2z-proof-desc   { font-size: 8px !important; }
         }
+
         @media (prefers-reduced-motion: reduce) {
-          .a2z-live-dot,
-          .a2z-proof-pulse,
-          .a2z-proof-sweep,
-          .a2z-badge-dot,
-          .a2z-scroll-inner {
-            animation: none !important;
-          }
+          .a2z-live-dot, .a2z-badge-dot,
+          .a2z-proof-pulse, .a2z-proof-sweep { animation: none !important; }
         }
-        /* Global keyframes */
+
         @keyframes a2z-blink {
-          0%, 100% { opacity: 1; }
-          50%       { opacity: 0.15; }
+          0%, 100% { opacity: 1; } 50% { opacity: 0.15; }
         }
         @keyframes a2z-sweep {
           0%, 100% { opacity: 0; transform: translateX(-90%); }
           50%       { opacity: 1; transform: translateX(90%); }
         }
         @keyframes a2z-scroll-bob {
-          0%, 100% { transform: translateY(0); }
-          50%       { transform: translateY(6px); }
-        }
-        @keyframes a2z-scroll-inner {
-          0%, 100% { transform: translateY(0); opacity: 0.8; }
-          50%       { transform: translateY(6px); opacity: 0.4; }
+          0%, 100% { transform: translateX(-50%) translateY(0); opacity: 0.45; }
+          50%       { transform: translateX(-50%) translateY(6px); opacity: 0.72; }
         }
       `}</style>
     </section>
@@ -275,147 +301,66 @@ function TextColumn() {
     <motion.div
       className="a2z-text-col"
       style={{
-        padding: "clamp(24px,4vh,52px) 0 clamp(20px,3vh,40px) clamp(24px,3vw,52px)",
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "center",
+        padding: "clamp(14px, 2.5vh, 38px) 0 14px clamp(20px, 3vw, 52px)",
+        display: "flex", flexDirection: "column", justifyContent: "center", height: "100%",
       }}
-      initial={{ opacity: 0, x: -24 }}
+      initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+      transition={{ duration: 0.85, ease: [0.16, 1, 0.3, 1] }}
     >
-      {/* Badge pill */}
-      <div
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          gap: 6,
-          background: "rgba(0,212,255,0.07)",
-          border: "1px solid rgba(0,212,255,0.18)",
-          borderRadius: 9999,
-          padding: "4px 12px",
-          marginBottom: 14,
-          width: "fit-content",
-        }}
-      >
-        <span
-          className="a2z-badge-dot"
-          style={{
-            width: 6,
-            height: 6,
-            borderRadius: "50%",
-            background: "#00d4ff",
-            flexShrink: 0,
-            animation: "a2z-blink 2s ease-in-out infinite",
-          }}
-        />
-        <span
-          style={{
-            fontSize: 10,
-            letterSpacing: "0.14em",
-            color: "rgba(0,212,255,0.75)",
-            textTransform: "uppercase",
-            fontWeight: 600,
-          }}
-        >
+      {/* Badge */}
+      <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(0,212,255,0.07)", border: "1px solid rgba(0,212,255,0.18)", borderRadius: 9999, padding: "3px 10px", marginBottom: "clamp(7px, 1.2vh, 13px)", width: "fit-content" }}>
+        <span className="a2z-badge-dot" style={{ width: 5, height: 5, borderRadius: "50%", background: "#00d4ff", flexShrink: 0, animation: "a2z-blink 2s ease-in-out infinite" }} />
+        <span style={{ fontSize: 9, letterSpacing: "0.14em", color: "rgba(0,212,255,0.75)", textTransform: "uppercase", fontWeight: 600 }}>
           A2Z Carbon Solutions Platform
         </span>
       </div>
 
-      {/* Headline block */}
-      <div style={{ marginBottom: "clamp(10px, 1.8vh, 18px)" }}>
-        {/* "The Full" — larger brand anchor */}
-        <span
-          style={{
-            display: "block",
-            fontFamily: "var(--font-syne), sans-serif",
-            fontSize: "clamp(18px, 2.6vw, 28px)",
-            fontWeight: 700,
-            color: "rgba(255,255,255,0.9)",
-            letterSpacing: "-0.02em",
-            lineHeight: 1.18,
-          }}
-        >
-          The Full
-        </span>
-
-        {/* "Carbon Stack." — gradient, largest */}
-        <span
-          id="hero-heading"
-          style={{
-            display: "block",
-            fontFamily: "var(--font-syne), sans-serif",
-            fontSize: "clamp(22px, 3.2vw, 34px)",
-            fontWeight: 800,
-            letterSpacing: "-0.03em",
-            lineHeight: 1.1,
-            background: BRAND_GRADIENT,
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            backgroundClip: "text",
-            marginBottom: 2,
-          }}
-        >
+      {/* Headline */}
+      <div style={{ marginBottom: "clamp(7px, 1.2vh, 14px)" }}>
+        <span style={{ display: "block", fontFamily: "var(--font-syne), sans-serif", fontSize: "clamp(16px, 2.3vw, 27px)", fontWeight: 700, color: "rgba(255,255,255,0.9)", letterSpacing: "-0.02em", lineHeight: 1.18 }}>The Full</span>
+        <span id="hero-heading" style={{ display: "block", fontFamily: "var(--font-syne), sans-serif", fontSize: "clamp(19px, 2.8vw, 33px)", fontWeight: 800, letterSpacing: "-0.03em", lineHeight: 1.1, background: BRAND_GRADIENT, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text", marginBottom: 2 }}>
           Carbon Stack.
         </span>
-
-        {/* Descriptor lines — ALL same size, weight, colour */}
         {DESCRIPTOR_LINES.map(({ text, indent }) => (
-          <span
-            key={text}
-            style={{
-              display: "block",
-              fontFamily: "var(--font-syne), sans-serif",
-              fontSize: "clamp(14px, 1.9vw, 20px)",
-              fontWeight: 600,
-              color: "rgba(255,255,255,0.78)",
-              letterSpacing: "-0.01em",
-              lineHeight: 1.22,
-              paddingRight: indent,
-            }}
-          >
+          <span key={text} style={{ display: "block", fontFamily: "var(--font-syne), sans-serif", fontSize: "clamp(12px, 1.6vw, 18px)", fontWeight: 600, color: "rgba(255,255,255,0.78)", letterSpacing: "-0.01em", lineHeight: 1.22, paddingRight: indent }}>
             {text}
           </span>
         ))}
-
-        {/* Micro tag line */}
-        <span
-          style={{
-            display: "block",
-            fontSize: "clamp(9px, 0.9vw, 11px)",
-            color: "rgba(255,255,255,0.25)",
-            fontWeight: 400,
-            letterSpacing: "0.08em",
-            marginTop: 6,
-          }}
-        >
+        <span style={{ display: "block", fontSize: "clamp(8px, 0.8vw, 10px)", color: "rgba(255,255,255,0.2)", fontWeight: 400, letterSpacing: "0.08em", marginTop: 4 }}>
           Enterprise carbon management platform
         </span>
       </div>
 
-      {/* Sub paragraph */}
-      <p
-        style={{
-          fontSize: "clamp(12px, 1.1vw, 14px)",
-          color: "rgba(255,255,255,0.38)",
-          lineHeight: 1.72,
-          marginBottom: "clamp(14px, 2vh, 22px)",
-          maxWidth: 340,
-        }}
-      >
-        A2Z operates across the{" "}
-        <strong style={{ color: "rgba(255,255,255,0.65)" }}>entire carbon lifecycle</strong>{" "}
-        — real-time GHG tracking, CBAM automation, amine manufacturing and turnkey CCS delivery.
+      {/* Sub paragraph — hidden mobile */}
+      <p className="a2z-sub-para" style={{ fontSize: "clamp(11px, 0.95vw, 13px)", color: "rgba(255,255,255,0.37)", lineHeight: 1.7, marginBottom: "clamp(10px, 1.5vh, 18px)", maxWidth: 310 }}>
+        A2Z operates across the <strong style={{ color: "rgba(255,255,255,0.65)" }}>entire carbon lifecycle</strong> — real-time GHG tracking, CBAM automation, amine manufacturing and turnkey CCS delivery.
       </p>
 
       {/* CTAs */}
-      <div style={{ display: "flex", gap: 8, marginBottom: "clamp(12px, 2vh, 18px)", flexWrap: "wrap" }}>
-        <a href="#demo" style={primaryBtnStyle}>Book a Demo →</a>
-        <a href="/calculator" style={ghostBtnStyle}>Free CBAM Calculator</a>
+      <div className="a2z-cta-row" style={{ display: "flex", gap: 8, marginBottom: "clamp(9px, 1.3vh, 15px)", flexWrap: "wrap" }}>
+        <a href="#demo" className="a2z-cta-primary" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", height: 42, padding: "0 20px", background: BRAND_GRADIENT, border: "none", borderRadius: 8, fontSize: "clamp(12px, 1vw, 14px)", fontWeight: 700, color: "#fff", cursor: "pointer", textDecoration: "none", whiteSpace: "nowrap", boxShadow: "0 4px 18px rgba(0,212,255,0.22)" }}>
+          Book a Demo →
+        </a>
+        <a href="/calculator" className="a2z-cta-ghost" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", height: 42, padding: "0 16px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.18)", borderRadius: 8, fontSize: "clamp(12px, 1vw, 14px)", fontWeight: 500, color: "rgba(255,255,255,0.62)", cursor: "pointer", textDecoration: "none", whiteSpace: "nowrap" }}>
+          Free CBAM Calculator
+        </a>
       </div>
 
       {/* Trust badges */}
-      <TrustBadges />
+      <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+        {TRUST_ITEMS.map((label, i) => (
+          <span key={label} className="a2z-trust-item" style={{ display: "flex", alignItems: "center", gap: 5 }}>
+            {i > 0 && <span style={{ width: 1, height: 9, background: "rgba(255,255,255,0.1)" }} />}
+            <span style={{ display: "flex", alignItems: "center", gap: 3, fontSize: "clamp(9px, 0.78vw, 11px)", color: "rgba(255,255,255,0.38)" }}>
+              <span style={{ width: 11, height: 11, borderRadius: "50%", background: "rgba(48,209,88,0.12)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <svg width="6" height="5" viewBox="0 0 6 5" fill="none" aria-hidden="true"><polyline points="0.8,3 2.4,4.8 5.6,0.8" stroke="#30d158" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" /></svg>
+              </span>
+              {label}
+            </span>
+          </span>
+        ))}
+      </div>
     </motion.div>
   );
 }
@@ -609,7 +554,10 @@ function TogglePill({
    ───────────────────────────────────────────── */
 function ScrollCue() {
   const handleScroll = () => {
-    const footer = document.getElementById("footer") || document.querySelector("footer") || document.querySelector(".sec:last-of-type");
+    const footer = document.getElementById("footer") || 
+                   document.querySelector("footer") || 
+                   document.querySelector(".sec:last-of-type");
+    
     if (footer) {
       footer.scrollIntoView({ behavior: "smooth" });
     } else {
@@ -623,8 +571,9 @@ function ScrollCue() {
       aria-label="Scroll to explore"
       style={{
         position: "absolute",
-        bottom: "clamp(10px, 2vh, 20px)",
-        left: "18%",
+        bottom: 14,
+        left: "50%",
+        transform: "translateX(-50%)",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
@@ -632,32 +581,22 @@ function ScrollCue() {
         background: "none",
         border: "none",
         cursor: "pointer",
-        opacity: 0.42,
         animation: "a2z-scroll-bob 2.8s ease-in-out infinite",
       }}
     >
       <span
         style={{
-          fontSize: 9,
-          letterSpacing: "0.18em",
-          color: "rgba(255,255,255,0.55)",
+          fontSize: 8,
+          letterSpacing: "0.2em",
+          color: "rgba(255,255,255,0.42)",
           fontFamily: "var(--font-mono)",
         }}
       >
         EXPLORE
       </span>
       <svg width="10" height="16" viewBox="0 0 10 16" fill="none" aria-hidden="true">
-        <rect x="0.5" y="0.5" width="9" height="15" rx="4.5" stroke="rgba(255,255,255,0.25)" />
-        <rect
-          x="4"
-          y="3"
-          width="2"
-          height="4"
-          rx="1"
-          fill="rgba(0,212,255,0.5)"
-          className="a2z-scroll-inner"
-          style={{ animation: "a2z-scroll-inner 2.8s ease-in-out infinite" }}
-        />
+        <rect x="0.5" y="0.5" width="9" height="15" rx="4.5" stroke="rgba(255,255,255,0.22)" />
+        <rect x="4" y="3" width="2" height="4" rx="1" fill="rgba(0,212,255,0.5)" />
       </svg>
     </button>
   );
@@ -670,119 +609,22 @@ function ScrollCue() {
    ───────────────────────────────────────────── */
 function LiveDataPanel() {
   return (
-    <motion.aside
-      className="a2z-panel-col"
-      aria-label="Live platform data"
-      style={{
-        borderLeft: "1px solid rgba(255,255,255,0.05)",
-        display: "flex",
-        flexDirection: "column",
-        background: "rgba(3,8,18,0.65)",
-      }}
-      initial={{ opacity: 0, x: 16 }}
-      animate={{ opacity: 1, x: 0 }}
+    <motion.aside className="a2z-panel-col" aria-label="Live platform data"
+      style={{ borderLeft: "1px solid rgba(255,255,255,0.05)", display: "flex", flexDirection: "column", background: "rgba(2,6,16,0.52)", backdropFilter: "blur(8px)" }}
+      initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.8, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
     >
-      {/* Panel header */}
-      <div
-        style={{
-          padding: "8px 10px 7px",
-          borderBottom: "1px solid rgba(255,255,255,0.05)",
-          display: "flex",
-          alignItems: "center",
-          gap: 6,
-        }}
-      >
-        <span
-          style={{
-            fontSize: 8,
-            textTransform: "uppercase",
-            letterSpacing: "0.14em",
-            color: "rgba(255,255,255,0.2)",
-            fontWeight: 600,
-          }}
-        >
-          Live data
-        </span>
-        <span
-          className="a2z-live-dot"
-          style={{
-            width: 5,
-            height: 5,
-            borderRadius: "50%",
-            background: "#30d158",
-            marginLeft: "auto",
-            animation: "a2z-blink 2s ease-in-out infinite",
-          }}
-        />
-        <span style={{ fontSize: 7, color: "rgba(48,209,88,0.55)", letterSpacing: "0.1em" }}>
-          LIVE
-        </span>
+      <div style={{ padding: "7px 10px 6px", borderBottom: "1px solid rgba(255,255,255,0.05)", display: "flex", alignItems: "center", gap: 6 }}>
+        <span style={{ fontSize: 7, textTransform: "uppercase", letterSpacing: "0.14em", color: "rgba(255,255,255,0.2)", fontWeight: 600 }}>Live data</span>
+        <span className="a2z-live-dot" style={{ width: 5, height: 5, borderRadius: "50%", background: "#30d158", marginLeft: "auto", animation: "a2z-blink 2s ease-in-out infinite" }} />
+        <span style={{ fontSize: 7, color: "rgba(48,209,88,0.55)", letterSpacing: "0.1em" }}>LIVE</span>
       </div>
-
-      {/* Data rows */}
       {LIVE_ROWS.map((row, i) => (
-        <div
-          key={row.id}
-          style={{
-            padding: "8px 10px",
-            borderBottom: i < LIVE_ROWS.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none",
-            display: "flex",
-            flexDirection: "column",
-            gap: 2,
-            position: "relative",
-            cursor: "default",
-            flex: 1,
-            justifyContent: "center",
-          }}
-        >
-          {/* Left accent bar — status colour before reading text */}
-          <span
-            style={{
-              position: "absolute",
-              left: 0,
-              top: "22%",
-              bottom: "22%",
-              width: 2,
-              borderRadius: 1,
-              background: row.accent,
-            }}
-          />
-
-          {/* Label */}
-          <span
-            style={{
-              fontSize: 7,
-              color: "rgba(255,255,255,0.28)",
-              textTransform: "uppercase",
-              letterSpacing: "0.09em",
-            }}
-          >
-            {row.label}
-          </span>
-
-          {/* Value */}
-          <span
-            style={{
-              fontFamily: "var(--font-mono)",
-              fontSize: "clamp(11px, 1.2vw, 14px)",
-              fontWeight: 700,
-              color: row.valueColor,
-              lineHeight: 1.15,
-            }}
-          >
-            {row.value}
-            {row.valueSuffix && (
-              <span style={{ fontSize: 8, color: row.valueColor, opacity: 0.5, fontWeight: 400, fontFamily: "var(--font-body)" }}>
-                {row.valueSuffix}
-              </span>
-            )}
-          </span>
-
-          {/* Sub */}
-          <span style={{ fontSize: 7, color: row.subColor, lineHeight: 1.3 }}>
-            {row.sub}
-          </span>
+        <div key={row.id} style={{ padding: "clamp(5px, 1vh, 9px) 10px", borderBottom: i < LIVE_ROWS.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none", display: "flex", flexDirection: "column", gap: 2, position: "relative", flex: 1, justifyContent: "center" }}>
+          <span style={{ position: "absolute", left: 0, top: "22%", bottom: "22%", width: 2, borderRadius: 1, background: row.accent }} />
+          <span style={{ fontSize: 7, color: "rgba(255,255,255,0.28)", textTransform: "uppercase", letterSpacing: "0.09em" }}>{row.label}</span>
+          <span style={{ fontFamily: "var(--font-mono)", fontSize: "clamp(11px, 1.1vw, 14px)", fontWeight: 700, color: row.valueColor, lineHeight: 1.15 }}>{row.value}</span>
+          <span style={{ fontSize: 7, color: row.subColor, lineHeight: 1.3 }}>{row.sub}</span>
         </div>
       ))}
     </motion.aside>
@@ -796,152 +638,29 @@ function LiveDataPanel() {
    ───────────────────────────────────────────── */
 function ProofBar() {
   return (
-    <div
-      className="a2z-proof-bar"
-      role="region"
-      aria-label="Platform statistics"
-      style={{
-        background: "rgba(4,10,22,0.97)",
-        borderTop: "1px solid rgba(255,255,255,0.05)",
-        padding: "10px clamp(20px, 4vw, 56px)",
-        display: "flex",
-        alignItems: "stretch",
-        justifyContent: "center",
-        flexWrap: "nowrap",
-        position: "relative",
-        overflow: "hidden",
-        zIndex: 2,
-      }}
+    <div className="a2z-proof-bar" role="region" aria-label="Platform statistics"
+      style={{ background: "rgba(1,5,14,0.94)", borderTop: "1px solid rgba(255,255,255,0.06)", backdropFilter: "blur(12px)", padding: "7px clamp(14px, 3.5vw, 48px)", display: "flex", alignItems: "stretch", justifyContent: "center", flexWrap: "nowrap", position: "relative", overflow: "hidden" }}
     >
-      {/* Shimmer sweep — draws eye through sequence */}
-      <span
-        className="a2z-proof-sweep"
-        aria-hidden="true"
-        style={{
-          position: "absolute",
-          inset: 0,
-          background: "linear-gradient(90deg, transparent 5%, rgba(0,212,255,0.018) 50%, transparent 95%)",
-          animation: "a2z-sweep 5s ease-in-out infinite",
-          pointerEvents: "none",
-        }}
-      />
-
-      <span
-        style={{
-          fontSize: "clamp(8px, 0.7vw, 10px)",
-          color: "rgba(255,255,255,0.16)",
-          textTransform: "uppercase",
-          letterSpacing: "0.1em",
-          display: "flex",
-          alignItems: "center",
-          paddingRight: "clamp(8px, 1.5vw, 16px)",
-          whiteSpace: "nowrap",
-          flexShrink: 0,
-        }}
-      >
+      <span className="a2z-proof-sweep" aria-hidden="true" style={{ position: "absolute", inset: 0, background: "linear-gradient(90deg, transparent 5%, rgba(0,212,255,0.016) 50%, transparent 95%)", animation: "a2z-sweep 5s ease-in-out infinite", pointerEvents: "none" }} />
+      <span className="a2z-proof-label" style={{ fontSize: "clamp(8px, 0.7vw, 10px)", color: "rgba(255,255,255,0.16)", textTransform: "uppercase", letterSpacing: "0.1em", display: "flex", alignItems: "center", paddingRight: "clamp(8px, 1.5vw, 14px)", whiteSpace: "nowrap", flexShrink: 0 }}>
         Trusted across
       </span>
-
       {PROOF_STATS.map((stat, i) => (
-        <span key={stat.d} style={{ display: "flex", alignItems: "center" }}>
-          {/* Separator */}
-          <span
-            style={{
-              width: 1,
-              background: "rgba(255,255,255,0.07)",
-              margin: "4px 0",
-              alignSelf: "stretch",
-            }}
-          />
-
-          {/* Stat block */}
-          <div
-            className="a2z-proof-stat"
-            style={{
-              textAlign: "center",
-              padding: "0 clamp(8px, 1.5vw, 16px)",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            {/* Number */}
-            <span
-              style={{
-                fontFamily: "var(--font-mono)",
-                fontSize: stat.peak ? "clamp(14px, 1.6vw, 18px)" : "clamp(12px, 1.3vw, 15px)",
-                color: stat.peak ? "#ff9500" : "rgba(255,255,255,0.82)",
-                display: "flex",
-                alignItems: "center",
-                fontWeight: 700,
-                lineHeight: 1.1,
-                letterSpacing: "-0.02em",
-              }}
-            >
+        <span key={stat.d} className={`a2z-proof-stat a2z-proof-stat-${i + 1}`} style={{ display: "flex", alignItems: "center" }}>
+          <span style={{ width: 1, background: "rgba(255,255,255,0.07)", margin: "4px 0", alignSelf: "stretch" }} />
+          <div style={{ textAlign: "center", padding: "0 clamp(7px, 1.2vw, 13px)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+            <span className="a2z-proof-num" style={{ fontFamily: "var(--font-mono)", fontSize: stat.peak ? "clamp(13px, 1.4vw, 16px)" : "clamp(11px, 1.1vw, 14px)", color: stat.peak ? "#ff9500" : "rgba(255,255,255,0.82)", display: "flex", alignItems: "center", fontWeight: 700, lineHeight: 1.1 }}>
               {stat.n}
-              {stat.live && (
-                <span
-                  className="a2z-proof-pulse"
-                  aria-label="live"
-                  style={{
-                    width: 5,
-                    height: 5,
-                    borderRadius: "50%",
-                    background: "#30d158",
-                    display: "inline-block",
-                    marginLeft: 4,
-                    animation: "a2z-blink 2s ease-in-out infinite",
-                  }}
-                />
-              )}
+              {stat.live && <span className="a2z-proof-pulse" aria-label="live" style={{ width: 4, height: 4, borderRadius: "50%", background: "#30d158", display: "inline-block", marginLeft: 3, animation: "a2z-blink 2s ease-in-out infinite" }} />}
             </span>
-
-            {/* Label */}
-            <span
-              style={{
-                fontSize: "clamp(8px, 0.7vw, 10px)",
-                color: stat.peak ? "rgba(255,149,0,0.5)" : "rgba(255,255,255,0.28)",
-                whiteSpace: "nowrap",
-                marginTop: 2,
-              }}
-            >
-              {stat.d}
-            </span>
-
-            {/* Context / badge */}
+            <span className="a2z-proof-desc" style={{ fontSize: "clamp(7px, 0.62vw, 9px)", color: stat.peak ? "rgba(255,149,0,0.5)" : "rgba(255,255,255,0.28)", whiteSpace: "nowrap", marginTop: 1 }}>{stat.d}</span>
             {stat.badge ? (
-              <span
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 3,
-                  background: "rgba(48,209,88,0.07)",
-                  border: "1px solid rgba(48,209,88,0.16)",
-                  borderRadius: 3,
-                  padding: "1px 5px",
-                  fontSize: "clamp(7px, 0.6vw, 9px)",
-                  color: "rgba(48,209,88,0.62)",
-                  marginTop: 2,
-                }}
-              >
-                <svg width="6" height="5" viewBox="0 0 6 5" fill="none" aria-hidden="true">
-                  <polyline points="0.8,2.5 2.2,4.2 5.2,0.8" stroke="rgba(48,209,88,0.7)" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+              <span className="a2z-proof-ctx" style={{ display: "inline-flex", alignItems: "center", gap: 2, background: "rgba(48,209,88,0.07)", border: "1px solid rgba(48,209,88,0.16)", borderRadius: 3, padding: "1px 4px", fontSize: "clamp(6px, 0.5vw, 8px)", color: "rgba(48,209,88,0.62)", marginTop: 2 }}>
+                <svg width="5" height="4" viewBox="0 0 5 4" fill="none" aria-hidden="true"><polyline points="0.6,2 1.8,3.4 4.4,0.6" stroke="rgba(48,209,88,0.7)" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round" /></svg>
                 {stat.ctx}
               </span>
             ) : (
-              <span
-                className="a2z-proof-ctx"
-                style={{
-                  fontSize: "clamp(7px, 0.6vw, 9px)",
-                  color: "rgba(255,255,255,0.14)",
-                  whiteSpace: "nowrap",
-                  marginTop: 2,
-                }}
-              >
-                {stat.ctx}
-              </span>
+              <span className="a2z-proof-ctx" style={{ fontSize: "clamp(6px, 0.5vw, 8px)", color: "rgba(255,255,255,0.14)", whiteSpace: "nowrap", marginTop: 1 }}>{stat.ctx}</span>
             )}
           </div>
         </span>

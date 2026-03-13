@@ -56,6 +56,35 @@ export default function LandingScripts() {
       saveCookie();
     });
 
+    if (window.innerWidth <= 640) {
+  const banner  = document.getElementById("cookie-banner");
+  const actions = banner?.querySelector(".ck-actions");
+  const acceptBtn = document.getElementById("cookie-accept");
+
+  if (banner && actions) {
+    // Inject "Manage" button
+    const manageBtn = document.createElement("button");
+    manageBtn.className = "ck-manage-mobile";
+    manageBtn.textContent = "Manage";
+    manageBtn.setAttribute("aria-expanded", "false");
+
+    manageBtn.addEventListener("click", () => {
+      const isExpanded = banner.classList.toggle("expanded");
+      manageBtn.setAttribute("aria-expanded", String(isExpanded));
+      manageBtn.textContent = isExpanded ? "Close" : "Manage";
+    });
+
+    // Insert Manage before the first button in actions
+    actions.insertBefore(manageBtn, actions.firstChild);
+
+    // Accept all also collapses on mobile
+    acceptBtn?.addEventListener("click", () => {
+      banner.classList.remove("expanded");
+    }, { once: false });
+  }
+}
+
+
 
 'use strict';
 

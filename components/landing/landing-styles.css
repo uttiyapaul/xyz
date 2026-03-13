@@ -145,6 +145,117 @@ img{display:block;max-width:100%}
 .ck-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .ck-link{font-size:0.73rem;color:var(--text-tertiary);text-decoration:underline;text-underline-offset:2px;margin-left:auto}
 
+/* ─────────────────────────────────────────────────────────────
+   MOBILE COOKIE BANNER — slim bottom bar
+   ───────────────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+
+  #cookie-banner {
+    /* Pin to bottom, slim height */
+    position: fixed;
+    bottom: 60px;        /* above mobile tab bar if present */
+    left: 8px;
+    right: 8px;
+    top: auto !important;
+
+    /* Compact card */
+    border-radius: 12px;
+    padding: 10px 14px;
+    max-height: 64px;
+    overflow: hidden;
+    transition: max-height 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+
+    /* Dark glass */
+    background: rgba(4, 10, 24, 0.96) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 -4px 32px rgba(0, 0, 0, 0.5);
+
+    /* Flex row for compact layout */
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 10px;
+  }
+
+  /* Expanded state — user tapped "Manage" */
+  #cookie-banner.expanded {
+    max-height: 420px;
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+
+  /* Hide verbose elements in collapsed state */
+  #cookie-banner:not(.expanded) .ck-desc,
+  #cookie-banner:not(.expanded) .ck-toggles,
+  #cookie-banner:not(.expanded) #cookie-save,
+  #cookie-banner:not(.expanded) #cookie-reject,
+  #cookie-banner:not(.expanded) .ck-link {
+    display: none !important;
+  }
+
+  /* Compact title row */
+  .ck-title {
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    margin: 0 !important;
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Actions row: single line on mobile */
+  .ck-actions {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 6px !important;
+    flex-wrap: nowrap !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Accept All: compact */
+  #cookie-accept {
+    height: 32px !important;
+    padding: 0 12px !important;
+    font-size: 11px !important;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  /* Manage link — appears in collapsed state as text button */
+  .ck-manage-mobile {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.4);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    white-space: nowrap;
+    flex-shrink: 0;
+    text-decoration: underline;
+    text-decoration-color: rgba(255, 255, 255, 0.2);
+  }
+
+  /* Expanded state: show everything normally */
+  #cookie-banner.expanded .ck-desc,
+  #cookie-banner.expanded .ck-toggles {
+    display: block !important;
+  }
+  #cookie-banner.expanded .ck-title {
+    white-space: normal !important;
+    margin-bottom: 6px !important;
+  }
+  #cookie-banner.expanded .ck-actions {
+    flex-wrap: wrap !important;
+    margin-top: 8px !important;
+  }
+}
+
+
 /* ══════════════════════════════════════════════
    NAVBAR
 ══════════════════════════════════════════════ */

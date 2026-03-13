@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import LandingScripts from "@/components/landing/LandingScripts";
+import HeroSection from "@/components/landing/hero/HeroSection";
 
 export const metadata = {
   title: "XYZ-For-Now — Automate Carbon Compliance",
@@ -19,8 +20,12 @@ export default function HomePage() {
       <a className="skip-link" href="#main">
         Skip to main content
       </a>
+      {/* 3D WebGL Globe Hero — full viewport, replaces the old canvas animation */}
+      <HeroSection />
+      {/* Remaining landing page sections */}
       <style dangerouslySetInnerHTML={{ __html: css }} />
       <div dangerouslySetInnerHTML={{ __html: html }} />
+      {/* Cookie banner, scroll animations, other client-side scripts */}
       <LandingScripts />
     </>
   );

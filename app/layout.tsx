@@ -4,13 +4,16 @@ import { Geist, Geist_Mono, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 import { headers } from "next/headers";
-import { Syne, DM_Sans } from 'next/font/google'
+import { Syne, DM_Sans } from 'next/font/google';
+import dynamic from "next/dynamic";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 const syne          = Syne({ variable: "--font-syne", subsets: ["latin"] });          // headings on landing page
 const dmSans        = DM_Sans({ variable: "--font-dm-sans", subsets: ["latin"] });       // body text on landing page
 const jetbrainsMono = JetBrains_Mono({ variable: "--font-jetbrains-mono", subsets: ["latin"] });
+
+import PageDataStreamClient from "@/components/landing/PageDataStreamClient";
 
 export const metadata: Metadata = {
   title: {
@@ -52,6 +55,7 @@ export default async function RootLayout({
     <html lang="en" data-nonce={nonce}>
       <body className={`${geistSans.variable} ${geistMono.variable} ${syne.variable} ${dmSans.variable} ${jetbrainsMono.variable} antialiased`}>
         {/* Providers handles Redux + Auth sync — AuthProvider removed (was duplicate) */}
+        <PageDataStreamClient /> 
         <Providers>{children}</Providers>
       </body>
     </html>

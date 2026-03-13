@@ -33,7 +33,7 @@ export default function CarbonGlobe({ year, showFlights, showTrades }: CarbonGlo
 
       const Globe = mod.default;
       const globe = new Globe()
-        .globeImageUrl("/textures/earth-dark.jpg")
+        .globeImageUrl("/textures/earth-blue-marble.jpg")
         .bumpImageUrl("/textures/earth-topology.png")
         .atmosphereColor("#00eaff")
         .atmosphereAltitude(0.18);

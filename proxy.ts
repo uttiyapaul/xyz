@@ -31,6 +31,14 @@ const PUBLIC_ROUTES = new Set([
   "/calculator",                 // Public CBAM calculator
 ]);
 
+// Public metadata and root-level assets requested by browsers outside normal navigation.
+// These must stay reachable for anonymous visitors because the landing page and calculator
+// both advertise them in page metadata.
+const PUBLIC_FILE_ROUTES = new Set([
+  "/manifest.webmanifest",
+  "/sw.js",
+]);
+
 const AUTH_ROUTES = new Set(["/auth/login", "/auth/register"]);
 
 const API_WRITE_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
@@ -226,6 +234,7 @@ export async function proxy(req: NextRequest): Promise<NextResponse> {
 
   // 6. Auth guard
   const isPublic = PUBLIC_ROUTES.has(pathname) ||
+    PUBLIC_FILE_ROUTES.has(pathname) ||
     pathname.startsWith("/_next/") ||
     pathname.startsWith("/api/public/") ||
     pathname.startsWith("/debug-auth") ||
@@ -277,6 +286,6 @@ export async function proxy(req: NextRequest): Promise<NextResponse> {
 // ---------------------------------------------------------------------------
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml).*)",
+    "/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|manifest\\.webmanifest|sw\\.js).*)",
   ],
 };

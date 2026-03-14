@@ -48,6 +48,14 @@ function buildCspHeader(nonce?: string): string {
 // ---------------------------------------------------------------------------
 // Security Headers — applied globally
 // ---------------------------------------------------------------------------
+const CROSS_ORIGIN_ISOLATION_HEADERS = IS_PROD
+  ? [
+      { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+      { key: "Cross-Origin-Embedder-Policy", value: "require-corp" },
+      { key: "Cross-Origin-Resource-Policy", value: "same-origin" },
+    ]
+  : [];
+
 const SECURITY_HEADERS = [
   // Strict-Transport-Security (2 years, include sub-domains)
   {
@@ -77,10 +85,9 @@ const SECURITY_HEADERS = [
       "accelerometer=()",
     ].join(", "),
   },
-  // Cross-origin isolation
-  { key: "Cross-Origin-Opener-Policy",   value: "same-origin" },
-  { key: "Cross-Origin-Embedder-Policy", value: "require-corp" },
-  { key: "Cross-Origin-Resource-Policy", value: "same-origin" },
+  // Cross-origin isolation is production-only because browser security tools
+  // often inject helper requests during local development.
+  ...CROSS_ORIGIN_ISOLATION_HEADERS,
   // Remove powered-by
   { key: "X-Powered-By",                 value: "" },
 ];

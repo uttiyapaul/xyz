@@ -211,10 +211,16 @@ export async function proxy(req: NextRequest): Promise<NextResponse> {
             req.cookies.set(name, value);
             response.cookies.set(name, value, {
               ...options,
-              httpOnly: true,
-              secure: process.env.NODE_ENV === "production",
-              sameSite: "lax",
-              path: "/",
+              /**
+               * Do not force auth cookies to httpOnly here.
+               * The browser Supabase client created via `createBrowserClient`
+               * needs to read and refresh the session cookies on the client.
+               * Overriding the SSR defaults breaks that handoff and can leave
+               * the app stuck on `/auth/login` after a successful sign-in.
+               */
+              secure: options.secure ?? process.env.NODE_ENV === "production",
+              sameSite: options.sameSite ?? "lax",
+              path: options.path ?? "/",
             });
           });
         },
@@ -237,7 +243,6 @@ export async function proxy(req: NextRequest): Promise<NextResponse> {
     PUBLIC_FILE_ROUTES.has(pathname) ||
     pathname.startsWith("/_next/") ||
     pathname.startsWith("/api/public/") ||
-    pathname.startsWith("/debug-auth") ||
     pathname.match(/\.(ico|png|jpg|svg|webp|woff2?)$/) !== null;
 
   if (!isPublic && !isAuthed) {

@@ -1,4 +1,4 @@
-// app/dashboard/inventory/page.tsx
+// Legacy route prototype kept during migration out of components/page.tsx naming.
 "use client";
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase/client";

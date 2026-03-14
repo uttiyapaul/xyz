@@ -1,3 +1,4 @@
+// Legacy route prototype kept during migration out of components/page.tsx naming.
 "use client";
 
 import { useAuth } from "@/context/AuthContext";

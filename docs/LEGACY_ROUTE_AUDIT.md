@@ -2,22 +2,22 @@
 
 Date: 2026-03-14
 
-These files look like route entry points because they are named `page.tsx`, but they currently live under `components/` and are not part of the App Router tree.
+The route-like files that lived under `components/` have been renamed out of `page.tsx` naming so they no longer look like App Router entries.
 
-## Keep For Now
+## Completed In PR1
 
-Do not delete these in a cleanup-only PR unless they are first moved, imported, or replaced intentionally.
+These legacy files were preserved but renamed to non-route filenames:
 
-- `components/cbam-calculator/page.tsx`
-- `components/dashboard/ai/page.tsx`
-- `components/dashboard/cbam/page.tsx`
-- `components/dashboard/factors/page.tsx`
-- `components/dashboard/inventory/page.tsx`
-- `components/dashboard/settings/page.tsx`
-- `components/dashboard/settings/api-keys/page.tsx`
-- `components/dashboard/settings/profile/page.tsx`
-- `components/dashboard/settings/security/page.tsx`
-- `components/dashboard/settings/sessions/page.tsx`
+- `components/cbam-calculator/LegacyCalculatorRouteView.tsx`
+- `components/dashboard/ai/LegacyAIValidationView.tsx`
+- `components/dashboard/cbam/LegacyCBAMView.tsx`
+- `components/dashboard/factors/LegacyFactorsView.tsx`
+- `components/dashboard/inventory/LegacyInventoryView.tsx`
+- `components/dashboard/settings/LegacySettingsRedirectView.tsx`
+- `components/dashboard/settings/api-keys/LegacyApiKeysView.tsx`
+- `components/dashboard/settings/profile/LegacyProfileView.tsx`
+- `components/dashboard/settings/security/LegacySecurityView.tsx`
+- `components/dashboard/settings/sessions/LegacySessionsView.tsx`
 
 ## Migration Rule
 

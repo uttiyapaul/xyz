@@ -1,4 +1,4 @@
-// app/cbam-calculator/page.tsx
+// Legacy route prototype kept during migration out of components/page.tsx naming.
 // ─────────────────────────────────────────────────────────────────────────────
 // This file is intentionally thin.
 // All logic lives in components/cbam-calculator/CBAMCalculator.tsx

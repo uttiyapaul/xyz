@@ -1,4 +1,4 @@
-// app/dashboard/cbam/page.tsx
+// Legacy route prototype kept during migration out of components/page.tsx naming.
 // The public CBAM calculator already lives at /calculator (app/page.tsx).
 // This page provides a dashboard-scoped entry point with context.
 import Link from "next/link";

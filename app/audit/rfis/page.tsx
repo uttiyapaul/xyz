@@ -1,10 +1,8 @@
-import { SkeletonPage } from "@/components/layout/SkeletonPage";
+import { AuditRfisView } from "@/features/audit/AuditRfisView";
 
+/**
+ * Thin route entry: the audit feature owns the scoped RFI workspace.
+ */
 export default function AuditRfisPage() {
-  return (
-    <SkeletonPage 
-      title="Active RFIs" 
-      description="Manage Requests For Information (RFIs) and securely communicate clarifications with the client team."
-    />
-  );
+  return <AuditRfisView />;
 }

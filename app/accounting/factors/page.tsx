@@ -1,10 +1,8 @@
-import { SkeletonPage } from "@/components/layout/SkeletonPage";
+import { EmissionFactorsView } from "@/features/accounting/EmissionFactorsView";
 
+/**
+ * Thin route entry: the accounting feature owns live factor coverage behavior.
+ */
 export default function AccountingFactorsPage() {
-  return (
-    <SkeletonPage 
-      title="Emission Factor Library" 
-      description="Manage custom supplier-specific EF datasets alongside standard DEFRA, EPA, and IPCC libraries."
-    />
-  );
+  return <EmissionFactorsView />;
 }

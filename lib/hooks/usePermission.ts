@@ -1,10 +1,20 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { checkPermission } from "../supabase/queries";
-import { useAuth } from "../../context/AuthContext";
 
-// All permission codes from your live platform_permissions table
+import { useAuth } from "@/context/AuthContext";
+import { checkPermission } from "@/lib/supabase/queries";
+
+/**
+ * Frontend permission helper for places where we still need a quick
+ * role-sensitive UI toggle before a server action or RLS-backed query runs.
+ *
+ * Important:
+ * - Platform admins still bypass client-side checks.
+ * - The database function `has_permission()` remains the real source of truth.
+ * - This hook now defaults to `primaryOrgId` so screens do not keep re-creating
+ *   ad hoc `orgIds[0]` logic after the scope cleanup work.
+ */
 export type PermissionCode =
   | "data:entry"
   | "readings:write"
@@ -28,35 +38,50 @@ interface UsePermissionResult {
 
 export function usePermission(
   permission: PermissionCode,
-  orgId?: string
+  orgId?: string | null,
 ): UsePermissionResult {
-  const { isPlatformAdmin, isLoading: authLoading } = useAuth();
+  const { isPlatformAdmin, isLoading: authLoading, primaryOrgId } = useAuth();
+  const resolvedOrgId = orgId ?? primaryOrgId;
   const [hasPermission, setHasPermission] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (authLoading) return;
+    let isMounted = true;
 
-    // Platform admins bypass all permission checks
+    if (authLoading) {
+      return;
+    }
+
     if (isPlatformAdmin) {
       setHasPermission(true);
       setIsLoading(false);
       return;
     }
 
-    // platform:all_orgs is consultant-only — checked via DB
-    if (!orgId) {
+    if (!resolvedOrgId) {
       setHasPermission(false);
       setIsLoading(false);
       return;
     }
 
-    checkPermission(orgId, permission)
+    setIsLoading(true);
+
+    void checkPermission(resolvedOrgId, permission)
       .then((result) => {
-        setHasPermission(result);
+        if (isMounted) {
+          setHasPermission(result);
+        }
       })
-      .finally(() => setIsLoading(false));
-  }, [permission, orgId, isPlatformAdmin, authLoading]);
+      .finally(() => {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [authLoading, isPlatformAdmin, permission, resolvedOrgId]);
 
   return { hasPermission, isLoading };
 }

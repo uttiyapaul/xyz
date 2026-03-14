@@ -1,10 +1,8 @@
-import { SkeletonPage } from "@/components/layout/SkeletonPage";
+import { AccountingAnomaliesView } from "@/features/accounting/AccountingAnomaliesView";
 
+/**
+ * Thin route entry: the accounting feature owns the live anomaly workflow.
+ */
 export default function AccountingAnomaliesPage() {
-  return (
-    <SkeletonPage 
-      title="AI Anomaly Detection" 
-      description="Review data intelligently flagged by our models for deviating from historical facility baselines or sector norms."
-    />
-  );
+  return <AccountingAnomaliesView />;
 }

@@ -1,10 +1,8 @@
-import { SkeletonPage } from "@/components/layout/SkeletonPage";
+import { DataHistoryView } from "@/features/data/DataHistoryView";
 
+/**
+ * Thin route entry: the data feature owns personal submission history behavior.
+ */
 export default function DataHistoryPage() {
-  return (
-    <SkeletonPage 
-      title="Submission History" 
-      description="Track the status, timestamps, and verifier remarks strictly tied to your personal data submissions."
-    />
-  );
+  return <DataHistoryView />;
 }

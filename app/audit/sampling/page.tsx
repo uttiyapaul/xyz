@@ -1,10 +1,8 @@
-import { SkeletonPage } from "@/components/layout/SkeletonPage";
+import { AuditSamplingView } from "@/features/audit/AuditSamplingView";
 
+/**
+ * Thin route entry: the audit feature owns live sampling posture and evidence density.
+ */
 export default function AuditSamplingPage() {
-  return (
-    <SkeletonPage 
-      title="Cryptographic Data Sampling" 
-      description="Generate randomized, cryptographically secured sample pools from the client's GHG inventory for ISO 14064-3 verification."
-    />
-  );
+  return <AuditSamplingView />;
 }

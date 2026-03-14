@@ -50,4 +50,16 @@ describe("route access matrix", () => {
 
     expect(canAnyRoleAccessPath(roles, "/org/users")).toBe(true);
   });
+
+  it("keeps dashboard activity entry limited to scoped data-entry roles", () => {
+    expect(canRoleAccessPath("data_entry_operator", "/dashboard/activity")).toBe(true);
+    expect(canRoleAccessPath("data_approver", "/dashboard/activity")).toBe(false);
+    expect(canRoleAccessPath("executive_viewer", "/dashboard/activity")).toBe(false);
+  });
+
+  it("allows annual emissions reports to strategy and advisory roles but not raw supplier-facing roles", () => {
+    expect(canRoleAccessPath("consultant_lead", "/dashboard/reports")).toBe(true);
+    expect(canRoleAccessPath("sustainability_head", "/dashboard/reports")).toBe(true);
+    expect(canRoleAccessPath("supply_chain_reporter", "/dashboard/reports")).toBe(false);
+  });
 });

@@ -1,10 +1,9 @@
-import { SkeletonPage } from "@/components/layout/SkeletonPage";
+import { AccountingApprovalsView } from "@/features/accounting/AccountingApprovalsView";
 
+/**
+ * Thin route entry: the accounting feature owns live queue behavior, SoD notes,
+ * and scope-aware data access.
+ */
 export default function AccountingApprovalsPage() {
-  return (
-    <SkeletonPage 
-      title="Data Approval Queue" 
-      description="Stage, review, and approve incoming utility and activity data before it hits the immutable GHG ledger."
-    />
-  );
+  return <AccountingApprovalsView />;
 }

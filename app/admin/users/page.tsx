@@ -1,59 +1,64 @@
 import { UsersClient } from "@/features/admin/users/UsersClient";
-import { fetchAdminUsers } from "@/features/admin/users/actions";
-import { createServerSupabaseClient } from "@/lib/supabase/client";
+import { fetchUserManagementData } from "@/features/admin/users/actions";
+import styles from "@/features/admin/users/UsersManagement.module.css";
 
 export const dynamic = "force-dynamic";
 
+/**
+ * Route entry only.
+ *
+ * The heavy lifting for assignment data now lives in the feature action layer
+ * so this page can stay thin and follow the app/route contract.
+ */
 export default async function ManageUsersPage() {
-  const { data: users, error } = await fetchAdminUsers();
+  const result = await fetchUserManagementData();
 
-  const supabaseAdmin = createServerSupabaseClient();
+  if ("error" in result) {
+    return (
+      <section className={styles.page}>
+        <header className={styles.pageHeader}>
+          <h1 className={styles.pageTitle}>Manage users and assignments</h1>
+          <p className={styles.pageDescription}>
+            Review pending registrations, maintain organization assignments, and keep SoD evidence
+            aligned with the live role model.
+          </p>
+        </header>
+        <div className={styles.errorBanner}>
+          <div className={styles.bannerTitle}>User management data failed to load</div>
+          <div className={styles.hintText}>{result.error}</div>
+        </div>
+      </section>
+    );
+  }
 
-  const [orgsRes, rolesRes] = await Promise.all([
-    supabaseAdmin
-      .from("client_organizations")
-      .select("id, legal_name")
-      .is("deleted_at", null)
-      .order("legal_name"),
-    supabaseAdmin.from("platform_roles").select("id, role_name").order("role_name"),
-  ]);
-
-  const orgs = orgsRes.data || [];
-  const roles = rolesRes.data || [];
+  const { users, organizations, roles, sites, legalEntities, mfaRules, currentAdmin } = result.data;
 
   return (
-    <div style={{ padding: "32px", color: "#FAFAF8" }}>
-      <div style={{ marginBottom: "28px" }}>
-        <h1 style={{ fontSize: "24px", fontWeight: "700", marginBottom: "8px" }}>
-          Manage Users & Leads
-        </h1>
-        <p style={{ fontSize: "14px", color: "#9CA3AF", margin: 0 }}>
-          Verify pending registrations and manage existing platform access.
+    <section className={styles.page}>
+      <header className={styles.pageHeader}>
+        <h1 className={styles.pageTitle}>Manage users and assignments</h1>
+        <p className={styles.pageDescription}>
+          Review pending registrations, manage active role assignments, and capture the scope,
+          expiry, and verification evidence required by the updated role architecture.
         </p>
-      </div>
-
-      {error ? (
-        <div
-          style={{
-            color: "#FF3B30",
-            background: "rgba(255, 59, 48, 0.1)",
-            padding: "16px",
-            borderRadius: "8px",
-          }}
-        >
-          {error}
+        <div className={styles.pageMeta}>
+          <span className={styles.metaPill}>{users.length} user(s)</span>
+          <span className={styles.metaPill}>{roles.length} assignable role(s)</span>
+          <span className={styles.metaPill}>
+            Admin tier {currentAdmin.minTierRank ?? "unresolved"}
+          </span>
         </div>
-      ) : (
-        <UsersClient
-          users={(users || []).map((user) => ({
-            ...user,
-            email: user.email || "",
-            last_sign_in_at: user.last_sign_in_at || null,
-          }))}
-          organizations={orgs}
-          roles={roles}
-        />
-      )}
-    </div>
+      </header>
+
+      <UsersClient
+        users={users}
+        organizations={organizations}
+        roles={roles}
+        sites={sites}
+        legalEntities={legalEntities}
+        mfaRules={mfaRules}
+        currentAdmin={currentAdmin}
+      />
+    </section>
   );
 }

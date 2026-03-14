@@ -54,6 +54,32 @@ const DATA_ENTRY_ROUTE_ROLES: PlatformRole[] = DATA_PIPELINE_WORKSPACE_ROLES.fil
   (role) => role !== "data_reviewer" && role !== "data_approver" && role !== "iot_device_manager",
 );
 
+const DASHBOARD_ACTIVITY_ROUTE_ROLES: PlatformRole[] = [
+  "data_entry_operator",
+  "facility_manager",
+];
+
+const DASHBOARD_SOURCE_ROUTE_ROLES: PlatformRole[] = Array.from(
+  new Set<PlatformRole>([
+    ...ORG_MANAGEMENT_ROLES,
+    "facility_manager",
+    "carbon_accountant",
+    "sustainability_head",
+    "esg_manager",
+    "cbam_compliance_officer",
+  ]),
+);
+
+const DASHBOARD_REPORT_ROUTE_ROLES: PlatformRole[] = Array.from(
+  new Set<PlatformRole>([
+    ...SUSTAINABILITY_WORKSPACE_ROLES,
+    ...CARBON_ACCOUNTING_WORKSPACE_ROLES,
+    ...EXECUTIVE_WORKSPACE_ROLES,
+    ...ORG_MANAGEMENT_ROLES,
+    ...CONSULTANT_WORKSPACE_ROLES,
+  ]),
+);
+
 /**
  * Route rules are ordered from most specific to least specific so narrow paths
  * like `/dashboard/platform-superadmin` win before the general `/dashboard`
@@ -69,6 +95,21 @@ export const APP_ROUTE_ACCESS_RULES: RouteAccessRule[] = [
     prefix: "/dashboard/platform-superadmin",
     description: "Platform operations dashboard used by the control-plane roles.",
     allowedRoles: PLATFORM_CONTROL_ROLES,
+  },
+  {
+    prefix: "/dashboard/activity",
+    description: "Operational activity capture workspace for scoped data-entry roles.",
+    allowedRoles: DASHBOARD_ACTIVITY_ROUTE_ROLES,
+  },
+  {
+    prefix: "/dashboard/sources",
+    description: "Source register workspace for scoped facility, accounting, sustainability, and org-admin roles.",
+    allowedRoles: DASHBOARD_SOURCE_ROUTE_ROLES,
+  },
+  {
+    prefix: "/dashboard/reports",
+    description: "Annual emissions reporting workspace for approved strategy, accounting, and executive audiences.",
+    allowedRoles: DASHBOARD_REPORT_ROUTE_ROLES,
   },
   {
     prefix: "/org/users",

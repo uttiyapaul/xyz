@@ -1,10 +1,8 @@
-import { SkeletonPage } from "@/components/layout/SkeletonPage";
+import { AuditVaultView } from "@/features/audit/AuditVaultView";
 
+/**
+ * Thin route entry: the audit feature owns the assurance vault experience.
+ */
 export default function AuditVaultPage() {
-  return (
-    <SkeletonPage 
-      title="Assurance Vault" 
-      description="Immutable, cryptographically secured storage for your final assurance statements and verification signatures."
-    />
-  );
+  return <AuditVaultView />;
 }

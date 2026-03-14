@@ -16,7 +16,7 @@ import {
   isPlatformRole,
 } from "@/lib/auth/roles";
 import { buildSessionScope } from "@/lib/auth/sessionScope";
-import { createServerSupabaseClient } from "@/lib/supabase/client";
+import { createServerSupabaseClient } from "@/lib/supabase/admin";
 import { createRequestSupabaseClient } from "@/lib/supabase/server";
 import type {
   CurrentAdminContext,

@@ -1,0 +1,146 @@
+.page {
+  display: grid;
+  gap: 24px;
+  color: #fafaf8;
+}
+
+.header {
+  display: grid;
+  gap: 8px;
+}
+
+.eyebrow {
+  margin: 0;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #9ca3af;
+}
+
+.title {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  color: #fafaf8;
+}
+
+.subtitle {
+  margin: 0;
+  max-width: 720px;
+  font-size: 14px;
+  line-height: 1.7;
+  color: #9ca3af;
+}
+
+.panel {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  background: #0a1628;
+  overflow: hidden;
+}
+
+.alert {
+  padding: 16px 18px;
+  border: 1px solid rgba(255, 59, 48, 0.22);
+  border-radius: 12px;
+  background: rgba(255, 59, 48, 0.08);
+  font-size: 13px;
+  line-height: 1.6;
+  color: #fecaca;
+}
+
+.tableWrapper {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  min-width: 1000px;
+  border-collapse: collapse;
+}
+
+.headRow {
+  background: #050a14;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.headerCell {
+  padding: 16px 20px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #9ca3af;
+}
+
+.row {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.rowMuted {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.cell {
+  padding: 16px 20px;
+  vertical-align: top;
+  font-size: 13px;
+  color: #e5e7eb;
+}
+
+.monoCell {
+  font-family: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+  color: #9ca3af;
+}
+
+.timestampCell {
+  white-space: nowrap;
+}
+
+.userCell {
+  color: #6b7280;
+}
+
+.hashCell {
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #6b7280;
+}
+
+.emptyState {
+  padding: 40px;
+  text-align: center;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.badgeInsert {
+  background: rgba(48, 209, 88, 0.12);
+  color: #30d158;
+}
+
+.badgeUpdate {
+  background: rgba(245, 158, 11, 0.14);
+  color: #f59e0b;
+}
+
+.badgeDelete {
+  background: rgba(255, 59, 48, 0.12);
+  color: #ff3b30;
+}

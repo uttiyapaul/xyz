@@ -71,4 +71,10 @@ These may exist in a newer environment, but they are not present in the checked-
 - Read auth claims from JWT `app_metadata`, not `user_metadata`
 - Respect `scope_site_ids` and `scope_legal_entity_ids`
 - Treat `board_report_recipient` as non-interactive
-- Keep page entry files in `app/`; keep reusable UI in `components/`
+- Keep route files in `app/` only:
+- `page.tsx`
+- `layout.tsx`
+- `loading.tsx`
+- `error.tsx`
+- Keep reusable UI in `components/`
+- Do not keep duplicate screen implementations in both `app/` and `components/`

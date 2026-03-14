@@ -1,23 +1,24 @@
-// app/layout.tsx
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, JetBrains_Mono } from "next/font/google";
-import "./globals.css";
-import { Providers } from "./providers";
 import { headers } from "next/headers";
-import { Syne, DM_Sans } from 'next/font/google';
+import { DM_Sans, Geist, Geist_Mono, JetBrains_Mono, Syne } from "next/font/google";
+
+import "../styles/globals.css";
+import PageDataStreamClient from "@/components/landing/PageDataStreamClient";
+import { AppProviders } from "@/components/providers/AppProviders";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
-const syne          = Syne({ variable: "--font-syne", subsets: ["latin"] });          // headings on landing page
-const dmSans        = DM_Sans({ variable: "--font-dm-sans", subsets: ["latin"] });       // body text on landing page
-const jetbrainsMono = JetBrains_Mono({ variable: "--font-jetbrains-mono", subsets: ["latin"] });
-
-import PageDataStreamClient from "@/components/landing/PageDataStreamClient";
+const syne = Syne({ variable: "--font-syne", subsets: ["latin"] });
+const dmSans = DM_Sans({ variable: "--font-dm-sans", subsets: ["latin"] });
+const jetbrainsMono = JetBrains_Mono({
+  variable: "--font-jetbrains-mono",
+  subsets: ["latin"],
+});
 
 export const metadata: Metadata = {
   title: {
     default: "XYZ-For-Now",
-    template: "%s — XYZ-For-Now",
+    template: "%s - XYZ-For-Now",
   },
   description:
     "Enterprise carbon management for measurement, capture, and compliance. " +
@@ -47,15 +48,16 @@ export const viewport: Viewport = {
 export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  // nonce from proxy.ts for CSP — attach to any inline scripts/styles
+  // nonce from proxy.ts for CSP, attached to inline scripts and styles
   const nonce = (await headers()).get("x-nonce") ?? "";
 
   return (
     <html lang="en" data-nonce={nonce}>
-      <body className={`${geistSans.variable} ${geistMono.variable} ${syne.variable} ${dmSans.variable} ${jetbrainsMono.variable} antialiased`}>
-        {/* Providers handles Redux + Auth sync — AuthProvider removed (was duplicate) */}
-        <PageDataStreamClient /> 
-        <Providers>{children}</Providers>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} ${syne.variable} ${dmSans.variable} ${jetbrainsMono.variable} antialiased`}
+      >
+        <PageDataStreamClient />
+        <AppProviders>{children}</AppProviders>
       </body>
     </html>
   );

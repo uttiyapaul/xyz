@@ -7,7 +7,7 @@ This project already has a working website. Frontend cleanup must therefore be c
 - Align new work to the live database dump and approved role architecture.
 - Keep `proxy.ts` as the active request and auth guard.
 - Do not remove working routes unless a replacement route is ready in the same PR.
-- Treat legacy route-like files under `components/` as migration targets, not emergency deletions.
+- Remove dead route-like files under `components/` instead of keeping compatibility copies.
 
 ## Source Of Truth
 
@@ -71,10 +71,22 @@ These may exist in a newer environment, but they are not present in the checked-
 - Read auth claims from JWT `app_metadata`, not `user_metadata`
 - Respect `scope_site_ids` and `scope_legal_entity_ids`
 - Treat `board_report_recipient` as non-interactive
-- Keep route files in `app/` only:
+- Keep route-owned files in `app/` only:
 - `page.tsx`
 - `layout.tsx`
 - `loading.tsx`
 - `error.tsx`
+- `not-found.tsx`
+- metadata route files such as `manifest.ts`, `robots.txt`, and `favicon.ico`
+- Keep global styles in `styles/`
+- Keep feature code, server actions, and client views outside `app/`
 - Keep reusable UI in `components/`
-- Do not keep duplicate screen implementations in both `app/` and `components/`
+- Do not keep duplicate screen implementations in multiple folders just to preserve old paths
+
+## Code Documentation Rule
+
+- Every non-trivial file we add or materially change should include enough in-code explanation for the next developer or agent to understand its purpose quickly.
+- Add short descriptions for non-obvious components, server actions, utilities, and data flows.
+- Document important assumptions, scope rules, side effects, and why a decision exists when that context is not obvious from the code alone.
+- Prefer concise file headers, function descriptions, and targeted inline comments over long comment blocks.
+- Do not add filler comments that only restate the code literally; comments must explain intent, behavior, constraints, or integration details.

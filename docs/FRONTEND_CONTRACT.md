@@ -70,6 +70,7 @@ These may exist in a newer environment, but they are not present in the checked-
 - Use `role_id`, not `platform_role_id`
 - Read auth claims from JWT `app_metadata`, not `user_metadata`
 - Respect `scope_site_ids` and `scope_legal_entity_ids`
+- Prefer `useAuth().primaryOrgId`, `siteScopeIds`, and `legalEntityScopeIds` over ad hoc `orgIds[0]` lookups
 - Treat `board_report_recipient` as non-interactive
 - Keep route-owned files in `app/` only:
 - `page.tsx`
@@ -82,6 +83,7 @@ These may exist in a newer environment, but they are not present in the checked-
 - Keep feature code, server actions, and client views outside `app/`
 - Keep reusable UI in `components/`
 - Do not keep duplicate screen implementations in multiple folders just to preserve old paths
+- Do not use inline CSS via React `style` props; use CSS modules or shared stylesheet classes instead
 
 ## Code Documentation Rule
 

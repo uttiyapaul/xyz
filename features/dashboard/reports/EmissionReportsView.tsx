@@ -118,7 +118,7 @@ async function loadReportData(activeOrgId: string, requestedFyYear: string) {
 }
 
 export function EmissionReportsView() {
-  const { orgIds, isLoading: authLoading } = useAuth();
+  const { primaryOrgId, isLoading: authLoading } = useAuth();
   const [orgName, setOrgName] = useState("");
   const [fyYear, setFyYear] = useState(getCurrentFiscalYearLabel());
   const [availableYears, setAvailableYears] = useState<string[]>([getCurrentFiscalYearLabel()]);
@@ -130,7 +130,7 @@ export function EmissionReportsView() {
     avgTrustScore: null,
   });
   const [loading, setLoading] = useState(true);
-  const orgId = orgIds[0] ?? "";
+  const orgId = primaryOrgId ?? "";
 
   useEffect(() => {
     if (authLoading || !orgId) {

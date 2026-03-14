@@ -1,0 +1,252 @@
+/*
+ * Shared auth-screen styles for the route layout and login page.
+ * Keeping these classes together prevents auth UX updates from drifting across
+ * separate route files and avoids reintroducing inline styles.
+ */
+
+.shell {
+  min-height: 100vh;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #050508;
+  font-family: var(--font-body);
+}
+
+.brand {
+  margin-bottom: 40px;
+  text-align: center;
+}
+
+.brandMark {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 12px;
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.brandTitle {
+  color: #fafaf8;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+
+.brandTagline {
+  margin-top: 2px;
+  color: #6b7280;
+  font-size: 11px;
+  letter-spacing: 1.5px;
+}
+
+.card {
+  width: 100%;
+  max-width: 420px;
+  padding: 32px;
+  border: 1px solid #1a1a24;
+  border-radius: 12px;
+  background: #0d0d14;
+}
+
+.footerNote {
+  margin-top: 24px;
+  color: #374151;
+  font-size: 11px;
+  text-align: center;
+}
+
+.title {
+  margin: 0 0 6px;
+  color: #fafaf8;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.centeredState {
+  text-align: center;
+}
+
+.stateIcon {
+  margin-bottom: 16px;
+  color: #f59e0b;
+}
+
+.stateIconSuccess {
+  color: #22c55e;
+}
+
+.stateTitle {
+  margin: 0 0 12px;
+  color: #fafaf8;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.stateTitleSuccess {
+  color: #22c55e;
+}
+
+.stateBody {
+  color: #6b7280;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.stateBodyTight {
+  line-height: 1.7;
+}
+
+.inlineStrong {
+  color: #fafaf8;
+}
+
+.subtitle {
+  margin: 0 0 28px;
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.mutedNote {
+  margin-bottom: 28px;
+  color: #4b5563;
+  font-size: 12px;
+}
+
+.helperText {
+  margin-bottom: 20px;
+  color: #4b5563;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.errorBanner {
+  margin-bottom: 16px;
+  padding: 10px 14px;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: 6px;
+  background: rgba(239, 68, 68, 0.08);
+  color: #ef4444;
+  font-size: 13px;
+}
+
+.fieldGroup {
+  margin-bottom: 16px;
+}
+
+.fieldGroupCompact {
+  margin-bottom: 8px;
+}
+
+.fieldLabel {
+  display: block;
+  margin-bottom: 6px;
+  color: #6b7280;
+  font-size: 11px;
+  letter-spacing: 0.5px;
+}
+
+.passwordHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #1a1a24;
+  border-radius: 6px;
+  background: #07070e;
+  color: #fafaf8;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.input:focus {
+  border-color: #f59e0b;
+}
+
+.inputError {
+  border-color: #ef4444;
+}
+
+.forgotPasswordLink,
+.footerLink {
+  color: #f59e0b;
+  text-decoration: none;
+}
+
+.forgotPasswordLink:hover,
+.footerLink:hover {
+  text-decoration: underline;
+}
+
+.forgotPasswordLink {
+  font-size: 12px;
+}
+
+.submitButton {
+  width: 100%;
+  margin-top: 20px;
+  padding: 12px;
+  border: none;
+  border-radius: 6px;
+  background: #f59e0b;
+  color: #000;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: background 0.15s ease;
+}
+
+.submitButton:hover:not(:disabled) {
+  background: #f2a900;
+}
+
+.submitButtonLoading {
+  background: rgba(245, 158, 11, 0.7);
+}
+
+.submitButtonLocked {
+  background: #1a1a24;
+  color: #6b7280;
+}
+
+.submitButton:disabled {
+  cursor: not-allowed;
+}
+
+.linkButton {
+  display: inline-block;
+  margin-top: 24px;
+  padding: 10px 24px;
+  border-radius: 6px;
+  background: #f59e0b;
+  color: #000;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.linkButton:hover {
+  background: #f2a900;
+}
+
+.footerText {
+  margin-top: 20px;
+  color: #6b7280;
+  font-size: 13px;
+  text-align: center;
+}

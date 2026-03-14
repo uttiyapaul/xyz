@@ -26,8 +26,8 @@ const MOCK_ACTIVITY = [
 ];
 
 export function ClientAdminDashboard() {
-  const { orgIds } = useAuth();
-  const orgId = orgIds[0] || "Your Organization";
+  const { primaryOrgId } = useAuth();
+  const orgId = primaryOrgId || "Your Organization";
 
   return (
     <div style={{ padding: "32px", color: "#E8E6DE", fontFamily: "'DM Sans', sans-serif" }}>

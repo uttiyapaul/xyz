@@ -1,47 +1,22 @@
-// app/auth/layout.tsx
-"use client";
+import styles from "@/features/auth/AuthScreen.module.css";
 
+/**
+ * Auth routes share one shell so login, registration, and recovery pages stay
+ * visually consistent without duplicating inline layout styles.
+ */
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{
-      minHeight: "100vh", background: "#050508",
-      display: "flex", flexDirection: "column", alignItems: "center",
-      justifyContent: "center", padding: "24px",
-      fontFamily: "system-ui, -apple-system, sans-serif",
-    }}>
-      {/* Brand header */}
-      <div style={{ marginBottom: "40px", textAlign: "center" }}>
-        <div style={{
-          width: 48, height: 48, borderRadius: "12px",
-          background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.2)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          margin: "0 auto 12px", fontSize: "22px",
-        }}>
-          ◈
-        </div>
-        <div style={{ fontSize: "18px", fontWeight: "700", color: "#FAFAF8",
-          letterSpacing: "-0.3px" }}>
-          A2Z Carbon Solutions
-        </div>
-        <div style={{ fontSize: "11px", color: "#6B7280", marginTop: "2px",
-          letterSpacing: "1.5px" }}>
-          YOUR A2Z CARBON SOLUTIONS
-        </div>
+    <div className={styles.shell}>
+      <div className={styles.brand}>
+        <div className={styles.brandMark}>*</div>
+        <div className={styles.brandTitle}>A2Z Carbon Solutions</div>
+        <div className={styles.brandTagline}>YOUR A2Z CARBON SOLUTIONS</div>
       </div>
 
-      {/* Auth card */}
-      <div style={{
-        width: "100%", maxWidth: 420,
-        background: "#0D0D14", border: "1px solid #1A1A24",
-        borderRadius: "12px", padding: "32px",
-      }}>
-        {children}
-      </div>
+      <div className={styles.card}>{children}</div>
 
-      {/* Footer */}
-      <div style={{ marginTop: "24px", fontSize: "11px", color: "#374151",
-        textAlign: "center" }}>
-        © 2026 XYZ-for-now. A2Z Carbon Solutions. Built for secure, compliant carbon data workflows.
+      <div className={styles.footerNote}>
+        (c) 2026 XYZ-for-now. A2Z Carbon Solutions. Built for secure, compliant carbon data workflows.
       </div>
     </div>
   );

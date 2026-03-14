@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
+import shellStyles from "@/components/layout/ShellLayout.module.css";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { TopBar } from "@/components/layout/TopBar";
 import { ToastContainer } from "@/components/ui/Toast";
@@ -35,24 +36,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "#050508" }}>
+    <div className={shellStyles.root}>
       <Sidebar />
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
-        <div
-          style={{
-            background: "#7C3AED",
-            padding: "4px 20px",
-            fontSize: "11px",
-            color: "#fff",
-            fontWeight: "600",
-            letterSpacing: "1px",
-            textAlign: "center",
-          }}
-        >
-          PLATFORM ADMIN MODE
-        </div>
+      <div className={shellStyles.column}>
+        <div className={shellStyles.adminBanner}>PLATFORM ADMIN MODE</div>
         <TopBar />
-        <main style={{ flex: 1, overflow: "auto", padding: "24px" }}>{children}</main>
+        <main className={`${shellStyles.main} ${shellStyles.mainPadded}`}>{children}</main>
       </div>
       <ToastContainer />
     </div>

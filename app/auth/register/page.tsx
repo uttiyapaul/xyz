@@ -1,25 +1,24 @@
-// app/auth/register/page.tsx
 "use client";
+
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { Mail } from "lucide-react";
 import Link from "next/link";
+
+import styles from "@/features/auth/AuthScreen.module.css";
 import { supabase } from "@/lib/supabase/client";
 
-const inputStyle: React.CSSProperties = {
-  width: "100%", padding: "10px 12px",
-  background: "#07070E", border: "1px solid #1A1A24",
-  borderRadius: "6px", color: "#FAFAF8", fontSize: "14px", outline: "none",
-};
+function joinClasses(...classNames: Array<string | false | null | undefined>): string {
+  return classNames.filter(Boolean).join(" ");
+}
 
 export default function RegisterPage() {
-  const router = useRouter();
-  const [fullName, setFullName]   = useState("");
-  const [email, setEmail]         = useState("");
-  const [password, setPassword]   = useState("");
-  const [confirm, setConfirm]     = useState("");
-  const [loading, setLoading]     = useState(false);
-  const [error, setError]         = useState<string | null>(null);
-  const [success, setSuccess]     = useState(false);
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
 
   function validate(): string | null {
     if (!fullName.trim()) return "Full name is required";
@@ -33,8 +32,13 @@ export default function RegisterPage() {
 
   async function handleRegister() {
     setError(null);
-    const ve = validate();
-    if (ve) { setError(ve); return; }
+    const validationError = validate();
+
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
     setLoading(true);
 
     const { error: authError } = await supabase.auth.signUp({
@@ -44,23 +48,27 @@ export default function RegisterPage() {
     });
 
     setLoading(false);
-    if (authError) { setError(authError.message); return; }
+
+    if (authError) {
+      setError(authError.message);
+      return;
+    }
+
     setSuccess(true);
   }
 
   if (success) {
     return (
-      <div style={{ textAlign: "center" }}>
-        <div style={{ fontSize: "40px", marginBottom: "16px" }}>✉</div>
-        <h2 style={{ color: "#FAFAF8", fontSize: "18px", marginBottom: "12px" }}>
-          Check your email
-        </h2>
-        <p style={{ color: "#6B7280", fontSize: "13px", lineHeight: "1.6" }}>
-          We sent a confirmation link to <strong style={{ color: "#FAFAF8" }}>{email}</strong>.
-          Click it to activate your account.
+      <div className={styles.centeredState}>
+        <div className={styles.stateIcon}>
+          <Mail size={40} />
+        </div>
+        <h2 className={styles.stateTitle}>Check your email</h2>
+        <p className={styles.stateBody}>
+          We sent a confirmation link to <strong className={styles.inlineStrong}>{email}</strong>. Click it to
+          activate your account.
         </p>
-        <Link href="/auth/login" style={{ display: "inline-block", marginTop: "24px",
-          color: "#F59E0B", fontSize: "13px", textDecoration: "none" }}>
+        <Link href="/auth/login" className={styles.footerLink}>
           Back to sign in
         </Link>
       </div>
@@ -69,61 +77,83 @@ export default function RegisterPage() {
 
   return (
     <div>
-      <h1 style={{ fontSize: "20px", fontWeight: "700", color: "#FAFAF8",
-        margin: "0 0 6px" }}>
-        Create your account
-      </h1>
-      <p style={{ fontSize: "13px", color: "#6B7280", marginBottom: "28px" }}>
-        Request access to A2Z Carbon Solutions
-      </p>
+      <h1 className={styles.title}>Create your account</h1>
+      <p className={styles.subtitle}>Request access to A2Z Carbon Solutions</p>
 
-      {error && (
-        <div style={{ padding: "10px 14px", background: "rgba(239,68,68,0.08)",
-          border: "1px solid rgba(239,68,68,0.25)", borderRadius: "6px",
-          marginBottom: "16px", fontSize: "13px", color: "#EF4444" }}>
-          {error}
-        </div>
-      )}
+      {error && <div className={styles.errorBanner}>{error}</div>}
 
       {[
-        { label: "FULL NAME", value: fullName, set: setFullName, type: "text", placeholder: "Jane Smith", ac: "name" },
-        { label: "EMAIL ADDRESS", value: email, set: setEmail, type: "email", placeholder: "jane@company.com", ac: "email" },
-        { label: "PASSWORD", value: password, set: setPassword, type: "password", placeholder: "Min 8 chars, 1 uppercase, 1 number", ac: "new-password" },
-        { label: "CONFIRM PASSWORD", value: confirm, set: setConfirm, type: "password", placeholder: "Repeat password", ac: "new-password" },
-      ].map(({ label, value, set, type, placeholder, ac }) => (
-        <div key={label} style={{ marginBottom: "16px" }}>
-          <label style={{ fontSize: "11px", color: "#6B7280", display: "block",
-            marginBottom: "6px", letterSpacing: "0.5px" }}>
-            {label}
-          </label>
-          <input type={type} value={value} onChange={e => set(e.target.value)}
-            placeholder={placeholder} autoComplete={ac} disabled={loading}
-            onKeyDown={e => e.key === "Enter" && handleRegister()}
-            style={inputStyle} />
+        {
+          label: "FULL NAME",
+          value: fullName,
+          setValue: setFullName,
+          type: "text",
+          placeholder: "Jane Smith",
+          autoComplete: "name",
+        },
+        {
+          label: "EMAIL ADDRESS",
+          value: email,
+          setValue: setEmail,
+          type: "email",
+          placeholder: "jane@company.com",
+          autoComplete: "email",
+        },
+        {
+          label: "PASSWORD",
+          value: password,
+          setValue: setPassword,
+          type: "password",
+          placeholder: "Min 8 chars, 1 uppercase, 1 number",
+          autoComplete: "new-password",
+        },
+        {
+          label: "CONFIRM PASSWORD",
+          value: confirm,
+          setValue: setConfirm,
+          type: "password",
+          placeholder: "Repeat password",
+          autoComplete: "new-password",
+        },
+      ].map(({ label, value, setValue, type, placeholder, autoComplete }) => (
+        <div key={label} className={styles.fieldGroup}>
+          <label className={styles.fieldLabel}>{label}</label>
+          <input
+            type={type}
+            value={value}
+            onChange={(event) => setValue(event.target.value)}
+            placeholder={placeholder}
+            autoComplete={autoComplete}
+            disabled={loading}
+            onKeyDown={(event) => event.key === "Enter" && handleRegister()}
+            className={joinClasses(styles.input, error && !value && styles.inputError)}
+          />
         </div>
       ))}
 
-      <p style={{ fontSize: "11px", color: "#4B5563", marginBottom: "20px",
-        lineHeight: "1.5" }}>
+      <p className={styles.helperText}>
         By registering you agree to our{" "}
-        <Link href="/privacy" style={{ color: "#F59E0B", textDecoration: "none" }}>Privacy Policy</Link>
-        {" "}and{" "}
-        <Link href="/terms" style={{ color: "#F59E0B", textDecoration: "none" }}>Terms of Service</Link>.
+        <Link href="/privacy" className={styles.footerLink}>
+          Privacy Policy
+        </Link>{" "}
+        and{" "}
+        <Link href="/terms" className={styles.footerLink}>
+          Terms of Service
+        </Link>
+        .
       </p>
 
-      <button onClick={handleRegister} disabled={loading} style={{
-        width: "100%", padding: "12px",
-        background: loading ? "rgba(245,158,11,0.7)" : "#F59E0B",
-        border: "none", borderRadius: "6px", color: "#000",
-        fontSize: "14px", fontWeight: "600",
-        cursor: loading ? "not-allowed" : "pointer",
-      }}>
-        {loading ? "Creating account…" : "Create account"}
+      <button
+        onClick={handleRegister}
+        disabled={loading}
+        className={joinClasses(styles.submitButton, loading && styles.submitButtonLoading)}
+      >
+        {loading ? "Creating account..." : "Create account"}
       </button>
 
-      <p style={{ marginTop: "20px", fontSize: "13px", color: "#6B7280", textAlign: "center" }}>
+      <p className={styles.footerText}>
         Already have an account?{" "}
-        <Link href="/auth/login" style={{ color: "#F59E0B", textDecoration: "none" }}>
+        <Link href="/auth/login" className={styles.footerLink}>
           Sign in
         </Link>
       </p>

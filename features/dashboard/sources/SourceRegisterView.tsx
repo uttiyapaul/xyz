@@ -3,6 +3,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 
 import { useAuth } from "@/context/AuthContext";
+import { filterRowsByScopeId } from "@/lib/auth/sessionScope";
 import { supabase } from "@/lib/supabase/client";
 
 /**
@@ -61,7 +62,7 @@ function buildFieldKey(sourceName: string, scope: number): string {
 }
 
 export function SourceRegisterView() {
-  const { orgIds, user, isLoading: authLoading } = useAuth();
+  const { primaryOrgId, siteScopeIds, user, isLoading: authLoading } = useAuth();
   const [sites, setSites] = useState<Site[]>([]);
   const [sources, setSources] = useState<EmissionSource[]>([]);
   const [form, setForm] = useState({
@@ -72,7 +73,7 @@ export function SourceRegisterView() {
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const orgId = orgIds[0] ?? "";
+  const orgId = primaryOrgId ?? "";
 
   useEffect(() => {
     if (authLoading || !orgId) {
@@ -108,12 +109,17 @@ export function SourceRegisterView() {
         throw sourceResponse.error;
       }
 
-      const nextSites = (siteResponse.data ?? []) as Site[];
+      const nextSites = filterRowsByScopeId((siteResponse.data ?? []) as Site[], siteScopeIds, (site) => site.id);
       const siteMap = new Map(nextSites.map((site) => [site.id, site]));
-      const nextSources = ((sourceResponse.data ?? []) as SourceRow[]).map((source) => ({
-        ...source,
-        site_name: source.site_id ? siteMap.get(source.site_id)?.site_name ?? "Unassigned" : "Unassigned",
-      }));
+      const nextSources = filterRowsByScopeId(
+        ((sourceResponse.data ?? []) as SourceRow[]).map((source) => ({
+          ...source,
+          site_name: source.site_id ? siteMap.get(source.site_id)?.site_name ?? "Unassigned" : "Unassigned",
+        })),
+        siteScopeIds,
+        (source) => source.site_id,
+        { includeRowsWithoutScope: true },
+      );
 
       setSites(nextSites);
       setSources(nextSources);

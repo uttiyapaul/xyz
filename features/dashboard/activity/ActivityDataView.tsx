@@ -3,6 +3,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 
 import { useAuth } from "@/context/AuthContext";
+import { filterRowsByScopeId } from "@/lib/auth/sessionScope";
 import { supabase } from "@/lib/supabase/client";
 
 /**
@@ -144,7 +145,7 @@ function getDefaultReportingDate(): string {
 }
 
 export function ActivityDataView() {
-  const { orgIds, user, isLoading: authLoading } = useAuth();
+  const { primaryOrgId, siteScopeIds, user, isLoading: authLoading } = useAuth();
   const [sources, setSources] = useState<EmissionSource[]>([]);
   const [activities, setActivities] = useState<ActivityRecord[]>([]);
   const [form, setForm] = useState({
@@ -155,7 +156,7 @@ export function ActivityDataView() {
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const orgId = orgIds[0] ?? "";
+  const orgId = primaryOrgId ?? "";
 
   useEffect(() => {
     if (authLoading || !orgId) {
@@ -202,11 +203,21 @@ export function ActivityDataView() {
         throw activityResponse.error;
       }
 
-      const sites = (siteResponse.data ?? []) as Site[];
+      const sites = filterRowsByScopeId((siteResponse.data ?? []) as Site[], siteScopeIds, (site) => site.id);
       const siteMap = new Map(sites.map((site) => [site.id, site]));
-      const sourceRows = (sourceResponse.data ?? []) as EmissionSource[];
+      const sourceRows = filterRowsByScopeId(
+        (sourceResponse.data ?? []) as EmissionSource[],
+        siteScopeIds,
+        (source) => source.site_id,
+        { includeRowsWithoutScope: true },
+      );
       const sourceMap = new Map(sourceRows.map((source) => [source.id, source]));
-      const activityRows = (activityResponse.data ?? []) as ActivityRow[];
+      const activityRows = filterRowsByScopeId(
+        (activityResponse.data ?? []) as ActivityRow[],
+        siteScopeIds,
+        (activity) => activity.facility_id,
+        { includeRowsWithoutScope: true },
+      );
 
       setSources(sourceRows);
       setActivities(

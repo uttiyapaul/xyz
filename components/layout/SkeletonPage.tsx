@@ -1,70 +1,68 @@
-import React from "react";
-import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import { ArrowLeft, Zap } from "lucide-react";
+
+import styles from "@/components/layout/SkeletonPage.module.css";
 
 interface SkeletonPageProps {
   title: string;
   description: string;
 }
 
+/**
+ * SkeletonPage keeps unfinished modules routable without pretending the live
+ * DB-backed implementation exists yet. The styling lives in CSS so placeholder
+ * routes follow the no-inline-styles rule too.
+ */
 export function SkeletonPage({ title, description }: SkeletonPageProps) {
   return (
-    <div style={{ padding: "32px", color: "#E8E6DE", fontFamily: "system-ui", width: "100%", maxWidth: "1200px", margin: "0 auto" }}>
-      
-      {/* Header */}
-      <div style={{ marginBottom: "32px", borderBottom: "1px solid #1A1A24", paddingBottom: "24px" }}>
-        <Link href="/dashboard" style={{ display: "inline-flex", alignItems: "center", gap: "8px", color: "#9CA3AF", textDecoration: "none", fontSize: "14px", marginBottom: "24px", transition: "color 0.2s" }} className="hover:text-white">
-          <ArrowLeft size={16} /> Back to Dashboard
+    <div className={styles.page}>
+      <div className={styles.header}>
+        <Link href="/dashboard" className={styles.backLink}>
+          <ArrowLeft size={16} />
+          Back to Dashboard
         </Link>
-        <h1 style={{ fontSize: "28px", fontWeight: "600", color: "#FAFAF8", margin: "0 0 12px 0" }}>{title}</h1>
-        <p style={{ fontSize: "15px", color: "#9CA3AF", margin: 0, maxWidth: "600px", lineHeight: "1.5" }}>{description}</p>
+        <h1 className={styles.title}>{title}</h1>
+        <p className={styles.description}>{description}</p>
       </div>
 
-      {/* Content Skeleton */}
-      <div style={{ background: "#0A0A0F", border: "1px solid #1A1A24", borderRadius: "12px", overflow: "hidden" }}>
-        {/* Warning Banner */}
-        <div style={{ background: "rgba(245, 158, 11, 0.05)", borderBottom: "1px solid rgba(245, 158, 11, 0.1)", padding: "16px 24px", display: "flex", alignItems: "center", gap: "12px" }}>
-          <span style={{ color: "#F59E0B" }}>⚡</span>
-          <span style={{ color: "#D97706", fontSize: "14px", fontWeight: "500" }}>Live Database Connection Pending</span>
+      <div className={styles.card}>
+        <div className={styles.banner}>
+          <span className={styles.bannerIcon}>
+            <Zap size={16} />
+          </span>
+          <span className={styles.bannerText}>Live Database Connection Pending</span>
         </div>
 
-        {/* Mock UI Structure */}
-        <div style={{ padding: "32px" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "32px", animation: "pulse 2s infinite cubic-bezier(0.4, 0, 0.6, 1)" }}>
-            <div style={{ display: "flex", gap: "16px" }}>
-              <div style={{ height: "36px", width: "200px", background: "#1A1A24", borderRadius: "6px" }}></div>
-              <div style={{ height: "36px", width: "120px", background: "#1A1A24", borderRadius: "6px" }}></div>
+        <div className={styles.content}>
+          <div className={styles.toolbar}>
+            <div className={styles.toolbarLeft}>
+              <div className={`${styles.skeletonBlock} ${styles.blockWide}`}></div>
+              <div className={`${styles.skeletonBlock} ${styles.blockSmall}`}></div>
             </div>
-            <div style={{ height: "36px", width: "150px", background: "#1A1A24", borderRadius: "6px" }}></div>
+            <div className={`${styles.skeletonBlock} ${styles.blockMedium}`}></div>
           </div>
 
-          <div style={{ border: "1px solid #1A1A24", borderRadius: "8px", animation: "pulse 2s infinite cubic-bezier(0.4, 0, 0.6, 1)" }}>
-            <div style={{ borderBottom: "1px solid #1A1A24", padding: "16px 24px", display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr 1fr", gap: "16px" }}>
-              <div style={{ height: "16px", background: "#27273A", borderRadius: "4px" }}></div>
-              <div style={{ height: "16px", background: "#27273A", borderRadius: "4px" }}></div>
-              <div style={{ height: "16px", background: "#27273A", borderRadius: "4px" }}></div>
-              <div style={{ height: "16px", background: "#27273A", borderRadius: "4px" }}></div>
-              <div style={{ height: "16px", background: "#27273A", borderRadius: "4px" }}></div>
+          <div className={styles.table}>
+            <div className={styles.tableHeader}>
+              <div className={styles.lineHeader}></div>
+              <div className={styles.lineHeader}></div>
+              <div className={styles.lineHeader}></div>
+              <div className={styles.lineHeader}></div>
+              <div className={styles.lineHeader}></div>
             </div>
-            {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} style={{ borderBottom: i !== 5 ? "1px solid #1A1A24" : "none", padding: "20px 24px", display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr 1fr", gap: "16px" }}>
-                <div style={{ height: "16px", width: "80%", background: "#1A1A24", borderRadius: "4px" }}></div>
-                <div style={{ height: "16px", width: "40%", background: "#1A1A24", borderRadius: "4px" }}></div>
-                <div style={{ height: "16px", width: "60%", background: "#1A1A24", borderRadius: "4px" }}></div>
-                <div style={{ height: "16px", width: "50%", background: "#1A1A24", borderRadius: "4px" }}></div>
-                <div style={{ height: "16px", width: "70%", background: "#1A1A24", borderRadius: "4px" }}></div>
+
+            {[1, 2, 3, 4, 5].map((row) => (
+              <div key={row} className={styles.tableRow}>
+                <div className={`${styles.line} ${styles.line80}`}></div>
+                <div className={`${styles.line} ${styles.line40}`}></div>
+                <div className={`${styles.line} ${styles.line60}`}></div>
+                <div className={`${styles.line} ${styles.line50}`}></div>
+                <div className={`${styles.line} ${styles.line70}`}></div>
               </div>
             ))}
           </div>
         </div>
       </div>
-
-      <style>{`
-        @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: .4; }
-        }
-      `}</style>
     </div>
   );
 }

@@ -2,7 +2,6 @@
  * jest.config.ts
  */
 
-import '@testing-library/jest-dom'
 import type { Config } from "jest";
 
 const config: Config = {
@@ -26,7 +25,7 @@ const config: Config = {
     "**/__tests__/**/*.test.ts",
     "**/__tests__/**/*.test.tsx",
   ],
-  setupFiles: ["<rootDir>/jest.setup.ts"],
+  setupFilesAfterEnv: ["<rootDir>/jest.setup.ts"],
   collectCoverageFrom: [
     "store/**/*.ts",
     "services/**/*.ts",

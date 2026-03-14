@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 
+import {
+  getUserPrimaryRole,
+  type PlatformRole,
+} from "@/lib/auth/roles";
+import { canRoleAccessPath, getRouteAccessRule } from "@/lib/auth/routeAccess";
+
 /**
  * A2Z Carbon Solutions — request proxy
  *
@@ -201,6 +207,7 @@ export async function proxy(req: NextRequest): Promise<NextResponse> {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
   let isAuthed = false;
+  let primaryRole: PlatformRole | null = null;
 
   if (supabaseUrl && supabaseKey) {
     const supabase = createServerClient(supabaseUrl, supabaseKey, {
@@ -229,12 +236,13 @@ export async function proxy(req: NextRequest): Promise<NextResponse> {
 
     const { data: { user } } = await supabase.auth.getUser();
     isAuthed = !!user;
+    primaryRole = user ? getUserPrimaryRole(user) : null;
 
     // Set user context headers for downstream use
     if (user) {
       response.headers.set("x-user-id", user.id);
       response.headers.set("x-user-email", user.email ?? "");
-      response.headers.set("x-user-role", user.role ?? "authenticated");
+      response.headers.set("x-user-role", primaryRole ?? user.role ?? "authenticated");
     }
   }
 
@@ -249,6 +257,12 @@ export async function proxy(req: NextRequest): Promise<NextResponse> {
     const loginUrl = new URL("/auth/login", req.url);
     loginUrl.searchParams.set("redirect", pathname);
     return NextResponse.redirect(loginUrl);
+  }
+
+  const matchedRouteRule = getRouteAccessRule(pathname);
+
+  if (isAuthed && primaryRole && matchedRouteRule && !canRoleAccessPath(primaryRole, pathname)) {
+    return NextResponse.redirect(new URL("/dashboard", req.url));
   }
 
   // Redirect authenticated users away from auth pages

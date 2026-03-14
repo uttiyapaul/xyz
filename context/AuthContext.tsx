@@ -10,6 +10,7 @@ import {
   isPlatformRole,
   type PlatformRole,
 } from "@/lib/auth/roles";
+import { buildSessionScope } from "@/lib/auth/sessionScope";
 import { supabase } from "@/lib/supabase/client";
 
 /**
@@ -18,6 +19,8 @@ import { supabase } from "@/lib/supabase/client";
  * Why this file matters:
  * - `session.user.app_metadata` can lag behind the live JWT claims.
  * - The dashboard and sidebar need a typed role list from the token.
+ * - Live views need normalized org/site/legal-entity scope without manually
+ *   reaching for `orgIds[0]` in every component.
  * - Keeping that normalization in one place prevents every component from
  *   decoding JWT state differently.
  */
@@ -26,6 +29,9 @@ interface AuthState {
   user: User | null;
   session: Session | null;
   orgIds: string[];
+  primaryOrgId: string | null;
+  siteScopeIds: string[];
+  legalEntityScopeIds: string[];
   roles: PlatformRole[];
   isPlatformAdmin: boolean;
   isConsultant: boolean;
@@ -36,6 +42,9 @@ const defaultState: AuthState = {
   user: null,
   session: null,
   orgIds: [],
+  primaryOrgId: null,
+  siteScopeIds: [],
+  legalEntityScopeIds: [],
   roles: [],
   isPlatformAdmin: false,
   isConsultant: false,
@@ -87,9 +96,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     const patchedMeta = patchedUser.app_metadata ?? {};
+    const sessionScope = buildSessionScope(patchedMeta);
     const roles = extractRoles(patchedMeta.roles, patchedMeta.primary_role);
     const fallbackRoles = roles.length > 0 ? roles : getUserRoles(patchedUser);
-    const orgIds = Array.isArray(patchedMeta.org_ids) ? (patchedMeta.org_ids as string[]) : [];
 
     const primaryRole = getUserPrimaryRole(patchedUser);
     const isPlatformAdmin =
@@ -103,7 +112,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return {
       user: patchedUser,
       session,
-      orgIds,
+      orgIds: sessionScope.orgIds,
+      primaryOrgId: sessionScope.primaryOrgId,
+      siteScopeIds: sessionScope.siteScopeIds,
+      legalEntityScopeIds: sessionScope.legalEntityScopeIds,
       roles: fallbackRoles,
       isPlatformAdmin,
       isConsultant,

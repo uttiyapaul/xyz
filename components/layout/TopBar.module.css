@@ -1,0 +1,163 @@
+/*
+ * Topbar styles for account controls and dropdown actions.
+ * The menu now relies on hover/focus classes instead of mutating inline styles.
+ */
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  border-bottom: 1px solid #111120;
+  background: #07070e;
+}
+
+.left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.iconButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border: none;
+  background: none;
+  color: #6b7280;
+  cursor: pointer;
+}
+
+.iconButton:hover {
+  color: #fafaf8;
+}
+
+.menu {
+  position: relative;
+}
+
+.menuButton {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.menuButton:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: 999px;
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.meta {
+  text-align: left;
+}
+
+.name {
+  max-width: 140px;
+  overflow: hidden;
+  color: #fafaf8;
+  font-size: 13px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.role {
+  color: #6b7280;
+  font-size: 10px;
+  text-transform: capitalize;
+}
+
+.chevron {
+  color: #6b7280;
+}
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+}
+
+.dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 50;
+  min-width: 180px;
+  overflow: hidden;
+  border: 1px solid #1a1a24;
+  border-radius: 8px;
+  background: #0d0d14;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.dropdownHeader {
+  padding: 12px 16px;
+  border-bottom: 1px solid #1a1a24;
+}
+
+.email {
+  overflow: hidden;
+  color: #fafaf8;
+  font-size: 12px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dropdownRole {
+  margin-top: 2px;
+  color: #6b7280;
+  font-size: 10px;
+}
+
+.dropdownAction {
+  display: block;
+  width: 100%;
+  padding: 10px 16px;
+  border: none;
+  background: none;
+  color: #d1d5db;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dropdownAction:hover {
+  background: #111120;
+}
+
+.footer {
+  border-top: 1px solid #1a1a24;
+}
+
+.dangerAction {
+  color: #ef4444;
+}
+
+.disabledAction {
+  color: #6b7280;
+  cursor: not-allowed;
+}

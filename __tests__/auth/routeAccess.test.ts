@@ -1,0 +1,53 @@
+/**
+ * __tests__/auth/routeAccess.test.ts
+ *
+ * Focused coverage for the frontend route-access contract.
+ * These tests protect the shared matrix used by both the request proxy and the
+ * sidebar so future refactors do not silently reopen or hide routes.
+ */
+
+import {
+  canAnyRoleAccessPath,
+  canRoleAccessPath,
+  getRouteAccessRule,
+} from "@/lib/auth/routeAccess";
+import type { PlatformRole } from "@/lib/auth/roles";
+
+describe("route access matrix", () => {
+  it("prefers the most specific dashboard rule before the generic dashboard fallback", () => {
+    expect(getRouteAccessRule("/dashboard/platform-superadmin")?.prefix).toBe(
+      "/dashboard/platform-superadmin",
+    );
+  });
+
+  it("allows platform control roles to bypass route-specific workspace fences", () => {
+    expect(canRoleAccessPath("platform_superadmin", "/admin/logs")).toBe(true);
+    expect(canRoleAccessPath("platform_admin", "/consulting/portfolio")).toBe(true);
+  });
+
+  it("keeps client admins inside organization management and out of platform admin routes", () => {
+    expect(canRoleAccessPath("client_admin", "/org/users")).toBe(true);
+    expect(canRoleAccessPath("client_admin", "/admin/logs")).toBe(false);
+  });
+
+  it("treats api key managers as integration operators rather than org administrators", () => {
+    expect(canRoleAccessPath("api_key_manager", "/org/integrations")).toBe(true);
+    expect(canRoleAccessPath("api_key_manager", "/org/users")).toBe(false);
+  });
+
+  it("blocks non-interactive roles from live workspaces while keeping the dashboard notice reachable", () => {
+    expect(canRoleAccessPath("board_report_recipient", "/dashboard")).toBe(true);
+    expect(canRoleAccessPath("board_report_recipient", "/finance/reports")).toBe(false);
+  });
+
+  it("keeps lifecycle roles on the dashboard notice instead of operational tools", () => {
+    expect(canRoleAccessPath("pending_approval", "/dashboard")).toBe(true);
+    expect(canRoleAccessPath("pending_approval", "/data/upload")).toBe(false);
+  });
+
+  it("allows any granted role on a multi-role account to unlock a route", () => {
+    const roles: PlatformRole[] = ["api_key_manager", "client_admin"];
+
+    expect(canAnyRoleAccessPath(roles, "/org/users")).toBe(true);
+  });
+});

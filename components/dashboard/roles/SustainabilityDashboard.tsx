@@ -1,7 +1,6 @@
 // components/dashboard/roles/SustainabilityDashboard.tsx
 "use client";
 
-import { useAuth } from "@/context/AuthContext";
 import { PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from "recharts";
 import { Calendar, Euro, Target, AlertTriangle, FileCheck } from "lucide-react";
 
@@ -21,8 +20,6 @@ const TRAJECTORY_DATA = [
 ];
 
 export function SustainabilityDashboard() {
-  const { orgIds } = useAuth();
-
   return (
     <div style={{ padding: "32px", color: "#E8E6DE", fontFamily: "'DM Sans', sans-serif" }}>
       <div style={{ marginBottom: "32px", display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>

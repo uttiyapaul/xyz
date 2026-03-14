@@ -5,23 +5,16 @@ import type { Session } from "@supabase/supabase-js";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
+import styles from "@/features/auth/AuthScreen.module.css";
 import { isEmailVerified } from "@/lib/auth/roles";
 import { supabase } from "@/lib/supabase/client";
 
 const MAX_ATTEMPTS = 5;
 const LOCKOUT_MS = 15 * 60 * 1000;
 
-const inputStyle: React.CSSProperties = {
-  width: "100%",
-  padding: "10px 12px",
-  background: "#07070E",
-  border: "1px solid #1A1A24",
-  borderRadius: "6px",
-  color: "#FAFAF8",
-  fontSize: "14px",
-  outline: "none",
-  transition: "border-color 0.15s",
-};
+function joinClasses(...classNames: Array<string | false | null | undefined>): string {
+  return classNames.filter(Boolean).join(" ");
+}
 
 /**
  * Login needs both submit-time auth and mount-time session recovery.
@@ -75,7 +68,7 @@ export default function LoginPage() {
       const redirect = safeRedirect(searchParams.get("redirect"));
       window.location.replace(redirect !== "/dashboard" ? redirect : "/dashboard");
     },
-    [router, searchParams]
+    [router, searchParams],
   );
 
   useEffect(() => {
@@ -138,7 +131,7 @@ export default function LoginPage() {
         setError("Too many failed attempts. Account locked for 15 minutes.");
       } else {
         setError(
-          `Invalid credentials. ${MAX_ATTEMPTS - newAttempts} attempt${MAX_ATTEMPTS - newAttempts !== 1 ? "s" : ""} remaining.`
+          `Invalid credentials. ${MAX_ATTEMPTS - newAttempts} attempt${MAX_ATTEMPTS - newAttempts !== 1 ? "s" : ""} remaining.`,
         );
       }
       return;
@@ -160,50 +153,19 @@ export default function LoginPage() {
   };
 
   const isLocked = lockedUntil !== null && Date.now() < lockedUntil;
+  const emailHasError =
+    error !== null && (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email));
+  const passwordHasError = error !== null && (!password || password.length < 6);
 
   return (
     <div>
-      <h1
-        style={{
-          fontSize: "20px",
-          fontWeight: "700",
-          color: "#FAFAF8",
-          marginBottom: "6px",
-          margin: "0 0 6px",
-        }}
-      >
-        Sign in to your account
-      </h1>
-      <p style={{ fontSize: "13px", color: "#6B7280", marginBottom: "28px" }}>Your A2Z Carbon Solutions</p>
+      <h1 className={styles.title}>Sign in to your account</h1>
+      <p className={styles.subtitle}>Your A2Z Carbon Solutions</p>
 
-      {error && (
-        <div
-          style={{
-            padding: "10px 14px",
-            background: "rgba(239,68,68,0.08)",
-            border: "1px solid rgba(239,68,68,0.25)",
-            borderRadius: "6px",
-            marginBottom: "16px",
-            fontSize: "13px",
-            color: "#EF4444",
-          }}
-        >
-          {error}
-        </div>
-      )}
+      {error && <div className={styles.errorBanner}>{error}</div>}
 
-      <div style={{ marginBottom: "16px" }}>
-        <label
-          style={{
-            fontSize: "11px",
-            color: "#6B7280",
-            display: "block",
-            marginBottom: "6px",
-            letterSpacing: "0.5px",
-          }}
-        >
-          EMAIL ADDRESS
-        </label>
+      <div className={styles.fieldGroup}>
+        <label className={styles.fieldLabel}>EMAIL ADDRESS</label>
         <input
           type="email"
           value={email}
@@ -213,30 +175,16 @@ export default function LoginPage() {
           autoComplete="email"
           autoFocus
           disabled={loading || isLocked}
-          style={{ ...inputStyle, borderColor: error && !email ? "#EF4444" : "#1A1A24" }}
+          className={joinClasses(styles.input, emailHasError && styles.inputError)}
           aria-label="Email address"
           aria-required="true"
         />
       </div>
 
-      <div style={{ marginBottom: "8px" }}>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: "6px",
-          }}
-        >
-          <label style={{ fontSize: "11px", color: "#6B7280", letterSpacing: "0.5px" }}>PASSWORD</label>
-          <Link
-            href="/auth/forgot-password"
-            style={{
-              fontSize: "12px",
-              color: "#F59E0B",
-              textDecoration: "none",
-            }}
-          >
+      <div className={joinClasses(styles.fieldGroup, styles.fieldGroupCompact)}>
+        <div className={styles.passwordHeader}>
+          <label className={styles.fieldLabel}>PASSWORD</label>
+          <Link href="/auth/forgot-password" className={styles.forgotPasswordLink}>
             Forgot password?
           </Link>
         </div>
@@ -248,7 +196,7 @@ export default function LoginPage() {
           placeholder="........"
           autoComplete="current-password"
           disabled={loading || isLocked}
-          style={inputStyle}
+          className={joinClasses(styles.input, passwordHasError && styles.inputError)}
           aria-label="Password"
           aria-required="true"
         />
@@ -257,34 +205,19 @@ export default function LoginPage() {
       <button
         onClick={handleLogin}
         disabled={loading || isLocked}
-        style={{
-          width: "100%",
-          padding: "12px",
-          background: isLocked ? "#1A1A24" : loading ? "rgba(245,158,11,0.7)" : "#F59E0B",
-          border: "none",
-          borderRadius: "6px",
-          color: isLocked ? "#6B7280" : "#000",
-          fontSize: "14px",
-          fontWeight: "600",
-          cursor: loading || isLocked ? "not-allowed" : "pointer",
-          marginTop: "20px",
-          transition: "background 0.15s",
-        }}
+        className={joinClasses(
+          styles.submitButton,
+          loading && styles.submitButtonLoading,
+          isLocked && styles.submitButtonLocked,
+        )}
         aria-label="Sign in"
       >
         {loading ? "Signing in..." : isLocked ? "Account locked" : "Sign in"}
       </button>
 
-      <p
-        style={{
-          marginTop: "20px",
-          fontSize: "13px",
-          color: "#6B7280",
-          textAlign: "center",
-        }}
-      >
+      <p className={styles.footerText}>
         Don&apos;t have an account?{" "}
-        <Link href="/auth/register" style={{ color: "#F59E0B", textDecoration: "none" }}>
+        <Link href="/auth/register" className={styles.footerLink}>
           Request access
         </Link>
       </p>

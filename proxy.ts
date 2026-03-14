@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createServerClient } from "@supabase/ssr";
+import { createServerClient, type CookieOptions } from "@supabase/ssr";
 
 /**
- * A2Z Carbon Solutions — middleware.ts
+ * A2Z Carbon Solutions — request proxy
  *
  * Executed at the Edge before every request. Implements:
  *   1. CSP Nonce generation (per-request, crypto-random)
@@ -83,7 +83,7 @@ function generateNonce(): string {
 // Simple double-submit cookie pattern:
 //   - Server sets __csrf_token cookie (httpOnly=false so JS can read it)
 //   - Client sends it back as X-CSRF-Token header
-//   - Middleware validates they match
+//   - Proxy validates they match
 // ---------------------------------------------------------------------------
 function validateCsrf(req: NextRequest): boolean {
   if (!API_WRITE_METHODS.has(req.method)) return true;         // GET/HEAD/OPTIONS are safe
@@ -135,7 +135,7 @@ function generateTraceId(): string {
 }
 
 // ---------------------------------------------------------------------------
-// Main middleware
+// Main request proxy
 // ---------------------------------------------------------------------------
 export async function proxy(req: NextRequest): Promise<NextResponse> {
   const { pathname } = req.nextUrl;
@@ -179,7 +179,7 @@ export async function proxy(req: NextRequest): Promise<NextResponse> {
   }
 
   // 4. Bootstrap response
-  let response = NextResponse.next({
+  const response = NextResponse.next({
     request: {
       headers: new Headers({
         ...Object.fromEntries(req.headers.entries()),
@@ -198,7 +198,7 @@ export async function proxy(req: NextRequest): Promise<NextResponse> {
     const supabase = createServerClient(supabaseUrl, supabaseKey, {
       cookies: {
         getAll: () => req.cookies.getAll(),
-        setAll: (cookiesToSet: { name: string; value: string; options: any }[]) => {
+        setAll: (cookiesToSet: { name: string; value: string; options: CookieOptions }[]) => {
           cookiesToSet.forEach(({ name, value, options }) => {
             req.cookies.set(name, value);
             response.cookies.set(name, value, {

@@ -12,7 +12,7 @@ const IS_PROD = process.env.NODE_ENV === "production";
 
 // ---------------------------------------------------------------------------
 // CSP Directive builder
-// Nonce is injected at runtime via middleware — here we define the policy.
+// Nonce is injected at runtime via proxy.ts — here we define the policy.
 // ---------------------------------------------------------------------------
 function buildCspHeader(nonce?: string): string {
   const n = nonce ? `'nonce-${nonce}'` : "";
@@ -107,7 +107,7 @@ const nextConfig: NextConfig = {
         headers: [
           ...SECURITY_HEADERS.filter((h) => h.value !== ""),
           {
-            // CSP without nonce here — middleware injects nonce per-request
+            // CSP without nonce here — proxy.ts injects nonce per-request
             key: "Content-Security-Policy",
             value: buildCspHeader(),
           },

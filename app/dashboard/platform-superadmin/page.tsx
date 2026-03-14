@@ -7,8 +7,8 @@ import Link from "next/link";
 interface Organization {
   id: string;
   legal_name: string;
-  industry_segment: string | null;
-  country_code: string | null;
+  industry_segment_id: string | null;
+  country: string | null;
   created_at: string;
 }
 
@@ -16,6 +16,22 @@ interface UserStats {
   total: number;
   active: number;
   pending: number;
+}
+
+interface RoleSummaryRow {
+  user_id: string;
+  is_active: boolean | null;
+  platform_roles: { role_name: string } | { role_name: string }[] | null;
+}
+
+function getRoleName(platformRole: RoleSummaryRow["platform_roles"]): string | null {
+  if (!platformRole) {
+    return null;
+  }
+
+  return Array.isArray(platformRole)
+    ? platformRole[0]?.role_name ?? null
+    : platformRole.role_name;
 }
 
 export default function PlatformSuperAdminDashboard() {
@@ -32,26 +48,29 @@ export default function PlatformSuperAdminDashboard() {
       // Load organizations from correct table
       const { data: orgData } = await supabase
         .from("client_organizations")
-        .select("id, legal_name, industry_segment, country_code, created_at")
+        .select("id, legal_name, industry_segment_id, country, created_at")
         .is("deleted_at", null)
         .order("created_at", { ascending: false })
         .limit(10);
 
-      if (orgData) setOrgs(orgData);
+      if (orgData) {
+        setOrgs(orgData as Organization[]);
+      }
 
       // Load user stats from user_organization_roles
       const { data: roleData } = await supabase
         .from("user_organization_roles")
-        .select("user_id, is_active, platform_roles(role_name)")
-        .is("deleted_at", null);
+        .select("user_id, is_active, platform_roles(role_name)");
 
       if (roleData) {
+        const roleRows = roleData as RoleSummaryRow[];
+
         // Count unique users
-        const uniqueUsers = new Set(roleData.map((r: any) => r.user_id));
+        const uniqueUsers = new Set(roleRows.map((r) => r.user_id));
         const total = uniqueUsers.size;
-        const active = roleData.filter((r: any) => r.is_active).length;
-        const pending = roleData.filter((r: any) => 
-          r.platform_roles?.role_name === "pending_approval"
+        const active = roleRows.filter((r) => r.is_active === true).length;
+        const pending = roleRows.filter((r) =>
+          getRoleName(r.platform_roles) === "pending_approval"
         ).length;
         setUserStats({ total, active, pending });
       }
@@ -270,10 +289,10 @@ export default function PlatformSuperAdminDashboard() {
                       {org.legal_name}
                     </td>
                     <td style={{ padding: "16px", color: "#9CA3AF" }}>
-                      {org.industry_segment || "—"}
+                      {org.industry_segment_id || "—"}
                     </td>
                     <td style={{ padding: "16px", color: "#9CA3AF" }}>
-                      {org.country_code || "—"}
+                      {org.country || "—"}
                     </td>
                     <td style={{ padding: "16px", color: "#9CA3AF" }}>
                       {new Date(org.created_at).toLocaleDateString()}

@@ -4,7 +4,7 @@
  */
 
 /**
- * Read the CSRF token from the cookie set by middleware.
+ * Read the CSRF token from the cookie set by proxy.ts.
  * Returns null if not found (SSR or not yet set).
  */
 export function getCsrfToken(): string | null {

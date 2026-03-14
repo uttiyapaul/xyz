@@ -5,7 +5,6 @@ import "./globals.css";
 import { Providers } from "./providers";
 import { headers } from "next/headers";
 import { Syne, DM_Sans } from 'next/font/google';
-import dynamic from "next/dynamic";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
@@ -48,7 +47,7 @@ export const viewport: Viewport = {
 export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  // nonce from middleware for CSP — attach to any inline scripts/styles
+  // nonce from proxy.ts for CSP — attach to any inline scripts/styles
   const nonce = (await headers()).get("x-nonce") ?? "";
 
   return (

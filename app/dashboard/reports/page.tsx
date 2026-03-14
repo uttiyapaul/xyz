@@ -1,51 +1,171 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
+import { useEffect, useState } from "react";
+import { useAuth } from "@/context/AuthContext";
+import { supabase } from "@/lib/supabase/client";
+import { getMyAnnualEmissions } from "@/lib/supabase/queries";
+
+interface AnnualEmissionRow {
+  organization_id: string;
+  fy_year: string;
+  scope: number;
+  tco2e_total: number | string | null;
+  reading_count: number | string | null;
+  anomaly_count: number | string | null;
+  avg_trust_score: number | string | null;
+}
 
 interface EmissionData {
-  scope: string;
+  scope: number;
+  label: string;
   total: number;
   percentage: number;
+  color: string;
+}
+
+interface SummaryState {
+  total: number;
+  readingCount: number;
+  anomalyCount: number;
+  avgTrustScore: number | null;
+}
+
+const EMPTY_BREAKDOWN: EmissionData[] = [
+  { scope: 1, label: "Scope 1", total: 0, percentage: 0, color: "#EF4444" },
+  { scope: 2, label: "Scope 2", total: 0, percentage: 0, color: "#F59E0B" },
+  { scope: 3, label: "Scope 3", total: 0, percentage: 0, color: "#06B6D4" },
+];
+
+function getCurrentFyYearLabel(date = new Date()): string {
+  const startYear = date.getMonth() >= 3 ? date.getFullYear() : date.getFullYear() - 1;
+  const endYear = String(startYear + 1).slice(-2);
+  return `${startYear}-${endYear}`;
+}
+
+async function loadReportData(activeOrgId: string, requestedFyYear: string) {
+  const [{ data: orgRow }, annualRows] = await Promise.all([
+    supabase
+      .from("v_active_organizations")
+      .select("legal_name")
+      .eq("id", activeOrgId)
+      .maybeSingle(),
+    getMyAnnualEmissions(activeOrgId),
+  ]);
+
+  const rows = (annualRows ?? []) as AnnualEmissionRow[];
+  const fallbackYear = getCurrentFyYearLabel();
+  const availableYears = Array.from(
+    new Set(rows.map((row) => row.fy_year).filter(Boolean))
+  ).sort().reverse();
+  const resolvedYear = availableYears.includes(requestedFyYear)
+    ? requestedFyYear
+    : (availableYears[0] ?? fallbackYear);
+  const scopedRows = rows.filter((row) => row.fy_year === resolvedYear);
+  const normalized = EMPTY_BREAKDOWN.map((item) => {
+    const row = scopedRows.find((candidate) => Number(candidate.scope) === item.scope);
+    return {
+      ...item,
+      total: Number(row?.tco2e_total ?? 0),
+      readingCount: Number(row?.reading_count ?? 0),
+      anomalyCount: Number(row?.anomaly_count ?? 0),
+      avgTrustScore:
+        row?.avg_trust_score == null ? null : Number(row.avg_trust_score),
+    };
+  });
+
+  const total = normalized.reduce((sum, item) => sum + item.total, 0);
+  const trustScores = normalized
+    .map((item) => item.avgTrustScore)
+    .filter((value): value is number => value != null);
+
+  return {
+    orgName: orgRow?.legal_name ?? "Organization",
+    resolvedYear,
+    availableYears: availableYears.length > 0 ? availableYears : [fallbackYear],
+    data: normalized.map((item) => ({
+      scope: item.scope,
+      label: item.label,
+      total: item.total,
+      percentage: total > 0 ? (item.total / total) * 100 : 0,
+      color: item.color,
+    })),
+    summary: {
+      total,
+      readingCount: normalized.reduce((sum, item) => sum + item.readingCount, 0),
+      anomalyCount: normalized.reduce((sum, item) => sum + item.anomalyCount, 0),
+      avgTrustScore:
+        trustScores.length > 0
+          ? trustScores.reduce((sum, value) => sum + value, 0) / trustScores.length
+          : null,
+    },
+  };
 }
 
 export default function ReportsPage() {
-  const [year, setYear] = useState(new Date().getFullYear());
-  const [data, setData] = useState<EmissionData[]>([]);
-  const [total, setTotal] = useState(0);
-  const [orgId, setOrgId] = useState("");
+  const { orgIds, isLoading: authLoading } = useAuth();
   const [orgName, setOrgName] = useState("");
+  const [fyYear, setFyYear] = useState(getCurrentFyYearLabel());
+  const [availableYears, setAvailableYears] = useState<string[]>([getCurrentFyYearLabel()]);
+  const [data, setData] = useState<EmissionData[]>(EMPTY_BREAKDOWN);
+  const [summary, setSummary] = useState<SummaryState>({
+    total: 0,
+    readingCount: 0,
+    anomalyCount: 0,
+    avgTrustScore: null,
+  });
+  const [loading, setLoading] = useState(true);
+  const orgId = orgIds[0] ?? "";
 
   useEffect(() => {
-    loadData();
-  }, [year]);
-
-  async function loadData() {
-    const { data: orgs } = await supabase.from("organizations").select("*").limit(1);
-    if (orgs && orgs[0]) {
-      setOrgId(orgs[0].id);
-      setOrgName(orgs[0].name);
-
-      const { data: results } = await supabase
-        .from("emission_results")
-        .select("scope, co2e_total, calculated_at")
-        .eq("organization_id", orgs[0].id);
-
-      if (results) {
-        const filtered = results.filter(r => new Date(r.calculated_at).getFullYear() === year);
-        const s1 = filtered.filter(r => r.scope === "Scope 1").reduce((sum, r) => sum + Number(r.co2e_total), 0);
-        const s2 = filtered.filter(r => r.scope === "Scope 2").reduce((sum, r) => sum + Number(r.co2e_total), 0);
-        const s3 = filtered.filter(r => r.scope === "Scope 3").reduce((sum, r) => sum + Number(r.co2e_total), 0);
-        const tot = s1 + s2 + s3;
-
-        setTotal(tot);
-        setData([
-          { scope: "Scope 1", total: s1, percentage: tot > 0 ? (s1 / tot) * 100 : 0 },
-          { scope: "Scope 2", total: s2, percentage: tot > 0 ? (s2 / tot) * 100 : 0 },
-          { scope: "Scope 3", total: s3, percentage: tot > 0 ? (s3 / tot) * 100 : 0 }
-        ]);
-      }
+    if (authLoading || !orgId) {
+      return;
     }
+
+    loadReportData(orgId, fyYear)
+      .then((result) => {
+        setOrgName(result.orgName);
+        setAvailableYears(result.availableYears);
+        setData(result.data);
+        setSummary(result.summary);
+
+        if (result.resolvedYear !== fyYear) {
+          setFyYear(result.resolvedYear);
+        }
+      })
+      .catch((error) => {
+        console.error("Error loading emissions report:", error);
+        setData(EMPTY_BREAKDOWN);
+        setSummary({
+          total: 0,
+          readingCount: 0,
+          anomalyCount: 0,
+          avgTrustScore: null,
+        });
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, [authLoading, fyYear, orgId]);
+
+  if (authLoading || (orgId && loading)) {
+    return (
+      <div style={{ padding: "40px", textAlign: "center", color: "#9CA3AF" }}>
+        Loading reports...
+      </div>
+    );
+  }
+
+  if (!orgId) {
+    return (
+      <div style={{ padding: "32px", color: "#E8E6DE", minHeight: "100vh", background: "#050508" }}>
+        <div style={{ padding: "24px", background: "#0D0D14", border: "1px solid #1A1A24", borderRadius: "8px" }}>
+          <h1 style={{ fontSize: "24px", color: "#FAFAF8", margin: "0 0 8px" }}>Emission Reports</h1>
+          <p style={{ fontSize: "14px", color: "#9CA3AF", margin: 0 }}>
+            No organization is available in your current session scope yet.
+          </p>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -55,14 +175,22 @@ export default function ReportsPage() {
       </div>
 
       <div style={{ padding: "24px 32px" }}>
-        <div style={{ marginBottom: "24px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ marginBottom: "24px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "16px", flexWrap: "wrap" }}>
           <div>
             <h2 style={{ fontSize: "18px", color: "#FAFAF8", margin: 0 }}>{orgName}</h2>
-            <p style={{ fontSize: "12px", color: "#6B7280", marginTop: "4px" }}>Annual GHG Inventory</p>
+            <p style={{ fontSize: "12px", color: "#6B7280", marginTop: "4px" }}>
+              Annual inventory from live GHG readings
+            </p>
           </div>
-          <select value={year} onChange={e => setYear(Number(e.target.value))} style={{ padding: "10px 14px", background: "#0D0D14", border: "1px solid #1A1A24", borderRadius: "4px", color: "#FAFAF8", fontSize: "14px" }}>
-            {[2024, 2023, 2022, 2021].map(y => (
-              <option key={y} value={y}>{y}</option>
+          <select
+            value={fyYear}
+            onChange={(e) => setFyYear(e.target.value)}
+            style={{ padding: "10px 14px", background: "#0D0D14", border: "1px solid #1A1A24", borderRadius: "4px", color: "#FAFAF8", fontSize: "14px" }}
+          >
+            {availableYears.map((yearOption) => (
+              <option key={yearOption} value={yearOption}>
+                {yearOption}
+              </option>
             ))}
           </select>
         </div>
@@ -71,26 +199,27 @@ export default function ReportsPage() {
           <div style={{ background: "#0D0D14", border: "1px solid #1A1A24", borderRadius: "6px", padding: "24px" }}>
             <h3 style={{ fontSize: "14px", color: "#6B7280", marginBottom: "20px" }}>TOTAL EMISSIONS</h3>
             <div style={{ fontSize: "48px", color: "#22C55E", fontWeight: "600", marginBottom: "8px" }}>
-              {total.toLocaleString("en-IN", { maximumFractionDigits: 2 })}
+              {summary.total.toLocaleString("en-IN", { maximumFractionDigits: 2 })}
             </div>
-            <div style={{ fontSize: "14px", color: "#6B7280" }}>tCO₂e in {year}</div>
+            <div style={{ fontSize: "14px", color: "#6B7280" }}>tCO2e in {fyYear}</div>
 
             <div style={{ marginTop: "32px" }}>
-              {data.map(d => {
-                const color = d.scope === "Scope 1" ? "#EF4444" : d.scope === "Scope 2" ? "#F59E0B" : "#06B6D4";
-                return (
-                  <div key={d.scope} style={{ marginBottom: "16px" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
-                      <span style={{ fontSize: "12px", color: "#9CA3AF" }}>{d.scope}</span>
-                      <span style={{ fontSize: "12px", color: "#FAFAF8" }}>{d.total.toLocaleString("en-IN", { maximumFractionDigits: 2 })} tCO₂e</span>
-                    </div>
-                    <div style={{ width: "100%", height: "8px", background: "#1A1A24", borderRadius: "4px", overflow: "hidden" }}>
-                      <div style={{ width: `${d.percentage}%`, height: "100%", background: color, transition: "width 0.5s" }} />
-                    </div>
-                    <div style={{ fontSize: "10px", color: "#6B7280", marginTop: "4px" }}>{d.percentage.toFixed(1)}%</div>
+              {data.map((item) => (
+                <div key={item.label} style={{ marginBottom: "16px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+                    <span style={{ fontSize: "12px", color: "#9CA3AF" }}>{item.label}</span>
+                    <span style={{ fontSize: "12px", color: "#FAFAF8" }}>
+                      {item.total.toLocaleString("en-IN", { maximumFractionDigits: 2 })} tCO2e
+                    </span>
                   </div>
-                );
-              })}
+                  <div style={{ width: "100%", height: "8px", background: "#1A1A24", borderRadius: "4px", overflow: "hidden" }}>
+                    <div style={{ width: `${item.percentage}%`, height: "100%", background: item.color, transition: "width 0.5s" }} />
+                  </div>
+                  <div style={{ fontSize: "10px", color: "#6B7280", marginTop: "4px" }}>
+                    {item.percentage.toFixed(1)}%
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 
@@ -105,24 +234,21 @@ export default function ReportsPage() {
                 </tr>
               </thead>
               <tbody>
-                {data.map(d => {
-                  const color = d.scope === "Scope 1" ? "#EF4444" : d.scope === "Scope 2" ? "#F59E0B" : "#06B6D4";
-                  return (
-                    <tr key={d.scope} style={{ borderBottom: "1px solid #111120" }}>
-                      <td style={{ padding: "16px 0", fontSize: "13px", color: color }}>{d.scope}</td>
-                      <td style={{ padding: "16px 0", fontSize: "13px", color: "#FAFAF8", textAlign: "right" }}>
-                        {d.total.toLocaleString("en-IN", { maximumFractionDigits: 2 })}
-                      </td>
-                      <td style={{ padding: "16px 0", fontSize: "13px", color: "#9CA3AF", textAlign: "right" }}>
-                        {d.percentage.toFixed(1)}%
-                      </td>
-                    </tr>
-                  );
-                })}
+                {data.map((item) => (
+                  <tr key={item.label} style={{ borderBottom: "1px solid #111120" }}>
+                    <td style={{ padding: "16px 0", fontSize: "13px", color: item.color }}>{item.label}</td>
+                    <td style={{ padding: "16px 0", fontSize: "13px", color: "#FAFAF8", textAlign: "right" }}>
+                      {item.total.toLocaleString("en-IN", { maximumFractionDigits: 2 })}
+                    </td>
+                    <td style={{ padding: "16px 0", fontSize: "13px", color: "#9CA3AF", textAlign: "right" }}>
+                      {item.percentage.toFixed(1)}%
+                    </td>
+                  </tr>
+                ))}
                 <tr>
                   <td style={{ padding: "16px 0", fontSize: "14px", color: "#FAFAF8", fontWeight: "600" }}>Total</td>
                   <td style={{ padding: "16px 0", fontSize: "14px", color: "#22C55E", textAlign: "right", fontWeight: "600" }}>
-                    {total.toLocaleString("en-IN", { maximumFractionDigits: 2 })}
+                    {summary.total.toLocaleString("en-IN", { maximumFractionDigits: 2 })}
                   </td>
                   <td style={{ padding: "16px 0", fontSize: "14px", color: "#9CA3AF", textAlign: "right" }}>100%</td>
                 </tr>
@@ -130,9 +256,16 @@ export default function ReportsPage() {
             </table>
 
             <div style={{ marginTop: "32px", padding: "16px", background: "#07070E", borderRadius: "4px" }}>
-              <div style={{ fontSize: "11px", color: "#6B7280", marginBottom: "8px" }}>COMPLIANCE STATUS</div>
-              <div style={{ fontSize: "14px", color: "#22C55E" }}>✓ Data collection in progress</div>
-              <div style={{ fontSize: "11px", color: "#6B7280", marginTop: "8px" }}>ISO 14064-1 verification pending</div>
+              <div style={{ fontSize: "11px", color: "#6B7280", marginBottom: "8px" }}>DATA QUALITY SNAPSHOT</div>
+              <div style={{ fontSize: "14px", color: summary.anomalyCount > 0 ? "#F59E0B" : "#22C55E" }}>
+                {summary.anomalyCount > 0
+                  ? `${summary.anomalyCount} anomalies need review`
+                  : "No anomalies flagged in this FY"}
+              </div>
+              <div style={{ fontSize: "11px", color: "#6B7280", marginTop: "8px" }}>
+                {summary.readingCount} readings | Avg trust score{" "}
+                {summary.avgTrustScore == null ? "-" : summary.avgTrustScore.toFixed(2)}
+              </div>
             </div>
           </div>
         </div>

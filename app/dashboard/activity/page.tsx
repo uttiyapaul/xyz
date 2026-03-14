@@ -1,82 +1,276 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase/client";
+import { useAuth } from "@/context/AuthContext";
+
+interface Site {
+  id: string;
+  site_name: string;
+}
 
 interface EmissionSource {
   id: string;
   source_name: string;
-  scope: string;
+  scope: number;
+  source_category: string;
+  site_id: string | null;
+  field_key: string | null;
 }
 
 interface ActivityRecord {
   id: string;
   quantity: number;
   unit: string;
-  activity_date: string;
-  description: string;
+  reporting_period: string;
+  status: string;
+  activity_type: string;
   source_name: string;
+  site_name: string;
+}
+
+function getFyYearLabel(dateValue: string): string {
+  const [yearText, monthText] = dateValue.split("-");
+  const year = Number(yearText);
+  const month = Number(monthText);
+  const startYear = month >= 4 ? year : year - 1;
+  const endYear = String(startYear + 1).slice(-2);
+  return `${startYear}-${endYear}`;
+}
+
+function getDateParts(dateValue: string): { month: number; year: number } {
+  const [yearText, monthText] = dateValue.split("-");
+  return {
+    month: Number(monthText),
+    year: Number(yearText),
+  };
+}
+
+function buildFieldKey(sourceName: string): string {
+  const slug = sourceName
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+
+  return slug || "activity_entry";
+}
+
+function deriveActivityType(source: EmissionSource): string {
+  const lookup = `${source.source_category} ${source.source_name}`.toLowerCase();
+
+  if (lookup.includes("vehicle") || lookup.includes("fleet") || lookup.includes("mobile")) {
+    return "mobile_combustion";
+  }
+
+  if (lookup.includes("fugitive") || lookup.includes("refrigerant")) {
+    return "fugitive_emissions";
+  }
+
+  if (lookup.includes("process")) {
+    return "process_emissions";
+  }
+
+  if (lookup.includes("steam") || lookup.includes("heat")) {
+    return "purchased_heat_steam";
+  }
+
+  if (lookup.includes("cooling")) {
+    return "purchased_cooling";
+  }
+
+  if (lookup.includes("travel")) {
+    return "business_travel";
+  }
+
+  if (lookup.includes("commut")) {
+    return "employee_commuting";
+  }
+
+  if (lookup.includes("waste")) {
+    return "waste_operations";
+  }
+
+  if (lookup.includes("goods") || lookup.includes("procurement")) {
+    return "purchased_goods_services";
+  }
+
+  if (lookup.includes("capital")) {
+    return "capital_goods";
+  }
+
+  if (lookup.includes("transport")) {
+    return "upstream_transport";
+  }
+
+  if (lookup.includes("electric") || source.scope === 2) {
+    return "purchased_electricity";
+  }
+
+  if (source.scope === 3) {
+    return "purchased_goods_services";
+  }
+
+  return "stationary_combustion";
 }
 
 export default function ActivityDataPage() {
+  const { orgIds, user, isLoading: authLoading } = useAuth();
   const [sources, setSources] = useState<EmissionSource[]>([]);
   const [activities, setActivities] = useState<ActivityRecord[]>([]);
   const [form, setForm] = useState({
     source_id: "",
     quantity: "",
     unit: "kWh",
-    activity_date: new Date().toISOString().split("T")[0],
-    description: ""
+    reporting_period: new Date().toISOString().split("T")[0],
   });
-  const [orgId, setOrgId] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const orgId = orgIds[0] ?? "";
 
   useEffect(() => {
-    loadData();
-  }, []);
+    if (authLoading || !orgId) {
+      return;
+    }
 
-  async function loadData() {
-    const { data: orgs } = await supabase.from("organizations").select("id").limit(1);
-    if (orgs && orgs[0]) {
-      const oid = orgs[0].id;
-      setOrgId(oid);
-      
-      const { data: srcData } = await supabase.from("emission_sources").select("*").eq("organization_id", oid);
-      if (srcData) setSources(srcData);
+    loadData(orgId);
+  }, [authLoading, orgId]);
 
-      const { data: actData } = await supabase
-        .from("activity_data")
-        .select("*, emission_sources(source_name)")
-        .eq("organization_id", oid)
-        .order("activity_date", { ascending: false })
-        .limit(20);
-      if (actData) {
-        setActivities(actData.map(a => ({
-          id: a.id,
-          quantity: a.quantity,
-          unit: a.unit,
-          activity_date: a.activity_date,
-          description: a.description,
-          source_name: a.emission_sources?.source_name || "N/A"
-        })));
-      }
+  async function loadData(activeOrgId: string) {
+    setLoading(true);
+
+    try {
+      const [{ data: siteData }, { data: sourceData }, { data: activityData }] = await Promise.all([
+        supabase
+          .from("v_active_sites")
+          .select("id, site_name")
+          .eq("organization_id", activeOrgId),
+        supabase
+          .from("ghg_emission_source_register")
+          .select("id, source_name, scope, source_category, site_id, field_key")
+          .eq("organization_id", activeOrgId)
+          .is("deleted_at", null)
+          .order("source_name"),
+        supabase
+          .from("activity_data")
+          .select("id, quantity, unit, reporting_period, status, activity_type, facility_id, field_key, source_ref")
+          .eq("organization_id", activeOrgId)
+          .order("reporting_period", { ascending: false })
+          .limit(20),
+      ]);
+
+      const sites = (siteData ?? []) as Site[];
+      const siteMap = new Map(sites.map((site) => [site.id, site]));
+      const sourceRows = (sourceData ?? []) as EmissionSource[];
+      const sourceMap = new Map(sourceRows.map((source) => [source.id, source]));
+
+      setSources(sourceRows);
+      setActivities(
+        ((activityData ?? []) as {
+          id: string;
+          quantity: number;
+          unit: string;
+          reporting_period: string;
+          status: string;
+          activity_type: string;
+          facility_id: string | null;
+          field_key: string | null;
+          source_ref: string | null;
+        }[]).map((activity) => {
+          const linkedSource =
+            (activity.source_ref ? sourceMap.get(activity.source_ref) : undefined) ??
+            sourceRows.find((source) => source.field_key && source.field_key === activity.field_key);
+
+          return {
+            id: activity.id,
+            quantity: Number(activity.quantity),
+            unit: activity.unit,
+            reporting_period: activity.reporting_period,
+            status: activity.status,
+            activity_type: activity.activity_type,
+            source_name: linkedSource?.source_name ?? activity.activity_type,
+            site_name: activity.facility_id ? siteMap.get(activity.facility_id)?.site_name ?? "Unassigned" : "Unassigned",
+          };
+        })
+      );
+    } catch (error) {
+      console.error("Error loading activity data:", error);
+      setSources([]);
+      setActivities([]);
+    } finally {
+      setLoading(false);
     }
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!orgId || !form.source_id || !form.quantity) return;
 
-    await supabase.from("activity_data").insert({
-      organization_id: orgId,
-      source_id: form.source_id,
-      quantity: parseFloat(form.quantity),
-      unit: form.unit,
-      activity_date: form.activity_date,
-      description: form.description
-    });
+    if (!orgId || !user || !form.source_id || !form.quantity) {
+      return;
+    }
 
-    setForm({ source_id: "", quantity: "", unit: "kWh", activity_date: new Date().toISOString().split("T")[0], description: "" });
-    loadData();
+    const selectedSource = sources.find((source) => source.id === form.source_id);
+    if (!selectedSource) {
+      return;
+    }
+
+    setSaving(true);
+
+    try {
+      const dateParts = getDateParts(form.reporting_period);
+
+      await supabase.from("activity_data").insert({
+        organization_id: orgId,
+        facility_id: selectedSource.site_id,
+        activity_type: deriveActivityType(selectedSource),
+        field_key: selectedSource.field_key || buildFieldKey(selectedSource.source_name),
+        quantity: parseFloat(form.quantity),
+        unit: form.unit,
+        reporting_period: form.reporting_period,
+        month: dateParts.month,
+        year: dateParts.year,
+        fy_year: getFyYearLabel(form.reporting_period),
+        data_source: "manual_entry",
+        source_ref: selectedSource.id,
+        status: "pending",
+        created_by: user.id,
+      });
+
+      setForm({
+        source_id: "",
+        quantity: "",
+        unit: "kWh",
+        reporting_period: new Date().toISOString().split("T")[0],
+      });
+      await loadData(orgId);
+    } catch (error) {
+      console.error("Error creating activity entry:", error);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const selectedSource = sources.find((source) => source.id === form.source_id);
+
+  if (authLoading || (orgId && loading)) {
+    return (
+      <div style={{ padding: "40px", textAlign: "center", color: "#9CA3AF" }}>
+        Loading activity data...
+      </div>
+    );
+  }
+
+  if (!orgId) {
+    return (
+      <div style={{ padding: "32px", color: "#E8E6DE", minHeight: "100vh", background: "#050508" }}>
+        <div style={{ padding: "24px", background: "#0D0D14", border: "1px solid #1A1A24", borderRadius: "8px" }}>
+          <h1 style={{ fontSize: "24px", color: "#FAFAF8", margin: "0 0 8px" }}>Activity Data Entry</h1>
+          <p style={{ fontSize: "14px", color: "#9CA3AF", margin: 0 }}>
+            No organization is available in your current session scope yet.
+          </p>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -89,45 +283,78 @@ export default function ActivityDataPage() {
         <div>
           <div style={{ background: "#0D0D14", border: "1px solid #1A1A24", borderRadius: "6px", padding: "20px" }}>
             <h2 style={{ fontSize: "16px", color: "#FAFAF8", marginBottom: "16px" }}>New Activity</h2>
+            <p style={{ fontSize: "12px", color: "#6B7280", marginTop: 0, marginBottom: "16px" }}>
+              The selected source now drives facility, field key, and a compatible activity type automatically.
+            </p>
             <form onSubmit={handleSubmit}>
               <div style={{ marginBottom: "16px" }}>
                 <label style={{ fontSize: "11px", color: "#6B7280", display: "block", marginBottom: "6px" }}>SOURCE</label>
-                <select value={form.source_id} onChange={e => setForm({ ...form, source_id: e.target.value })} style={{ width: "100%", padding: "10px", background: "#07070E", border: "1px solid #1A1A24", borderRadius: "4px", color: "#FAFAF8", fontSize: "14px" }} required>
+                <select
+                  value={form.source_id}
+                  onChange={(e) => setForm({ ...form, source_id: e.target.value })}
+                  style={{ width: "100%", padding: "10px", background: "#07070E", border: "1px solid #1A1A24", borderRadius: "4px", color: "#FAFAF8", fontSize: "14px" }}
+                  required
+                >
                   <option value="">Select...</option>
-                  {sources.map(s => (
-                    <option key={s.id} value={s.id}>{s.source_name} ({s.scope})</option>
+                  {sources.map((source) => (
+                    <option key={source.id} value={source.id}>
+                      {source.source_name} (Scope {source.scope})
+                    </option>
                   ))}
                 </select>
               </div>
 
+              <div style={{ marginBottom: "16px", padding: "12px", background: "#07070E", border: "1px solid #1A1A24", borderRadius: "4px" }}>
+                <div style={{ fontSize: "11px", color: "#6B7280", marginBottom: "4px" }}>AUTO-DERIVED TYPE</div>
+                <div style={{ fontSize: "13px", color: "#FAFAF8" }}>
+                  {selectedSource ? deriveActivityType(selectedSource).replace(/_/g, " ") : "Select a source"}
+                </div>
+              </div>
+
               <div style={{ marginBottom: "16px" }}>
                 <label style={{ fontSize: "11px", color: "#6B7280", display: "block", marginBottom: "6px" }}>QUANTITY</label>
-                <input type="number" step="0.01" value={form.quantity} onChange={e => setForm({ ...form, quantity: e.target.value })} style={{ width: "100%", padding: "10px", background: "#07070E", border: "1px solid #1A1A24", borderRadius: "4px", color: "#FAFAF8", fontSize: "14px" }} required />
+                <input
+                  type="number"
+                  step="0.01"
+                  value={form.quantity}
+                  onChange={(e) => setForm({ ...form, quantity: e.target.value })}
+                  style={{ width: "100%", padding: "10px", background: "#07070E", border: "1px solid #1A1A24", borderRadius: "4px", color: "#FAFAF8", fontSize: "14px" }}
+                  required
+                />
               </div>
 
               <div style={{ marginBottom: "16px" }}>
                 <label style={{ fontSize: "11px", color: "#6B7280", display: "block", marginBottom: "6px" }}>UNIT</label>
-                <select value={form.unit} onChange={e => setForm({ ...form, unit: e.target.value })} style={{ width: "100%", padding: "10px", background: "#07070E", border: "1px solid #1A1A24", borderRadius: "4px", color: "#FAFAF8", fontSize: "14px" }}>
+                <select
+                  value={form.unit}
+                  onChange={(e) => setForm({ ...form, unit: e.target.value })}
+                  style={{ width: "100%", padding: "10px", background: "#07070E", border: "1px solid #1A1A24", borderRadius: "4px", color: "#FAFAF8", fontSize: "14px" }}
+                >
                   <option value="kWh">kWh</option>
                   <option value="L">Liters</option>
-                  <option value="m3">m³</option>
+                  <option value="m3">m3</option>
                   <option value="kg">kg</option>
                   <option value="tonnes">tonnes</option>
                 </select>
               </div>
 
               <div style={{ marginBottom: "16px" }}>
-                <label style={{ fontSize: "11px", color: "#6B7280", display: "block", marginBottom: "6px" }}>DATE</label>
-                <input type="date" value={form.activity_date} onChange={e => setForm({ ...form, activity_date: e.target.value })} style={{ width: "100%", padding: "10px", background: "#07070E", border: "1px solid #1A1A24", borderRadius: "4px", color: "#FAFAF8", fontSize: "14px" }} required />
+                <label style={{ fontSize: "11px", color: "#6B7280", display: "block", marginBottom: "6px" }}>REPORTING DATE</label>
+                <input
+                  type="date"
+                  value={form.reporting_period}
+                  onChange={(e) => setForm({ ...form, reporting_period: e.target.value })}
+                  style={{ width: "100%", padding: "10px", background: "#07070E", border: "1px solid #1A1A24", borderRadius: "4px", color: "#FAFAF8", fontSize: "14px" }}
+                  required
+                />
               </div>
 
-              <div style={{ marginBottom: "16px" }}>
-                <label style={{ fontSize: "11px", color: "#6B7280", display: "block", marginBottom: "6px" }}>DESCRIPTION</label>
-                <textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} style={{ width: "100%", padding: "10px", background: "#07070E", border: "1px solid #1A1A24", borderRadius: "4px", color: "#FAFAF8", fontSize: "14px", minHeight: "80px" }} />
-              </div>
-
-              <button type="submit" style={{ width: "100%", padding: "12px", background: "#F59E0B", border: "none", borderRadius: "4px", color: "#000", fontSize: "14px", fontWeight: "600", cursor: "pointer" }}>
-                Add Activity
+              <button
+                type="submit"
+                disabled={saving}
+                style={{ width: "100%", padding: "12px", background: "#F59E0B", border: "none", borderRadius: "4px", color: "#000", fontSize: "14px", fontWeight: "600", cursor: "pointer", opacity: saving ? 0.7 : 1 }}
+              >
+                {saving ? "Saving..." : "Add Activity"}
               </button>
             </form>
           </div>
@@ -143,21 +370,37 @@ export default function ActivityDataPage() {
                 <tr style={{ background: "#07070E" }}>
                   <th style={{ padding: "12px 20px", textAlign: "left", fontSize: "11px", color: "#6B7280", fontWeight: "500" }}>DATE</th>
                   <th style={{ padding: "12px 20px", textAlign: "left", fontSize: "11px", color: "#6B7280", fontWeight: "500" }}>SOURCE</th>
+                  <th style={{ padding: "12px 20px", textAlign: "left", fontSize: "11px", color: "#6B7280", fontWeight: "500" }}>SITE</th>
+                  <th style={{ padding: "12px 20px", textAlign: "left", fontSize: "11px", color: "#6B7280", fontWeight: "500" }}>TYPE</th>
                   <th style={{ padding: "12px 20px", textAlign: "right", fontSize: "11px", color: "#6B7280", fontWeight: "500" }}>QUANTITY</th>
-                  <th style={{ padding: "12px 20px", textAlign: "left", fontSize: "11px", color: "#6B7280", fontWeight: "500" }}>DESCRIPTION</th>
+                  <th style={{ padding: "12px 20px", textAlign: "left", fontSize: "11px", color: "#6B7280", fontWeight: "500" }}>STATUS</th>
                 </tr>
               </thead>
               <tbody>
-                {activities.map(a => (
-                  <tr key={a.id} style={{ borderBottom: "1px solid #111120" }}>
-                    <td style={{ padding: "12px 20px", fontSize: "13px", color: "#9CA3AF" }}>{a.activity_date}</td>
-                    <td style={{ padding: "12px 20px", fontSize: "13px", color: "#FAFAF8" }}>{a.source_name}</td>
-                    <td style={{ padding: "12px 20px", fontSize: "13px", color: "#F59E0B", textAlign: "right" }}>
-                      {a.quantity.toLocaleString()} {a.unit}
+                {activities.map((activity) => (
+                  <tr key={activity.id} style={{ borderBottom: "1px solid #111120" }}>
+                    <td style={{ padding: "12px 20px", fontSize: "13px", color: "#9CA3AF" }}>{activity.reporting_period}</td>
+                    <td style={{ padding: "12px 20px", fontSize: "13px", color: "#FAFAF8" }}>{activity.source_name}</td>
+                    <td style={{ padding: "12px 20px", fontSize: "13px", color: "#9CA3AF" }}>{activity.site_name}</td>
+                    <td style={{ padding: "12px 20px", fontSize: "13px", color: "#6B7280" }}>
+                      {activity.activity_type.replace(/_/g, " ")}
                     </td>
-                    <td style={{ padding: "12px 20px", fontSize: "13px", color: "#6B7280" }}>{a.description || "—"}</td>
+                    <td style={{ padding: "12px 20px", fontSize: "13px", color: "#F59E0B", textAlign: "right" }}>
+                      {activity.quantity.toLocaleString()} {activity.unit}
+                    </td>
+                    <td style={{ padding: "12px 20px", fontSize: "12px", color: "#9CA3AF", textTransform: "uppercase" }}>
+                      {activity.status}
+                    </td>
                   </tr>
                 ))}
+
+                {activities.length === 0 && (
+                  <tr>
+                    <td colSpan={6} style={{ padding: "32px", textAlign: "center", color: "#6B7280" }}>
+                      No activity entries found yet.
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>

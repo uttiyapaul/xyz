@@ -1,0 +1,54 @@
+.errorRoot {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  background: #04040a;
+  color: #fafaf8;
+}
+
+.errorCard {
+  max-width: 520px;
+  display: grid;
+  gap: 16px;
+  text-align: center;
+}
+
+.errorIcon {
+  margin: 0;
+  font-size: 3rem;
+  line-height: 1;
+}
+
+.errorTitle {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #ff2d55;
+}
+
+.errorMessage {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: rgba(221, 221, 239, 0.72);
+}
+
+.errorButton {
+  justify-self: center;
+  min-width: 180px;
+  padding: 10px 24px;
+  border: 1px solid rgba(0, 255, 136, 0.2);
+  border-radius: 8px;
+  background: rgba(0, 255, 136, 0.08);
+  color: #00ff88;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.errorButton:hover {
+  border-color: rgba(0, 255, 136, 0.3);
+  background: rgba(0, 255, 136, 0.12);
+}

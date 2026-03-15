@@ -2,17 +2,45 @@
 
 import { Component, type ErrorInfo, type ReactNode, useEffect } from "react";
 import { Provider } from "react-redux";
+import type { Session, User } from "@supabase/supabase-js";
 
+import styles from "@/components/providers/AppProviders.module.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { getUserPrimaryRole } from "@/lib/auth/roles";
-import { supabase } from "@/lib/supabase/client";
+import { browserSupabaseConfigError, supabase } from "@/lib/supabase/client";
 import { store } from "@/store";
 import { setCsrfToken, setSession, setUser } from "@/store/slices/auth.slice";
 import { setTheme } from "@/store/slices/ui.slice";
+import type { AuthSession, UserProfile } from "@/types/auth.types";
 
 interface ErrorBoundaryState {
   hasError: boolean;
   error: Error | null;
+}
+
+function ProviderErrorState({
+  title,
+  message,
+  actionLabel,
+  onAction,
+}: {
+  title: string;
+  message: string;
+  actionLabel: string;
+  onAction: () => void;
+}) {
+  return (
+    <div className={styles.errorRoot}>
+      <div className={styles.errorCard}>
+        <p className={styles.errorIcon}>[!]</p>
+        <h1 className={styles.errorTitle}>{title}</h1>
+        <p className={styles.errorMessage}>{message}</p>
+        <button type="button" className={styles.errorButton} onClick={onAction}>
+          {actionLabel}
+        </button>
+      </div>
+    </div>
+  );
 }
 
 class GlobalErrorBoundary extends Component<
@@ -37,60 +65,42 @@ class GlobalErrorBoundary extends Component<
   render() {
     if (this.state.hasError) {
       return (
-        <div
-          style={{
-            minHeight: "100vh",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            background: "#04040A",
-            fontFamily: "system-ui, sans-serif",
-            padding: "40px",
-          }}
-        >
-          <div style={{ maxWidth: 480, textAlign: "center" }}>
-            <div style={{ fontSize: "3rem", marginBottom: 16 }}>[!]</div>
-            <h1
-              style={{
-                color: "#FF2D55",
-                fontWeight: 700,
-                marginBottom: 8,
-                fontSize: "1.5rem",
-              }}
-            >
-              Unexpected Error
-            </h1>
-            <p
-              style={{
-                color: "rgba(221, 221, 239, 0.5)",
-                marginBottom: 24,
-                lineHeight: 1.6,
-              }}
-            >
-              {this.state.error?.message ?? "An unexpected error occurred."}
-            </p>
-            <button
-              onClick={() => window.location.reload()}
-              style={{
-                padding: "10px 24px",
-                background: "rgba(0,255,136,.08)",
-                border: "1px solid rgba(0,255,136,.2)",
-                borderRadius: 8,
-                color: "#00FF88",
-                cursor: "pointer",
-                fontSize: "0.9rem",
-                fontWeight: 600,
-              }}
-            >
-              Reload Application
-            </button>
-          </div>
-        </div>
+        <ProviderErrorState
+          title="Unexpected Error"
+          message={this.state.error?.message ?? "An unexpected error occurred."}
+          actionLabel="Reload Application"
+          onAction={() => window.location.reload()}
+        />
       );
     }
 
     return this.props.children;
   }
+}
+
+function toUserProfile(user: User): UserProfile {
+  return {
+    id: user.id,
+    email: user.email ?? "",
+    full_name: (user.user_metadata?.full_name as string) ?? "",
+    avatar_url: (user.user_metadata?.avatar_url as string) ?? null,
+    role: getUserPrimaryRole(user),
+    org_id: null,
+    org_name: null,
+    is_active: true,
+    last_login: user.last_sign_in_at ?? null,
+    mfa_enabled: false,
+    created_at: user.created_at,
+  };
+}
+
+function toAuthSession(session: Session): AuthSession {
+  return {
+    user: toUserProfile(session.user),
+    access_token: session.access_token,
+    refresh_token: session.refresh_token ?? "",
+    expires_at: new Date(session.expires_at ?? 0).getTime(),
+  };
 }
 
 function AuthSync({ children }: { children: ReactNode }) {
@@ -122,32 +132,8 @@ function AuthSync({ children }: { children: ReactNode }) {
         return;
       }
 
-      const role = getUserPrimaryRole(session.user);
-
-      store.dispatch(
-        setUser({
-          id: session.user.id,
-          email: session.user.email ?? "",
-          full_name: (session.user.user_metadata?.full_name as string) ?? "",
-          avatar_url: (session.user.user_metadata?.avatar_url as string) ?? null,
-          role: role as any,
-          org_id: null,
-          org_name: null,
-          is_active: true,
-          last_login: session.user.last_sign_in_at ?? null,
-          mfa_enabled: false,
-          created_at: session.user.created_at,
-        }),
-      );
-
-      store.dispatch(
-        setSession({
-          user: session.user as any,
-          access_token: session.access_token,
-          refresh_token: session.refresh_token ?? "",
-          expires_at: new Date(session.expires_at ?? 0).getTime(),
-        }),
-      );
+      store.dispatch(setUser(toUserProfile(session.user)));
+      store.dispatch(setSession(toAuthSession(session)));
     });
 
     const {
@@ -163,32 +149,8 @@ function AuthSync({ children }: { children: ReactNode }) {
         return;
       }
 
-      const role = getUserPrimaryRole(session.user);
-
-      store.dispatch(
-        setSession({
-          user: session.user as any,
-          access_token: session.access_token,
-          refresh_token: session.refresh_token ?? "",
-          expires_at: new Date(session.expires_at ?? 0).getTime(),
-        }),
-      );
-
-      store.dispatch(
-        setUser({
-          id: session.user.id,
-          email: session.user.email ?? "",
-          full_name: (session.user.user_metadata?.full_name as string) ?? "",
-          avatar_url: (session.user.user_metadata?.avatar_url as string) ?? null,
-          role: role as any,
-          org_id: null,
-          org_name: null,
-          is_active: true,
-          last_login: session.user.last_sign_in_at ?? null,
-          mfa_enabled: false,
-          created_at: session.user.created_at,
-        }),
-      );
+      store.dispatch(setSession(toAuthSession(session)));
+      store.dispatch(setUser(toUserProfile(session.user)));
     });
 
     return () => {
@@ -201,6 +163,17 @@ function AuthSync({ children }: { children: ReactNode }) {
 }
 
 export function AppProviders({ children }: { children: ReactNode }) {
+  if (browserSupabaseConfigError) {
+    return (
+      <ProviderErrorState
+        title="Supabase Configuration Missing"
+        message={`The deployed app is missing ${browserSupabaseConfigError}. Add the public Supabase environment variables in Vercel and redeploy.`}
+        actionLabel="Reload Application"
+        onAction={() => window.location.reload()}
+      />
+    );
+  }
+
   return (
     <GlobalErrorBoundary>
       <Provider store={store}>

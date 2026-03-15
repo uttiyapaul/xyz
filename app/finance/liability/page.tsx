@@ -1,10 +1,8 @@
-import { SkeletonPage } from "@/components/layout/SkeletonPage";
+import { FinanceLiabilityView } from "@/features/finance/liability/FinanceLiabilityView";
 
+/**
+ * Thin route entry for liability forecasting.
+ */
 export default function FinanceLiabilityPage() {
-  return (
-    <SkeletonPage 
-      title="Carbon Liability Forecasting" 
-      description="Live tracking of your financial exposure to ETS allowance purchases and carbon border taxes."
-    />
-  );
+  return <FinanceLiabilityView />;
 }

@@ -1,14 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 
+import styles from "@/features/dashboard/platform-superadmin/PlatformSuperAdminDashboardView.module.css";
 import { supabase } from "@/lib/supabase/client";
 
 /**
  * This remains a lightweight platform snapshot until the fuller role-aware
- * admin surface is built. The feature owns the dashboard data loading so the
- * route entry can stay focused on routing only.
+ * admin surface is built. The view now uses the shared frontend contract:
+ * tokenized styling, safe error messaging, and thin route ownership.
  */
 
 interface Organization {
@@ -44,13 +45,12 @@ export function PlatformSuperAdminDashboardView() {
   const [organizationCount, setOrganizationCount] = useState(0);
   const [userStats, setUserStats] = useState<UserStats>({ total: 0, active: 0, pending: 0 });
   const [loading, setLoading] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
 
-  useEffect(() => {
-    void loadDashboardData();
-  }, []);
-
-  async function loadDashboardData() {
+  const loadDashboardData = useCallback(async () => {
     try {
+      setLoadFailed(false);
+
       const [recentOrganizationsResponse, organizationCountResponse, roleResponse] = await Promise.all([
         supabase
           .from("client_organizations")
@@ -81,13 +81,9 @@ export function PlatformSuperAdminDashboardView() {
       setOrganizationCount(organizationCountResponse.count ?? recentOrganizations.length);
 
       const totalUsers = new Set(roleRows.map((row) => row.user_id));
-      const activeUsers = new Set(
-        roleRows.filter((row) => row.is_active === true).map((row) => row.user_id),
-      );
+      const activeUsers = new Set(roleRows.filter((row) => row.is_active === true).map((row) => row.user_id));
       const pendingUsers = new Set(
-        roleRows
-          .filter((row) => getRoleName(row.platform_roles) === "pending_approval")
-          .map((row) => row.user_id),
+        roleRows.filter((row) => getRoleName(row.platform_roles) === "pending_approval").map((row) => row.user_id),
       );
 
       setUserStats({
@@ -96,218 +92,106 @@ export function PlatformSuperAdminDashboardView() {
         pending: pendingUsers.size,
       });
     } catch (error) {
-      console.error("Error loading dashboard data:", error);
+      console.error("Platform dashboard load failed:", error);
+      setLoadFailed(true);
       setOrgs([]);
       setOrganizationCount(0);
       setUserStats({ total: 0, active: 0, pending: 0 });
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
+
+  useEffect(() => {
+    queueMicrotask(() => {
+      void loadDashboardData();
+    });
+  }, [loadDashboardData]);
 
   if (loading) {
     return (
-      <div style={{ padding: "40px", textAlign: "center" }}>
-        <div style={{ color: "#9CA3AF" }}>Loading dashboard...</div>
+      <div className={styles.loadingShell}>
+        <div className={styles.alert} data-tone="info">
+          Loading platform dashboard...
+        </div>
       </div>
     );
   }
 
   return (
-    <div style={{ padding: "32px", minHeight: "100vh", background: "#050508" }}>
-      <div style={{ marginBottom: "32px" }}>
-        <h1 style={{ fontSize: "28px", fontWeight: "700", color: "#FAFAF8", marginBottom: "8px" }}>
-          Platform Super Admin
-        </h1>
-        <p style={{ fontSize: "14px", color: "#9CA3AF" }}>
-          Manage all organizations, users, and platform settings
-        </p>
+    <section className={styles.page}>
+      <header className={styles.header}>
+        <h1 className={styles.title}>Platform Super Admin</h1>
+        <p className={styles.subtitle}>Manage organizations, users, and core platform operating controls.</p>
+      </header>
+
+      {loadFailed ? (
+        <div className={styles.alert} data-tone="danger">
+          Platform summary data could not be loaded right now. Refresh the page or try again shortly.
+        </div>
+      ) : null}
+
+      <div className={styles.metricsGrid}>
+        <article className={styles.metricCard}>
+          <p className={styles.metricLabel}>Organizations</p>
+          <p className={styles.metricValue}>{organizationCount}</p>
+        </article>
+        <article className={styles.metricCard}>
+          <p className={styles.metricLabel}>Total Users</p>
+          <p className={styles.metricValue}>{userStats.total}</p>
+        </article>
+        <article className={styles.metricCard}>
+          <p className={styles.metricLabel}>Active Users</p>
+          <p className={styles.metricValue} data-tone="success">
+            {userStats.active}
+          </p>
+        </article>
+        <article className={styles.metricCard}>
+          <p className={styles.metricLabel}>Pending Approval</p>
+          <p className={styles.metricValue} data-tone="warning">
+            {userStats.pending}
+          </p>
+        </article>
       </div>
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
-          gap: "20px",
-          marginBottom: "32px",
-        }}
-      >
-        <div
-          style={{
-            background: "#0D0D14",
-            border: "1px solid #1A1A24",
-            borderRadius: "12px",
-            padding: "24px",
-          }}
-        >
-          <div style={{ fontSize: "13px", color: "#9CA3AF", marginBottom: "8px" }}>ORGANIZATIONS</div>
-          <div style={{ fontSize: "32px", fontWeight: "700", color: "#FAFAF8" }}>{organizationCount}</div>
-        </div>
-
-        <div
-          style={{
-            background: "#0D0D14",
-            border: "1px solid #1A1A24",
-            borderRadius: "12px",
-            padding: "24px",
-          }}
-        >
-          <div style={{ fontSize: "13px", color: "#9CA3AF", marginBottom: "8px" }}>TOTAL USERS</div>
-          <div style={{ fontSize: "32px", fontWeight: "700", color: "#FAFAF8" }}>{userStats.total}</div>
-        </div>
-
-        <div
-          style={{
-            background: "#0D0D14",
-            border: "1px solid #1A1A24",
-            borderRadius: "12px",
-            padding: "24px",
-          }}
-        >
-          <div style={{ fontSize: "13px", color: "#9CA3AF", marginBottom: "8px" }}>ACTIVE USERS</div>
-          <div style={{ fontSize: "32px", fontWeight: "700", color: "#10B981" }}>{userStats.active}</div>
-        </div>
-
-        <div
-          style={{
-            background: "#0D0D14",
-            border: "1px solid #1A1A24",
-            borderRadius: "12px",
-            padding: "24px",
-          }}
-        >
-          <div style={{ fontSize: "13px", color: "#9CA3AF", marginBottom: "8px" }}>PENDING APPROVAL</div>
-          <div style={{ fontSize: "32px", fontWeight: "700", color: "#F59E0B" }}>{userStats.pending}</div>
-        </div>
-      </div>
-
-      <div style={{ marginBottom: "32px" }}>
-        <h2 style={{ fontSize: "18px", fontWeight: "600", color: "#FAFAF8", marginBottom: "16px" }}>
-          Quick Actions
-        </h2>
-        <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
-          <Link
-            href="/dashboard/organizations"
-            style={{
-              display: "inline-block",
-              padding: "12px 20px",
-              background: "#F59E0B",
-              color: "#000",
-              borderRadius: "8px",
-              fontSize: "14px",
-              fontWeight: "600",
-              textDecoration: "none",
-            }}
-          >
+      <section className={styles.section}>
+        <h2 className={styles.sectionTitle}>Quick Actions</h2>
+        <div className={styles.actionRow}>
+          <Link href="/dashboard/organizations" className={styles.primaryLink}>
             Manage Organizations
           </Link>
-          <Link
-            href="/dashboard/access-control"
-            style={{
-              display: "inline-block",
-              padding: "12px 20px",
-              background: "rgba(245,158,11,0.1)",
-              color: "#F59E0B",
-              border: "1px solid rgba(245,158,11,0.2)",
-              borderRadius: "8px",
-              fontSize: "14px",
-              fontWeight: "600",
-              textDecoration: "none",
-            }}
-          >
+          <Link href="/dashboard/access-control" className={styles.secondaryLink}>
             Access Control
           </Link>
-          <Link
-            href="/dashboard/reports"
-            style={{
-              display: "inline-block",
-              padding: "12px 20px",
-              background: "rgba(245,158,11,0.1)",
-              color: "#F59E0B",
-              border: "1px solid rgba(245,158,11,0.2)",
-              borderRadius: "8px",
-              fontSize: "14px",
-              fontWeight: "600",
-              textDecoration: "none",
-            }}
-          >
+          <Link href="/dashboard/reports" className={styles.secondaryLink}>
             View Reports
           </Link>
         </div>
-      </div>
+      </section>
 
-      <div>
-        <h2 style={{ fontSize: "18px", fontWeight: "600", color: "#FAFAF8", marginBottom: "16px" }}>
-          Recent Organizations
-        </h2>
-        <div
-          style={{
-            background: "#0D0D14",
-            border: "1px solid #1A1A24",
-            borderRadius: "12px",
-            overflow: "hidden",
-          }}
-        >
+      <section className={styles.section}>
+        <h2 className={styles.sectionTitle}>Recent Organizations</h2>
+        <div className={styles.card}>
           {orgs.length === 0 ? (
-            <div style={{ padding: "32px", textAlign: "center", color: "#9CA3AF" }}>No organizations found</div>
+            <div className={styles.emptyState}>No organizations found.</div>
           ) : (
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <table className={styles.table}>
               <thead>
-                <tr style={{ borderBottom: "1px solid #1A1A24" }}>
-                  <th
-                    style={{
-                      padding: "16px",
-                      textAlign: "left",
-                      fontSize: "12px",
-                      color: "#9CA3AF",
-                      fontWeight: "600",
-                    }}
-                  >
-                    NAME
-                  </th>
-                  <th
-                    style={{
-                      padding: "16px",
-                      textAlign: "left",
-                      fontSize: "12px",
-                      color: "#9CA3AF",
-                      fontWeight: "600",
-                    }}
-                  >
-                    INDUSTRY
-                  </th>
-                  <th
-                    style={{
-                      padding: "16px",
-                      textAlign: "left",
-                      fontSize: "12px",
-                      color: "#9CA3AF",
-                      fontWeight: "600",
-                    }}
-                  >
-                    COUNTRY
-                  </th>
-                  <th
-                    style={{
-                      padding: "16px",
-                      textAlign: "left",
-                      fontSize: "12px",
-                      color: "#9CA3AF",
-                      fontWeight: "600",
-                    }}
-                  >
-                    CREATED
-                  </th>
+                <tr>
+                  <th className={styles.tableHeaderCell}>Name</th>
+                  <th className={styles.tableHeaderCell}>Industry</th>
+                  <th className={styles.tableHeaderCell}>Country</th>
+                  <th className={styles.tableHeaderCell}>Created</th>
                 </tr>
               </thead>
               <tbody>
                 {orgs.map((org) => (
-                  <tr key={org.id} style={{ borderBottom: "1px solid #1A1A24" }}>
-                    <td style={{ padding: "16px", color: "#FAFAF8" }}>{org.legal_name}</td>
-                    <td style={{ padding: "16px", color: "#9CA3AF" }}>{org.industry_segment_id || "-"}</td>
-                    <td style={{ padding: "16px", color: "#9CA3AF" }}>{org.country || "-"}</td>
-                    <td style={{ padding: "16px", color: "#9CA3AF" }}>
-                      {new Date(org.created_at).toLocaleDateString()}
+                  <tr key={org.id}>
+                    <td className={styles.tableCell}>{org.legal_name}</td>
+                    <td className={`${styles.tableCell} ${styles.tableCellMuted}`}>{org.industry_segment_id || "-"}</td>
+                    <td className={`${styles.tableCell} ${styles.tableCellMuted}`}>{org.country || "-"}</td>
+                    <td className={`${styles.tableCell} ${styles.tableCellMuted}`}>
+                      {new Date(org.created_at).toLocaleDateString("en-IN")}
                     </td>
                   </tr>
                 ))}
@@ -315,7 +199,7 @@ export function PlatformSuperAdminDashboardView() {
             </table>
           )}
         </div>
-      </div>
-    </div>
+      </section>
+    </section>
   );
 }

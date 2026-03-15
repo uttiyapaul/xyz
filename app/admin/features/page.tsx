@@ -1,10 +1,10 @@
-import { SkeletonPage } from "@/components/layout/SkeletonPage";
+import { AdminFeaturesView } from "@/features/admin/features/AdminFeaturesView";
 
+export const dynamic = "force-dynamic";
+
+/**
+ * Thin route entry for global feature and security posture.
+ */
 export default function AdminFeaturesPage() {
-  return (
-    <SkeletonPage 
-      title="Global Configuration & Flags" 
-      description="Toggle experimental features globally across tenants and manage core system-wide environmental variables."
-    />
-  );
+  return <AdminFeaturesView />;
 }

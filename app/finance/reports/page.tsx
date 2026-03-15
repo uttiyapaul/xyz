@@ -1,10 +1,8 @@
-import { SkeletonPage } from "@/components/layout/SkeletonPage";
+import { FinanceReportsView } from "@/features/finance/reports/FinanceReportsView";
 
+/**
+ * Thin route entry for board-facing finance reporting.
+ */
 export default function FinanceReportsPage() {
-  return (
-    <SkeletonPage 
-      title="Board Material Generation" 
-      description="Seamlessly generate one-click, presentation-ready PDF reports and data packs for board members and shareholders."
-    />
-  );
+  return <FinanceReportsView />;
 }

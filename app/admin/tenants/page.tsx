@@ -1,10 +1,10 @@
-import { SkeletonPage } from "@/components/layout/SkeletonPage";
+import { AdminTenantsView } from "@/features/admin/tenants/AdminTenantsView";
 
+export const dynamic = "force-dynamic";
+
+/**
+ * Thin route entry for platform tenant oversight.
+ */
 export default function AdminTenantsPage() {
-  return (
-    <SkeletonPage 
-      title="Tenants & Billing Management" 
-      description="Manage multiple clients, monitor API quotas, and map enterprise licenses across the platform."
-    />
-  );
+  return <AdminTenantsView />;
 }

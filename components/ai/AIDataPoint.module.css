@@ -1,0 +1,86 @@
+.card {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-panel-muted);
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-strong);
+}
+
+.value {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.description {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+.metaRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.confidenceHigh {
+  background: var(--status-surface-success);
+  color: #86efac;
+}
+
+.confidenceMedium {
+  background: var(--status-surface-warning);
+  color: #fcd34d;
+}
+
+.confidenceLow {
+  background: var(--status-surface-danger);
+  color: #fecaca;
+}
+
+.reviewed {
+  background: rgba(103, 232, 249, 0.14);
+  color: var(--status-info);
+}
+
+.pending {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-muted);
+}
+
+.source {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text-soft);
+}

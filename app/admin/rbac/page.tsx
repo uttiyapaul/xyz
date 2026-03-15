@@ -1,10 +1,10 @@
-import { SkeletonPage } from "@/components/layout/SkeletonPage";
+import { AdminRbacView } from "@/features/admin/rbac/AdminRbacView";
 
-export default function AdminRBACPage() {
-  return (
-    <SkeletonPage 
-      title="Role-Based Access Control (RBAC)" 
-      description="Strict interface to adjust RBAC for platform users. Features hardcoded logical stops to prevent privilege escalation in compliance with ISO 27001, SOC 2, and DPDP."
-    />
-  );
+export const dynamic = "force-dynamic";
+
+/**
+ * Thin route entry for the RBAC oversight workspace.
+ */
+export default function AdminRbacPage() {
+  return <AdminRbacView />;
 }

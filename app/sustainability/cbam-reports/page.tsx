@@ -1,10 +1,8 @@
-import { SkeletonPage } from "@/components/layout/SkeletonPage";
+import { CbamReportsView } from "@/features/sustainability/cbam/CbamReportsView";
 
+/**
+ * Thin route entry for CBAM and filing operations.
+ */
 export default function SustainabilityCbamPage() {
-  return (
-    <SkeletonPage 
-      title="CBAM Operations & Reports" 
-      description="Generate actual EU Carbon Border Adjustment Mechanism (CBAM) declarations securely based on verified data."
-    />
-  );
+  return <CbamReportsView />;
 }

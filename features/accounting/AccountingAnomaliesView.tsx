@@ -1,5 +1,6 @@
 "use client";
 
+import { AIDataPoint, type AIConfidenceLevel } from "@/components/ai/AIDataPoint";
 import styles from "@/features/portal/WorkspaceShell.module.css";
 import { useAccountingAnomaliesData } from "@/features/accounting/useAccountingWorkspaceData";
 
@@ -11,6 +12,18 @@ function formatRange(low: number | null, high: number | null): string {
   return `${low.toLocaleString("en-IN", { maximumFractionDigits: 2 })} - ${high.toLocaleString("en-IN", {
     maximumFractionDigits: 2,
   })}`;
+}
+
+function getConfidenceLevel(score: number | null): AIConfidenceLevel {
+  if (score == null || score < 0.6) {
+    return "low";
+  }
+
+  if (score < 0.85) {
+    return "medium";
+  }
+
+  return "high";
 }
 
 export function AccountingAnomaliesView() {
@@ -43,6 +56,11 @@ export function AccountingAnomaliesView() {
       </header>
 
       <main className={styles.body}>
+        <div className={styles.alert} data-tone="info">
+          AI anomaly flags are advisory signals only. Each score below includes confidence, source attribution, and
+          human-review status so accounting teams do not mistake model output for a final compliance decision.
+        </div>
+
         {error ? (
           <div className={styles.alert} data-tone="danger">
             {error}
@@ -112,6 +130,16 @@ export function AccountingAnomaliesView() {
                   </div>
                   <div className={styles.rowMeta}>
                     Activity workflow status: <span className={styles.emphasis}>{anomaly.relatedActivityStatus}</span>
+                  </div>
+                  <div className={styles.stack}>
+                    <AIDataPoint
+                      label="Anomaly model signal"
+                      value={anomaly.anomalyScore == null ? "Not scored yet" : anomaly.anomalyScore.toFixed(3)}
+                      confidence={getConfidenceLevel(anomaly.anomalyScore)}
+                      source="Historical activity baseline, expected-range model, and current-period variance checks."
+                      reviewState={anomaly.isConfirmed ? "reviewed" : "pending"}
+                      description={`Flagged value ${anomaly.flaggedValue == null ? "not available" : anomaly.flaggedValue.toLocaleString("en-IN")} against expected range ${formatRange(anomaly.expectedRangeLow, anomaly.expectedRangeHigh)}.`}
+                    />
                   </div>
                   {anomaly.resolution ? (
                     <div className={styles.alert} data-tone="info">

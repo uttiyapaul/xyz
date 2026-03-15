@@ -1,10 +1,9 @@
-import { SkeletonPage } from "@/components/layout/SkeletonPage";
+import { OrgIntegrationsView } from "@/features/org/integrations/OrgIntegrationsView";
 
+/**
+ * Thin route entry so the integrations workspace can evolve without leaving
+ * route logic mixed into old placeholder content.
+ */
 export default function OrgIntegrationsPage() {
-  return (
-    <SkeletonPage 
-      title="Data Integrations & Webhooks" 
-      description="Setup automated data pipelines connecting your ERP (SAP/Oracle) and utility API connections directly to the platform."
-    />
-  );
+  return <OrgIntegrationsView />;
 }

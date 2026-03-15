@@ -5,6 +5,7 @@ import { Provider } from "react-redux";
 import type { Session, User } from "@supabase/supabase-js";
 
 import styles from "@/components/providers/AppProviders.module.css";
+import { SessionLockBoundary } from "@/components/security/SessionLockBoundary";
 import { AuthProvider } from "@/context/AuthContext";
 import { getUserPrimaryRole } from "@/lib/auth/roles";
 import { browserSupabaseConfigError, supabase } from "@/lib/supabase/client";
@@ -178,7 +179,9 @@ export function AppProviders({ children }: { children: ReactNode }) {
     <GlobalErrorBoundary>
       <Provider store={store}>
         <AuthProvider>
-          <AuthSync>{children}</AuthSync>
+          <AuthSync>
+            <SessionLockBoundary>{children}</SessionLockBoundary>
+          </AuthSync>
         </AuthProvider>
       </Provider>
     </GlobalErrorBoundary>

@@ -1,10 +1,8 @@
-import { SkeletonPage } from "@/components/layout/SkeletonPage";
+import { SustainabilityOffsetsView } from "@/features/sustainability/offsets/SustainabilityOffsetsView";
 
+/**
+ * Thin route entry for the offset-portfolio workspace.
+ */
 export default function SustainabilityOffsetsPage() {
-  return (
-    <SkeletonPage 
-      title="Carbon Offsets Portfolio" 
-      description="Manage voluntary carbon credits, track retirements, and balance residual emissions against your Net Zero target."
-    />
-  );
+  return <SustainabilityOffsetsView />;
 }

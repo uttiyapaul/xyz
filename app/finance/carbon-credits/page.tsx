@@ -1,10 +1,8 @@
-import { SkeletonPage } from "@/components/layout/SkeletonPage";
+import { FinanceCarbonCreditsView } from "@/features/finance/carbon-credits/FinanceCarbonCreditsView";
 
+/**
+ * Thin route entry for carbon-credit finance operations.
+ */
 export default function FinanceCarbonCreditsPage() {
-  return (
-    <SkeletonPage 
-      title="Carbon Credit Marketplace" 
-      description="Our dedicated platform built specifically to buy, sell, and certify high-quality carbon credits directly within your net-zero roadmap."
-    />
-  );
+  return <FinanceCarbonCreditsView />;
 }

@@ -1,10 +1,10 @@
-import { SkeletonPage } from "@/components/layout/SkeletonPage";
+import { AdminHealthView } from "@/features/admin/health/AdminHealthView";
 
+export const dynamic = "force-dynamic";
+
+/**
+ * Thin route entry for the platform health snapshot.
+ */
 export default function AdminHealthPage() {
-  return (
-    <SkeletonPage 
-      title="System Health & Metrics" 
-      description="Real-time monitoring of database load, API uptime, job queues, and critical platform infrastructure."
-    />
-  );
+  return <AdminHealthView />;
 }

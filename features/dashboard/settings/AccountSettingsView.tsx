@@ -2,6 +2,7 @@
 
 import { useState, type ChangeEvent } from "react";
 
+import styles from "@/features/dashboard/settings/AccountSettingsView.module.css";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase/client";
 
@@ -27,7 +28,8 @@ export function AccountSettingsView() {
     newPassword: "",
     confirmPassword: "",
   });
-  const [loading, setLoading] = useState(false);
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [passwordSaving, setPasswordSaving] = useState(false);
   const [message, setMessage] = useState<FlashMessage | null>(null);
 
   function handleProfileChange(event: ChangeEvent<HTMLInputElement>) {
@@ -39,7 +41,7 @@ export function AccountSettingsView() {
   }
 
   async function saveProfile() {
-    setLoading(true);
+    setProfileSaving(true);
     setMessage(null);
 
     const { error } = await supabase.auth.updateUser({
@@ -47,12 +49,15 @@ export function AccountSettingsView() {
     });
 
     if (error) {
-      setMessage({ type: "error", text: error.message });
+      setMessage({
+        type: "error",
+        text: "Profile details could not be updated. Refresh the page and try again, or contact support if the issue persists.",
+      });
     } else {
       setMessage({ type: "success", text: "Profile updated successfully." });
     }
 
-    setLoading(false);
+    setProfileSaving(false);
   }
 
   async function updatePassword() {
@@ -61,12 +66,12 @@ export function AccountSettingsView() {
       return;
     }
 
-    if (passwordForm.newPassword.length < 6) {
-      setMessage({ type: "error", text: "Password must be at least 6 characters." });
+    if (passwordForm.newPassword.length < 12) {
+      setMessage({ type: "error", text: "Password must be at least 12 characters long." });
       return;
     }
 
-    setLoading(true);
+    setPasswordSaving(true);
     setMessage(null);
 
     const { error } = await supabase.auth.updateUser({
@@ -74,204 +79,125 @@ export function AccountSettingsView() {
     });
 
     if (error) {
-      setMessage({ type: "error", text: error.message });
+      setMessage({
+        type: "error",
+        text: "Password update failed. Re-enter your new password and try again. If it keeps failing, sign out and back in before retrying.",
+      });
     } else {
       setMessage({ type: "success", text: "Password changed successfully." });
       setPasswordForm({ newPassword: "", confirmPassword: "" });
     }
 
-    setLoading(false);
+    setPasswordSaving(false);
   }
 
   return (
-    <div style={{ padding: "32px", color: "#FAFAF8", maxWidth: "600px", margin: "0 auto" }}>
-      <div style={{ marginBottom: "32px" }}>
-        <h1 style={{ fontSize: "28px", fontWeight: "700", marginBottom: "8px" }}>Account Settings</h1>
-        <p style={{ fontSize: "14px", color: "#9CA3AF", margin: 0 }}>
+    <section className={styles.page}>
+      <header className={styles.header}>
+        <h1 className={styles.title}>Account Settings</h1>
+        <p className={styles.subtitle}>
           Manage your personal profile and security preferences.
         </p>
-      </div>
+      </header>
 
       {message && (
-        <div
-          style={{
-            padding: "16px",
-            marginBottom: "24px",
-            borderRadius: "8px",
-            fontSize: "14px",
-            background:
-              message.type === "success" ? "rgba(48,209,88,0.1)" : "rgba(255,59,48,0.1)",
-            color: message.type === "success" ? "#30D158" : "#FF3B30",
-            border: `1px solid ${
-              message.type === "success"
-                ? "rgba(48,209,88,0.2)"
-                : "rgba(255,59,48,0.2)"
-            }`,
-          }}
-        >
+        <div className={styles.alert} data-tone={message.type}>
           {message.text}
         </div>
       )}
 
-      <div
-        style={{
-          background: "#0A1628",
-          border: "1px solid rgba(255,255,255,0.12)",
-          borderRadius: "12px",
-          padding: "24px",
-          marginBottom: "24px",
-        }}
-      >
-        <h2 style={{ fontSize: "16px", fontWeight: "600", marginBottom: "20px" }}>
-          Profile Information
-        </h2>
+      <div className={styles.stack}>
+        <div className={styles.card}>
+          <h2 className={styles.cardTitle}>Profile Information</h2>
 
-        <div style={{ marginBottom: "16px" }}>
-          <label style={{ display: "block", fontSize: "12px", color: "#9CA3AF", marginBottom: "8px" }}>
-            Full Name
-          </label>
-          <input
-            type="text"
-            name="fullName"
-            value={profile.fullName}
-            onChange={handleProfileChange}
-            style={{
-              width: "100%",
-              height: "44px",
-              padding: "0 16px",
-              background: "rgba(255,255,255,0.04)",
-              border: "1px solid rgba(255,255,255,0.12)",
-              borderRadius: "8px",
-              color: "#FAFAF8",
-              fontSize: "14px",
-              outline: "none",
-            }}
-          />
+          <div className={styles.fieldGroup}>
+            <label className={styles.label} htmlFor="account-full-name">
+              Full Name
+            </label>
+            <input
+              id="account-full-name"
+              type="text"
+              name="fullName"
+              value={profile.fullName}
+              onChange={handleProfileChange}
+              className={styles.input}
+            />
+          </div>
+
+          <div className={styles.fieldGroup}>
+            <label className={styles.label} htmlFor="account-email">
+              Email Address
+            </label>
+            <input
+              id="account-email"
+              type="email"
+              name="email"
+              value={profile.email}
+              disabled
+              className={styles.input}
+            />
+            <p className={styles.helper}>Email changes require verification and must be done through support.</p>
+          </div>
+
+          <div className={styles.actions}>
+            <button
+              type="button"
+              onClick={() => void saveProfile()}
+              disabled={profileSaving}
+              className={`${styles.button} ${styles.primaryButton}`.trim()}
+            >
+              {profileSaving ? "Saving..." : "Save Profile"}
+            </button>
+          </div>
         </div>
 
-        <div style={{ marginBottom: "24px" }}>
-          <label style={{ display: "block", fontSize: "12px", color: "#9CA3AF", marginBottom: "8px" }}>
-            Email Address
-          </label>
-          <input
-            type="email"
-            name="email"
-            value={profile.email}
-            disabled
-            style={{
-              width: "100%",
-              height: "44px",
-              padding: "0 16px",
-              background: "rgba(255,255,255,0.02)",
-              border: "1px solid rgba(255,255,255,0.06)",
-              borderRadius: "8px",
-              color: "#6B7280",
-              fontSize: "14px",
-              outline: "none",
-              cursor: "not-allowed",
-            }}
-          />
-          <p style={{ fontSize: "11px", color: "#6B7280", marginTop: "6px" }}>
-            Email changes require verification and must be done through support.
-          </p>
-        </div>
+        <div className={styles.card}>
+          <h2 className={styles.cardTitle}>Change Password</h2>
 
-        <button
-          onClick={saveProfile}
-          disabled={loading}
-          style={{
-            height: "44px",
-            padding: "0 24px",
-            background: "linear-gradient(135deg, #00D4FF 0%, #0066FF 100%)",
-            border: "none",
-            borderRadius: "8px",
-            color: "#FFF",
-            fontSize: "14px",
-            fontWeight: "600",
-            cursor: loading ? "not-allowed" : "pointer",
-          }}
-        >
-          {loading ? "Saving..." : "Save Profile"}
-        </button>
+          <div className={styles.fieldGroup}>
+            <label className={styles.label} htmlFor="account-new-password">
+              New Password
+            </label>
+            <input
+              id="account-new-password"
+              type="password"
+              name="newPassword"
+              value={passwordForm.newPassword}
+              onChange={handlePasswordChange}
+              placeholder="At least 12 characters"
+              className={styles.input}
+            />
+          </div>
+
+          <div className={styles.fieldGroup}>
+            <label className={styles.label} htmlFor="account-confirm-password">
+              Confirm New Password
+            </label>
+            <input
+              id="account-confirm-password"
+              type="password"
+              name="confirmPassword"
+              value={passwordForm.confirmPassword}
+              onChange={handlePasswordChange}
+              className={styles.input}
+            />
+            <p className={styles.helper}>
+              Use a unique passphrase. If this account relies on SSO, support may ask you to update credentials through your identity provider instead.
+            </p>
+          </div>
+
+          <div className={styles.actions}>
+            <button
+              type="button"
+              onClick={() => void updatePassword()}
+              disabled={passwordSaving}
+              className={`${styles.button} ${styles.secondaryButton}`.trim()}
+            >
+              {passwordSaving ? "Updating..." : "Update Password"}
+            </button>
+          </div>
+        </div>
       </div>
-
-      <div
-        style={{
-          background: "#0A1628",
-          border: "1px solid rgba(255,255,255,0.12)",
-          borderRadius: "12px",
-          padding: "24px",
-        }}
-      >
-        <h2 style={{ fontSize: "16px", fontWeight: "600", marginBottom: "20px" }}>
-          Change Password
-        </h2>
-
-        <div style={{ marginBottom: "16px" }}>
-          <label style={{ display: "block", fontSize: "12px", color: "#9CA3AF", marginBottom: "8px" }}>
-            New Password
-          </label>
-          <input
-            type="password"
-            name="newPassword"
-            value={passwordForm.newPassword}
-            onChange={handlePasswordChange}
-            placeholder="At least 6 characters"
-            style={{
-              width: "100%",
-              height: "44px",
-              padding: "0 16px",
-              background: "rgba(255,255,255,0.04)",
-              border: "1px solid rgba(255,255,255,0.12)",
-              borderRadius: "8px",
-              color: "#FAFAF8",
-              fontSize: "14px",
-              outline: "none",
-            }}
-          />
-        </div>
-
-        <div style={{ marginBottom: "24px" }}>
-          <label style={{ display: "block", fontSize: "12px", color: "#9CA3AF", marginBottom: "8px" }}>
-            Confirm New Password
-          </label>
-          <input
-            type="password"
-            name="confirmPassword"
-            value={passwordForm.confirmPassword}
-            onChange={handlePasswordChange}
-            style={{
-              width: "100%",
-              height: "44px",
-              padding: "0 16px",
-              background: "rgba(255,255,255,0.04)",
-              border: "1px solid rgba(255,255,255,0.12)",
-              borderRadius: "8px",
-              color: "#FAFAF8",
-              fontSize: "14px",
-              outline: "none",
-            }}
-          />
-        </div>
-
-        <button
-          onClick={updatePassword}
-          disabled={loading}
-          style={{
-            height: "44px",
-            padding: "0 24px",
-            background: "transparent",
-            border: "1px solid rgba(255,255,255,0.12)",
-            borderRadius: "8px",
-            color: "#FAFAF8",
-            fontSize: "14px",
-            fontWeight: "500",
-            cursor: loading ? "not-allowed" : "pointer",
-          }}
-        >
-          {loading ? "Updating..." : "Update Password"}
-        </button>
-      </div>
-    </div>
+    </section>
   );
 }

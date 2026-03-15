@@ -1,10 +1,8 @@
-import { SkeletonPage } from "@/components/layout/SkeletonPage";
+import { SustainabilityTargetsView } from "@/features/sustainability/targets/SustainabilityTargetsView";
 
+/**
+ * Thin route entry for the target-planning workspace.
+ */
 export default function SustainabilityTargetsPage() {
-  return (
-    <SkeletonPage 
-      title="Emissions Targets & SBTi" 
-      description="Configure and track Science-Based Targets (SBTi) and Net Zero decarbonization pathways."
-    />
-  );
+  return <SustainabilityTargetsView />;
 }

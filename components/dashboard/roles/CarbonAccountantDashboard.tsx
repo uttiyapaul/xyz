@@ -1,137 +1,225 @@
-// components/dashboard/roles/CarbonAccountantDashboard.tsx
 "use client";
 
-import { CheckSquare, Database, AlertTriangle, Layers, Activity } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import { AlertTriangle, CheckSquare, Database, Layers } from "lucide-react";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  type TooltipContentProps,
+  XAxis,
+  YAxis,
+} from "recharts";
+
+import { AIDataPoint, type AIConfidenceLevel, type AIReviewState } from "@/components/ai/AIDataPoint";
+import styles from "@/components/dashboard/roles/CarbonAccountantDashboard.module.css";
 
 const MOCK_METRICS = [
-  { label: "Awaiting Calculation", value: "34", color: "#F59E0B", icon: Database },
-  { label: "EF Coverage", value: "98.2%", color: "#10B981", icon: CheckSquare },
-  { label: "Anomalies Detected", value: "2", color: "#EF4444", icon: AlertTriangle },
-  { label: "Calculated Ratio", value: "85%", color: "#06B6D4", icon: Layers },
-];
+  { label: "Awaiting Calculation", value: "34", color: "var(--status-warning)", tone: "warning", icon: Database },
+  { label: "EF Coverage", value: "98.2%", color: "var(--status-success)", tone: "success", icon: CheckSquare },
+  { label: "Anomalies Detected", value: "2", color: "var(--status-danger)", tone: "danger", icon: AlertTriangle },
+  { label: "Calculated Ratio", value: "85%", color: "var(--status-info)", tone: "info", icon: Layers },
+] as const;
 
 const MOCK_APPROVAL_QUEUE = [
-  { id: "ACT-2091", type: "Grid Electricity", facility: "Site B", submittedBy: "Raj P.", amount: "12,450 kWh", status: "Needs Review" },
-  { id: "ACT-2090", type: "Diesel Mobile", facility: "Fleet cars", submittedBy: "Amit K.", amount: "400 L", status: "Needs Approval" },
-  { id: "ACT-2089", type: "Natural Gas", facility: "Site A", submittedBy: "Sonia T.", amount: "1,200 m³", status: "Needs Review" },
-];
+  {
+    id: "ACT-2091",
+    type: "Grid Electricity",
+    facility: "Site B",
+    submittedBy: "Raj P.",
+    amount: "12,450 kWh",
+    lane: "review" as const,
+  },
+  {
+    id: "ACT-2090",
+    type: "Diesel Mobile",
+    facility: "Fleet cars",
+    submittedBy: "Amit K.",
+    amount: "400 L",
+    lane: "approval" as const,
+  },
+  {
+    id: "ACT-2089",
+    type: "Natural Gas",
+    facility: "Site A",
+    submittedBy: "Sonia T.",
+    amount: "1,200 m3",
+    lane: "review" as const,
+  },
+] as const;
+
+const MOCK_AI_ALERTS: Array<{
+  id: string;
+  title: string;
+  summary: string;
+  confidence: AIConfidenceLevel;
+  reviewState: AIReviewState;
+  source: string;
+}> = [
+  {
+    id: "alert-1",
+    title: "Site A Electricity",
+    summary: "Usage is 42% higher year-over-year compared with the prior February baseline.",
+    confidence: "medium",
+    reviewState: "pending",
+    source: "Historical site consumption baseline and seasonal variance checks.",
+  },
+  {
+    id: "alert-2",
+    title: "Fleet Diesel",
+    summary: "Three expected transport logs are missing for the current quarter.",
+    confidence: "high",
+    reviewState: "pending",
+    source: "Fuel-log completeness checks against expected trip cadence and prior-period submissions.",
+  },
+] as const;
 
 const UNCERTAINTY_DATA = [
   { name: "Scope 1", emissions: 120 },
   { name: "Scope 2", emissions: 450 },
   { name: "Scope 3", emissions: 2100 },
-];
+] as const;
 
+function UncertaintyTooltip({ active, payload, label }: TooltipContentProps) {
+  if (!active || !payload?.length) {
+    return null;
+  }
+
+  return (
+    <div className={styles.tooltip}>
+      <p className={styles.tooltipLabel}>{label}</p>
+      <p className={styles.tooltipValue}>{String(payload[0]?.value ?? 0)} tCO2e</p>
+    </div>
+  );
+}
+
+/**
+ * Carbon-accountant landing surface keeps approval lanes and AI disclosure
+ * visible in the shared dashboard layer. That prevents the role shell from
+ * drifting away from the audit-required SoD and AI transparency rules.
+ */
 export function CarbonAccountantDashboard() {
   return (
-    <div style={{ padding: "32px", color: "#E8E6DE", fontFamily: "'DM Sans', sans-serif" }}>
-      <div style={{ marginBottom: "32px", display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
+    <section className={styles.page}>
+      <header className={styles.header}>
         <div>
-          <h1 style={{ fontSize: "28px", color: "#FAFAF8", fontWeight: "700", marginBottom: "8px" }}>Carbon Accounting</h1>
-          <p style={{ fontSize: "14px", color: "#9CA3AF" }}>Calculate emissions, manage emission factors, and review data quality.</p>
+          <h1 className={styles.title}>Carbon Accounting</h1>
+          <p className={styles.subtitle}>
+            Calculate emissions, manage emission factors, and keep reviewer versus approver responsibilities visible.
+          </p>
         </div>
-        <div>
-          <button style={{
-            background: "linear-gradient(135deg, #06B6D4 0%, #0284C7 100%)",
-            color: "#000", border: "none", padding: "10px 20px", borderRadius: "6px",
-            fontSize: "13px", fontWeight: "600", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px"
-          }}>
-            <Activity size={16} /> Run Calculation Engine
-          </button>
-        </div>
-      </div>
+        <button type="button" className={styles.heroAction}>
+          Run Calculation Engine
+        </button>
+      </header>
 
-      {/* KPI Metrics */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "20px", marginBottom: "32px" }}>
+      <div className={styles.metricsGrid}>
         {MOCK_METRICS.map((metric) => (
-          <div key={metric.label} style={{ background: "#0D0D14", border: "1px solid #1A1A24", borderRadius: "8px", padding: "24px", position: "relative", overflow: "hidden" }}>
-            <div style={{ position: "absolute", top: "24px", right: "24px", opacity: 0.1 }}>
+          <article key={metric.label} className={styles.metricCard}>
+            <div className={styles.metricIcon}>
               <metric.icon size={48} color={metric.color} />
             </div>
-            <div style={{ fontSize: "13px", color: "#6B7280", marginBottom: "12px", textTransform: "uppercase", letterSpacing: "1px", fontWeight: "600" }}>
-              {metric.label}
-            </div>
-            <div style={{ fontSize: "36px", color: metric.color, fontWeight: "700", fontFamily: "'JetBrains Mono', monospace" }}>
+            <p className={styles.metricLabel}>{metric.label}</p>
+            <p className={styles.metricValue} data-tone={metric.tone}>
               {metric.value}
-            </div>
-          </div>
+            </p>
+          </article>
         ))}
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(350px, 1fr))", gap: "24px" }}>
-        
-        {/* Uncertainty Analysis */}
-        <div style={{ background: "#0A0A0F", border: "1px solid #1A1A24", borderRadius: "8px", padding: "24px" }}>
-          <h2 style={{ fontSize: "16px", fontWeight: "600", color: "#FAFAF8", marginBottom: "8px" }}>Emissions Uncertainty (tCO₂e)</h2>
-          <p style={{ fontSize: "13px", color: "#6B7280", marginBottom: "24px" }}>Confidence intervals based on data quality scores and EF variance.</p>
-          <div style={{ height: "300px", width: "100%" }}>
+      <div className={styles.contentGrid}>
+        <article className={styles.card}>
+          <h2 className={styles.cardTitle}>Emissions Uncertainty (tCO2e)</h2>
+          <p className={styles.cardText}>Confidence intervals based on data quality scores and emission-factor variance.</p>
+          <div className={styles.chartShell}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={UNCERTAINTY_DATA} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1A1A24" vertical={false} />
-                <XAxis dataKey="name" stroke="#6B7280" tick={{ fill: '#6B7280', fontSize: 12 }} axisLine={false} tickLine={false} />
-                <YAxis stroke="#6B7280" tick={{ fill: '#6B7280', fontSize: 12 }} axisLine={false} tickLine={false} />
-                <Tooltip 
-                  contentStyle={{ background: "#0D0D14", border: "1px solid #1A1A24", borderRadius: "8px", color: "#E8E6DE" }}
-                  itemStyle={{ color: "#E8E6DE" }}
-                  cursor={{ fill: 'rgba(255,255,255,0.05)' }}
-                />
-                <Bar dataKey="emissions" fill="#06B6D4" radius={[4, 4, 0, 0]} maxBarSize={60} />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.08)" vertical={false} />
+                <XAxis dataKey="name" stroke="rgba(255, 255, 255, 0.45)" axisLine={false} tickLine={false} />
+                <YAxis stroke="rgba(255, 255, 255, 0.45)" axisLine={false} tickLine={false} />
+                <Tooltip content={UncertaintyTooltip} />
+                <Bar dataKey="emissions" fill="var(--status-info)" radius={[4, 4, 0, 0]} maxBarSize={60} />
               </BarChart>
             </ResponsiveContainer>
           </div>
-        </div>
+        </article>
 
-        {/* Action Items & Anomalies */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-          
-          <div style={{ background: "rgba(239,68,68,0.05)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: "8px", padding: "24px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px" }}>
-              <AlertTriangle color="#EF4444" size={24} />
-              <h2 style={{ fontSize: "16px", fontWeight: "600", color: "#EF4444", margin: 0 }}>AI Anomaly Alerts</h2>
+        <div className={styles.stack}>
+          <article className={styles.alertCard}>
+            <div className={styles.alertHeader}>
+              <AlertTriangle color="var(--status-warning)" size={22} />
+              <h2 className={styles.alertTitle}>AI anomaly alerts</h2>
             </div>
-            <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-              <li style={{ padding: "12px 0", borderBottom: "1px solid rgba(239,68,68,0.1)", fontSize: "13px", color: "#FAFAF8" }}>
-                <strong>Site A Electricity</strong>: Usage is 42% higher YoY compared to Feb 2025.
-              </li>
-              <li style={{ padding: "12px 0", fontSize: "13px", color: "#FAFAF8", paddingTop: "12px" }}>
-                <strong>Fleet Diesel</strong>: Missing 3 expected transport logs for Q1.
-              </li>
-            </ul>
-          </div>
+            <p className={styles.alertText}>
+              These anomaly signals are advisory only. Reviewers must inspect evidence first, and approvers remain a
+              separate control lane before any downstream filing or sign-off.
+            </p>
+            <div className={styles.alertList}>
+              {MOCK_AI_ALERTS.map((alert) => (
+                <AIDataPoint
+                  key={alert.id}
+                  label={alert.title}
+                  value={alert.summary}
+                  confidence={alert.confidence}
+                  source={alert.source}
+                  reviewState={alert.reviewState}
+                  description="AI output is not a final compliance decision. Human accounting review is required before any acceptance."
+                />
+              ))}
+            </div>
+          </article>
 
-          <div style={{ background: "#0A0A0F", border: "1px solid #1A1A24", borderRadius: "8px", overflow: "hidden", flex: 1 }}>
-            <div style={{ padding: "20px 24px", borderBottom: "1px solid #1A1A24", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <h2 style={{ fontSize: "16px", fontWeight: "600", color: "#FAFAF8", margin: 0 }}>Approval Queue</h2>
+          <article className={styles.card}>
+            <div className={styles.queueHeader}>
+              <div>
+                <h2 className={styles.cardTitle}>Approval Queue</h2>
+                <p className={styles.cardText}>
+                  Review and approval lanes stay distinct so the same person is not silently performing both controls.
+                </p>
+              </div>
             </div>
-            <div style={{ overflowX: "auto" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "13px" }}>
+
+            <div className={styles.queueWrapper}>
+              <table className={styles.table}>
                 <thead>
-                  <tr style={{ background: "#0D0D14" }}>
-                    <th style={{ padding: "12px 24px", color: "#6B7280", fontWeight: "500", borderBottom: "1px solid #1A1A24", whiteSpace: "nowrap" }}>ID</th>
-                    <th style={{ padding: "12px 24px", color: "#6B7280", fontWeight: "500", borderBottom: "1px solid #1A1A24", whiteSpace: "nowrap" }}>Type</th>
-                    <th style={{ padding: "12px 24px", color: "#6B7280", fontWeight: "500", borderBottom: "1px solid #1A1A24", whiteSpace: "nowrap" }}>Amount</th>
-                    <th style={{ padding: "12px 24px", color: "#6B7280", fontWeight: "500", borderBottom: "1px solid #1A1A24", whiteSpace: "nowrap" }}>Action</th>
+                  <tr>
+                    <th className={styles.tableHeaderCell}>ID</th>
+                    <th className={styles.tableHeaderCell}>Type</th>
+                    <th className={styles.tableHeaderCell}>Amount</th>
+                    <th className={styles.tableHeaderCell}>Lane</th>
+                    <th className={styles.tableHeaderCell}>Action</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {MOCK_APPROVAL_QUEUE.map((item, i) => (
-                    <tr key={item.id} style={{ borderBottom: "1px solid #1A1A24", background: i % 2 === 0 ? "transparent" : "rgba(255,255,255,0.01)" }}>
-                      <td style={{ padding: "12px 24px", color: "#D1D5DB", fontFamily: "'JetBrains Mono', monospace" }}>{item.id}</td>
-                      <td style={{ padding: "12px 24px", color: "#FAFAF8" }}>{item.type}</td>
-                      <td style={{ padding: "12px 24px", color: "#9CA3AF" }}>{item.amount}</td>
-                      <td style={{ padding: "12px 24px" }}>
-                        <button style={{ background: "transparent", color: "#06B6D4", border: "none", cursor: "pointer", fontWeight: "600", fontSize: "12px", padding: 0 }}>Review</button>
+                  {MOCK_APPROVAL_QUEUE.map((item) => (
+                    <tr key={item.id} className={styles.tableRow}>
+                      <td className={`${styles.tableCell} ${styles.queueId}`}>{item.id}</td>
+                      <td className={styles.tableCell}>
+                        {item.type}
+                        <span className={styles.queueMeta}>
+                          {item.facility} | Submitted by {item.submittedBy}
+                        </span>
+                      </td>
+                      <td className={`${styles.tableCell} ${styles.queueAmount}`}>{item.amount}</td>
+                      <td className={styles.tableCell}>
+                        <span className={styles.badge} data-tone={item.lane}>
+                          {item.lane === "review" ? "Reviewer lane" : "Approver lane"}
+                        </span>
+                      </td>
+                      <td className={styles.tableCell}>
+                        <button type="button" className={styles.reviewButton}>
+                          {item.lane === "review" ? "Open review" : "Open approval"}
+                        </button>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-          </div>
-
+          </article>
         </div>
       </div>
-    </div>
+    </section>
   );
 }

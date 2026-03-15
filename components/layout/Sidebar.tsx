@@ -191,8 +191,10 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
 
       {onToggle && (
         <button
+          type="button"
           onClick={onToggle}
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          aria-expanded={!collapsed}
           className={styles.toggle}
         >
           {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}

@@ -1,10 +1,11 @@
-import { SkeletonPage } from "@/components/layout/SkeletonPage";
+import { OrganizationFacilitiesView } from "@/features/org/facilities/OrganizationFacilitiesView";
 
+/**
+ * Route entry for organization legal-entity and facility management.
+ *
+ * The feature workspace owns the data flow so the App Router file stays a
+ * minimal entrypoint.
+ */
 export default function OrgFacilitiesPage() {
-  return (
-    <SkeletonPage 
-      title="Facilities & Site Configuration" 
-      description="Map physical sites, operational boundaries, and hierarchical organizational structure for GHG reporting."
-    />
-  );
+  return <OrganizationFacilitiesView />;
 }

@@ -18,9 +18,10 @@ Use these in order:
 3. [docs/FRONTEND_AUDIT_2026_ACTIONS.md](./FRONTEND_AUDIT_2026_ACTIONS.md) for frontend-only execution guidance extracted from that audit
 4. [docs/DB_FOLLOW_UP.md](./DB_FOLLOW_UP.md) for schema and backend gaps the frontend is intentionally tracking for later phases
 5. [docs/OrganizationFlowCharts.md](./OrganizationFlowCharts.md) for the living visual map of organization, auth, SoD, and data movement
-6. `carbonA2Z_Role_Architecture.txt`
-7. `carbonA2Z_Frontend_Implementation_Plan.md`
-8. Current repo code, only where it does not conflict with the above
+6. [docs/BUSINESS_MODEL_AND_REVENUE_PLAYBOOK.md](./BUSINESS_MODEL_AND_REVENUE_PLAYBOOK.md) for business model, GTM, monetization, segment, partnership, and investor-facing product ideas discovered during development
+7. `carbonA2Z_Role_Architecture.txt`
+8. `carbonA2Z_Frontend_Implementation_Plan.md`
+9. Current repo code, only where it does not conflict with the above
 
 ## Confirmed Live Objects
 
@@ -123,3 +124,21 @@ When there is a conflict between speed and completeness, use this frontend-only 
 - Whenever a role gains a new live route, KPI, menu item, shortcut, guardrail, or restriction, update [docs/ActiveRoleListandFeatures.md](./ActiveRoleListandFeatures.md) in the same PR so training and audit documentation stays current.
 - Whenever frontend work reveals a missing DB object, a schema workaround, or a backend-owned compliance gap, update [docs/DB_FOLLOW_UP.md](./DB_FOLLOW_UP.md) in the same PR so later database work has a trustworthy handoff list.
 - Whenever frontend work changes organization topology, auth flow, route access, SoD behavior, or core data movement, update [docs/OrganizationFlowCharts.md](./OrganizationFlowCharts.md) in the same PR so the visual system map stays trustworthy.
+- Whenever frontend work reveals a monetizable workflow, pricing/packaging angle, partner motion, investor-facing product story, government/client segment idea, or a new feature that could improve revenue, margin, retention, or expansion, update [docs/BUSINESS_MODEL_AND_REVENUE_PLAYBOOK.md](./BUSINESS_MODEL_AND_REVENUE_PLAYBOOK.md) in the same PR.
+
+## Business Development Companion Rule
+
+- Product development in this repo must not be treated as frontend-only craft work; we must keep capturing business, GTM, and monetization implications while building.
+- Maintain [docs/BUSINESS_MODEL_AND_REVENUE_PLAYBOOK.md](./BUSINESS_MODEL_AND_REVENUE_PLAYBOOK.md) as a living commercialization companion for the portal.
+- Use that document to track:
+  - business model evolution
+  - pricing and packaging ideas
+  - client and partner segment ideas
+  - country and geography expansion ideas
+  - government/public-sector use cases
+  - role- and workflow-based revenue opportunities
+  - SME / small-business pitch angles
+  - verifier, audit, consulting, and managed-service upsells
+  - investor and pitch-deck framing
+  - frontend and backend feature ideas that would materially improve revenue, profit, or retention
+- If a product idea depends on missing backend or schema support, record the commercial idea in the business playbook and the technical dependency in [docs/DB_FOLLOW_UP.md](./DB_FOLLOW_UP.md).

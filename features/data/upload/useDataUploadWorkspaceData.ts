@@ -58,6 +58,11 @@ export interface DataUploadEvidenceItem {
   justifiedFieldCount: number;
 }
 
+export interface DataUploadSiteOption {
+  id: string;
+  siteName: string;
+}
+
 export interface DataUploadScope3Item {
   id: string;
   scope3CategoryId: number;
@@ -85,9 +90,11 @@ export interface DataUploadDisclosureItem {
 export interface DataUploadWorkspaceState {
   loading: boolean;
   error: string | null;
+  sites: DataUploadSiteOption[];
   evidence: DataUploadEvidenceItem[];
   scope3Submissions: DataUploadScope3Item[];
   disclosures: DataUploadDisclosureItem[];
+  reload: () => void;
 }
 
 /**
@@ -97,22 +104,34 @@ export interface DataUploadWorkspaceState {
  */
 export function useDataUploadWorkspaceData(): DataUploadWorkspaceState {
   const { primaryOrgId, siteScopeIds, isLoading: authLoading } = useAuth();
+  const siteScopeKey = siteScopeIds.join("|");
   const [state, setState] = useState<DataUploadWorkspaceState>({
     loading: true,
     error: null,
+    sites: [],
     evidence: [],
     scope3Submissions: [],
     disclosures: [],
+    reload: () => undefined,
   });
 
   async function loadWorkspace() {
+    setState((current) => ({
+      ...current,
+      loading: true,
+      error: null,
+      reload: scheduleWorkspaceLoad,
+    }));
+
     if (!primaryOrgId) {
       setState({
         loading: false,
         error: null,
+        sites: [],
         evidence: [],
         scope3Submissions: [],
         disclosures: [],
+        reload: scheduleWorkspaceLoad,
       });
       return;
     }
@@ -150,9 +169,11 @@ export function useDataUploadWorkspaceData(): DataUploadWorkspaceState {
       setState({
         loading: false,
         error: "The upload workspace could not load its current evidence and disclosure queues.",
+        sites: [],
         evidence: [],
         scope3Submissions: [],
         disclosures: [],
+        reload: scheduleWorkspaceLoad,
       });
       return;
     }
@@ -169,6 +190,10 @@ export function useDataUploadWorkspaceData(): DataUploadWorkspaceState {
     setState({
       loading: false,
       error: null,
+      sites: sites.map((site) => ({
+        id: site.id,
+        siteName: site.site_name,
+      })),
       evidence: evidenceRows.map((document) => ({
         id: document.id,
         siteName: document.site_id ? siteMap.get(document.site_id) ?? "Unassigned" : "Unassigned",
@@ -201,6 +226,7 @@ export function useDataUploadWorkspaceData(): DataUploadWorkspaceState {
         assuranceLevel: disclosure.assurance_level,
         submittedAt: disclosure.submitted_at,
       })),
+      reload: scheduleWorkspaceLoad,
     });
   }
 
@@ -210,10 +236,9 @@ export function useDataUploadWorkspaceData(): DataUploadWorkspaceState {
 
   useEffect(() => {
     if (!authLoading) {
-      setState((current) => ({ ...current, loading: true }));
       queueMicrotask(scheduleWorkspaceLoad);
     }
-  }, [authLoading, primaryOrgId, siteScopeIds.join("|")]);
+  }, [authLoading, primaryOrgId, siteScopeKey]);
 
   return state;
 }

@@ -1,158 +1,284 @@
-import { AIDataPoint } from "@/components/ai/AIDataPoint";
+"use client";
+
+import { AIDataPoint, type AIConfidenceLevel, type AIReviewState } from "@/components/ai/AIDataPoint";
 import styles from "@/features/data/ai-extract/AIExtractionWorkbench.module.css";
+import {
+  useAIExtractionWorkspaceData,
+  type AIExtractionReadingItem,
+} from "@/features/data/ai-extract/useAIExtractionWorkspaceData";
 
-const EXTRACTION_STEPS = [
+const REVIEW_GUARDRAILS = [
   {
-    label: "Secure intake",
-    copy: "Documents are expected to pass malware screening and basic file validation before any parsing begins.",
+    label: "No silent posting",
+    copy: "AI-suggested values remain in a review lane until a human confirms them against evidence and route scope.",
   },
   {
-    label: "Model extraction",
-    copy: "The parser proposes supplier, invoice period, activity quantities, and line-item totals from uploaded evidence.",
+    label: "No hidden provenance",
+    copy: "Document extraction status, justified fields, and validation pressure stay visible before downstream use.",
   },
   {
-    label: "Human review",
-    copy: "Every extracted result still requires human confirmation before it can influence ledgers, reports, or regulatory filings.",
+    label: "No raw provider errors",
+    copy: "Users should receive safe workflow guidance, not parser internals or provider exception text.",
   },
 ] as const;
 
-const SUPPORTED_FIELDS = [
-  {
-    field: "Supplier and invoice identifiers",
-    source: "PDF OCR + invoice layout heuristics",
-    status: "Human review required",
-  },
-  {
-    field: "Consumption quantities and units",
-    source: "Line-item extraction + historical unit normalization",
-    status: "Human review required",
-  },
-  {
-    field: "Emission factor hints",
-    source: "Document context + factor catalog matching",
-    status: "Advisory only",
-  },
-] as const;
+function formatDateTime(value: string | null): string {
+  if (!value) {
+    return "Not recorded";
+  }
+
+  return new Date(value).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" });
+}
+
+function formatPeriod(value: string | null): string {
+  if (!value) {
+    return "Period not recorded";
+  }
+
+  return new Date(value).toLocaleDateString("en-IN", { dateStyle: "medium" });
+}
+
+function humanizeToken(value: string): string {
+  return value
+    .split("_")
+    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+    .join(" ");
+}
+
+function getConfidenceLevel(trustScore: number | null): AIConfidenceLevel {
+  const normalized = trustScore == null ? 0 : trustScore <= 1 ? trustScore : trustScore / 100;
+
+  if (normalized >= 0.85) {
+    return "high";
+  }
+
+  if (normalized >= 0.6) {
+    return "medium";
+  }
+
+  return "low";
+}
+
+function getReviewState(row: AIExtractionReadingItem): AIReviewState {
+  return row.humanReviewed ? "reviewed" : "pending";
+}
 
 /**
- * AI extraction remains disclosure-first even before the upload backend is wired.
- * The UI explains how suggested fields, confidence, and human review fit into
- * the regulated workflow so future ingestion features do not skip compliance cues.
+ * Live AI extraction workbench.
+ *
+ * This route now uses the current evidence and validation schema instead of a
+ * future-state placeholder. The UI keeps the audit-required disclosure pattern
+ * visible while grounding the page in live document, reading, and validation
+ * rows.
  */
 export function AIExtractionWorkbench() {
+  const { loading, error, evidence, readings, validationSummary } = useAIExtractionWorkspaceData();
+  const aiReadings = readings.filter((reading) => reading.isAiGenerated);
+  const topAiReadings = aiReadings.slice(0, 3);
+  const pendingExtraction = evidence.filter((document) => document.extractionStatus !== "completed").length;
+  const pendingHumanReview = aiReadings.filter((reading) => !reading.humanReviewed).length;
+  const lowTrustSuggestions = aiReadings.filter((reading) => {
+    const normalized = reading.trustScore == null ? 0 : reading.trustScore <= 1 ? reading.trustScore : reading.trustScore / 100;
+    return normalized < 0.6;
+  }).length;
+  const flaggedValidationRows = validationSummary.reduce((sum, row) => sum + row.flaggedCount, 0);
+
+  if (loading) {
+    return (
+      <section className={styles.page}>
+        <header className={styles.hero}>
+          <p className={styles.eyebrow}>AI Intake Workspace</p>
+          <h1 className={styles.title}>Loading AI extraction board...</h1>
+          <p className={styles.subtitle}>
+            Reading live document extraction posture, AI-generated review rows, and validation signals for the current
+            organization scope.
+          </p>
+        </header>
+      </section>
+    );
+  }
+
   return (
     <section className={styles.page}>
       <header className={styles.hero}>
         <p className={styles.eyebrow}>AI Intake Workspace</p>
         <h1 className={styles.title}>AI Invoice Parsing</h1>
         <p className={styles.subtitle}>
-          Upload and extraction wiring will arrive in a later backend phase. This frontend workbench already reflects
-          the required compliance contract: malware-aware intake, human-reviewed parsing, and transparent AI disclosure.
+          Review live extraction posture from evidence documents, AI-generated reading rows, and validation pressure
+          before any suggestion is trusted downstream. This route stays disclosure-first and human-review controlled by
+          design.
         </p>
       </header>
 
-      <div className={styles.alert}>
-        AI extraction suggestions are never authoritative by default. Every proposed value must show confidence,
-        source attribution, and review state before it reaches operational or compliance workflows.
-      </div>
+      {error ? (
+        <div className={styles.alert} data-tone="warning">
+          {error}
+        </div>
+      ) : (
+        <div className={styles.alert}>
+          AI extraction suggestions are never authoritative by default. Confidence, source attribution, and review state
+          stay visible until a human reviewer confirms the proposal.
+        </div>
+      )}
+
+      <section className={styles.metricsGrid}>
+        <article className={styles.metricCard}>
+          <p className={styles.metricLabel}>Pending Extraction</p>
+          <p className={styles.metricValue}>{pendingExtraction}</p>
+          <p className={styles.metricHint}>`ghg_documents` rows whose extraction has not yet completed.</p>
+        </article>
+        <article className={styles.metricCard}>
+          <p className={styles.metricLabel}>Pending Human Review</p>
+          <p className={styles.metricValue}>{pendingHumanReview}</p>
+          <p className={styles.metricHint}>AI-generated monthly reading rows still waiting for human confirmation.</p>
+        </article>
+        <article className={styles.metricCard}>
+          <p className={styles.metricLabel}>Low-Trust Suggestions</p>
+          <p className={styles.metricValue}>{lowTrustSuggestions}</p>
+          <p className={styles.metricHint}>AI suggestions whose trust score currently sits below the 0.6 caution line.</p>
+        </article>
+        <article className={styles.metricCard}>
+          <p className={styles.metricLabel}>Flagged Validation Rows</p>
+          <p className={styles.metricValue}>{flaggedValidationRows}</p>
+          <p className={styles.metricHint}>Rows currently flagged in the AI validation summary view.</p>
+        </article>
+      </section>
 
       <div className={styles.grid}>
         <div className={styles.stack}>
           <article className={styles.card}>
-            <h2 className={styles.cardTitle}>Processing contract</h2>
+            <h2 className={styles.cardTitle}>Extraction Ledger</h2>
             <p className={styles.cardDescription}>
-              This screen sets the expectations for the later ingestion flow so teams know where automation ends and
-              accountable review begins.
+              Current evidence rows tied to document extraction. This stays read-only and truthfully reflects the live
+              document ledger instead of inventing a future upload queue.
             </p>
 
-            <ul className={styles.list}>
-              {EXTRACTION_STEPS.map((step) => (
-                <li key={step.label} className={styles.listItem}>
-                  <span className={styles.listLabel}>{step.label}</span>
-                  <span className={styles.listCopy}>{step.copy}</span>
-                </li>
-              ))}
-            </ul>
+            {evidence.length === 0 ? (
+              <div className={styles.emptyState}>
+                <h3 className={styles.emptyTitle}>No evidence documents are visible yet.</h3>
+                <p className={styles.emptyDescription}>
+                  The AI intake lane is live, but this organization scope is not carrying `ghg_documents` rows yet.
+                </p>
+              </div>
+            ) : (
+              <div className={styles.tableWrapper}>
+                <table className={styles.table}>
+                  <thead>
+                    <tr>
+                      <th className={styles.tableHeaderCell}>Document</th>
+                      <th className={styles.tableHeaderCell}>Extraction</th>
+                      <th className={styles.tableHeaderCell}>Review</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {evidence.slice(0, 8).map((document) => (
+                      <tr key={document.id}>
+                        <td className={styles.tableCell}>
+                          <p className={styles.primaryText}>{document.fileName}</p>
+                          <p className={styles.metaText}>
+                            {humanizeToken(document.documentType)} | {document.siteName}
+                          </p>
+                          <p className={styles.metaText}>Uploaded {formatDateTime(document.uploadedAt)}</p>
+                        </td>
+                        <td className={styles.tableCell}>
+                          <span className={styles.badge} data-tone={document.extractionStatus === "completed" ? "success" : "warning"}>
+                            {humanizeToken(document.extractionStatus)}
+                          </span>
+                        </td>
+                        <td className={styles.tableCell}>
+                          <p className={styles.metaText}>Review: {humanizeToken(document.reviewStatus)}</p>
+                          <p className={styles.metaText}>Justified fields: {document.justifiedFieldCount}</p>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </article>
 
           <article className={styles.card}>
-            <h2 className={styles.cardTitle}>Expected extracted fields</h2>
+            <h2 className={styles.cardTitle}>Live AI Suggestions</h2>
             <p className={styles.cardDescription}>
-              These are the first field families the parser should propose once upload wiring is connected.
+              The disclosure card below now reflects live AI-generated reading rows instead of a static example.
             </p>
 
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th className={styles.tableHeaderCell}>Field</th>
-                  <th className={styles.tableHeaderCell}>Source</th>
-                  <th className={styles.tableHeaderCell}>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {SUPPORTED_FIELDS.map((row) => (
-                  <tr key={row.field}>
-                    <td className={styles.tableCell}>{row.field}</td>
-                    <td className={styles.tableCell}>{row.source}</td>
-                    <td className={styles.tableCell}>
-                      <span className={styles.badge} data-tone={row.status === "Advisory only" ? "info" : "warning"}>
-                        {row.status}
-                      </span>
-                    </td>
-                  </tr>
+            {topAiReadings.length === 0 ? (
+              <div className={styles.emptyState}>
+                <h3 className={styles.emptyTitle}>No AI-generated reading rows are visible.</h3>
+                <p className={styles.emptyDescription}>
+                  This scope is currently not carrying `is_ai_generated` monthly reading rows for review.
+                </p>
+              </div>
+            ) : (
+              <div className={styles.stack}>
+                {topAiReadings.map((reading) => (
+                  <AIDataPoint
+                    key={reading.id}
+                    label={`${reading.siteName} reading`}
+                    value={formatPeriod(reading.reportingPeriod)}
+                    confidence={getConfidenceLevel(reading.trustScore)}
+                    source="ghg_monthly_readings trust score, anomaly flag, and current review state"
+                    reviewState={getReviewState(reading)}
+                    description={`Status ${humanizeToken(reading.status)}.${reading.anomalyFlag ? " Anomaly flag raised." : " No anomaly flag raised."} Updated ${formatDateTime(reading.updatedAt)}.`}
+                  />
                 ))}
-              </tbody>
-            </table>
+              </div>
+            )}
           </article>
         </div>
 
         <div className={styles.stack}>
           <article className={styles.card}>
-            <h2 className={styles.cardTitle}>Disclosure example</h2>
+            <h2 className={styles.cardTitle}>AI Validation Summary</h2>
             <p className={styles.cardDescription}>
-              Every extracted AI suggestion should render through the shared disclosure primitive below.
+              Platform validation posture for the current organization, grounded in `mv_ai_validation_summary`.
             </p>
 
-            <AIDataPoint
-              label="Detected consumption quantity"
-              value="12,450 kWh"
-              confidence="medium"
-              source="Invoice OCR, layout parsing, and historical utility-bill pattern matching."
-              reviewState="pending"
-              description="Suggested from line-item parsing only. A human reviewer must confirm units, billing period, and supplier identity before posting."
-            />
-
-            <p className={styles.notice}>
-              Backend document parsing, upload quarantine, and ledger posting will be connected later. This screen keeps
-              the user-facing contract ready now so those capabilities land inside the correct guardrails.
-            </p>
+            {validationSummary.length === 0 ? (
+              <div className={styles.emptyState}>
+                <h3 className={styles.emptyTitle}>No validation summary rows are visible.</h3>
+                <p className={styles.emptyDescription}>
+                  The organization scope is not currently returning AI validation summary data.
+                </p>
+              </div>
+            ) : (
+              <div className={styles.stack}>
+                {validationSummary.slice(0, 6).map((row) => (
+                  <div key={`${row.tableName}-${row.validationStatus}`} className={styles.listItem}>
+                    <div className={styles.listHeader}>
+                      <p className={styles.primaryText}>{row.tableName}</p>
+                      <span
+                        className={styles.badge}
+                        data-tone={row.validationStatus === "passed" ? "success" : row.flaggedCount > 0 ? "warning" : "info"}
+                      >
+                        {humanizeToken(row.validationStatus)}
+                      </span>
+                    </div>
+                    <p className={styles.metaText}>
+                      {row.recordCount} row(s) | avg trust {row.avgTrust != null ? row.avgTrust.toFixed(2) : "n/a"} |
+                      flagged {row.flaggedCount}
+                    </p>
+                    <p className={styles.metaText}>Risk level: {row.riskLevel ? humanizeToken(row.riskLevel) : "Not scored"}</p>
+                  </div>
+                ))}
+              </div>
+            )}
           </article>
 
           <article className={styles.card}>
-            <h2 className={styles.cardTitle}>Security expectations</h2>
+            <h2 className={styles.cardTitle}>Human Review Guardrails</h2>
             <p className={styles.cardDescription}>
-              Frontend copy must keep these guardrails visible once uploads go live.
+              These controls must remain visible even as the upload and parser backend matures.
             </p>
 
             <ul className={styles.list}>
-              <li className={styles.listItem}>
-                <span className={styles.listLabel}>No raw parser errors</span>
-                <span className={styles.listCopy}>
-                  Provider and token failures should resolve to safe guidance, not internal error detail.
-                </span>
-              </li>
-              <li className={styles.listItem}>
-                <span className={styles.listLabel}>No silent posting</span>
-                <span className={styles.listCopy}>
-                  Extracted values must move into a reviewer-controlled staging surface before any ledger write.
-                </span>
-              </li>
-              <li className={styles.listItem}>
-                <span className={styles.listLabel}>No hidden provenance</span>
-                <span className={styles.listCopy}>
-                  Users need to see which document and parsing path produced a suggested value before approving it.
-                </span>
-              </li>
+              {REVIEW_GUARDRAILS.map((guardrail) => (
+                <li key={guardrail.label} className={styles.listItem}>
+                  <span className={styles.listLabel}>{guardrail.label}</span>
+                  <span className={styles.listCopy}>{guardrail.copy}</span>
+                </li>
+              ))}
             </ul>
           </article>
         </div>

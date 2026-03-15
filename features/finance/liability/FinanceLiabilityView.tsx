@@ -46,12 +46,16 @@ interface FilingRow {
  * replace a full treasury or ERP liability engine.
  */
 export function FinanceLiabilityView() {
-  const { primaryOrgId, isLoading: authLoading } = useAuth();
+  const { primaryOrgId, roles, isLoading: authLoading } = useAuth();
   const [productEmissions, setProductEmissions] = useState<ProductEmissionRow[]>([]);
   const [payments, setPayments] = useState<PaymentRow[]>([]);
   const [filings, setFilings] = useState<FilingRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<{ tone: "info" | "warning"; text: string } | null>(null);
+  const isTraderAudience = roles.includes("carbon_credit_trader");
+  const liabilityGuardrail = isTraderAudience
+    ? "This route gives traders read-only exposure context. It does not authorize market execution, filing submission, or payment approval."
+    : "Liability visibility is not filing approval authority. Reviewer, approver, and verifier lanes remain separate.";
 
   async function loadLiabilityView() {
     if (!primaryOrgId) {
@@ -141,7 +145,7 @@ export function FinanceLiabilityView() {
           <section className={styles.card}>
             <h2 className={styles.cardTitle}>Finance Guardrails</h2>
             <div className={styles.metaList}>
-              <div className={styles.alert} data-tone="warning">Liability visibility is not filing approval authority. Reviewer, approver, and verifier lanes remain separate.</div>
+              <div className={styles.alert} data-tone="warning">{liabilityGuardrail}</div>
               <div className={styles.alert} data-tone="info">Default-value product rows and low-confidence estimates should be challenged before any board-facing exposure number is treated as final.</div>
             </div>
           </section>
@@ -152,6 +156,7 @@ export function FinanceLiabilityView() {
               <p className={styles.detailText}>Embedded emissions across EU-export rows: {exportedRows.reduce((sum, row) => sum + Number(row.embedded_emissions ?? 0), 0).toFixed(2)}</p>
               <p className={styles.detailText}>Rows using default values: {exportedRows.filter((row) => row.default_value_used).length}</p>
               <p className={styles.detailText}>AI-calculated rows: {exportedRows.filter((row) => row.ai_calculated).length}</p>
+              <p className={styles.detailText}>Audience mode: {isTraderAudience ? "Market context only" : "Internal finance"}</p>
             </div>
           </section>
         </aside>

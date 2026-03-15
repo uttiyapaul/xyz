@@ -368,16 +368,18 @@ Live KPI blocks:
 - `Registered Sources`: source-register rows visible to the session.
 - `Open Records`: activity rows not yet accepted.
 - `Evidence Pending`: document uploads still waiting for review closure.
+- `Pending Extraction`: evidence rows whose extraction is not yet completed.
+- `Pending Human Review`: AI-generated reading rows still awaiting human confirmation.
 
 Live menus:
 - `Activity Entry`: live scoped activity capture.
 - `Source Register`: live source coverage and mapping.
 - `Bulk Upload`: structured data import workspace.
-- `AI Invoice Parse`: AI-assisted extraction workspace with disclosure-first handling.
+- `AI Invoice Parse`: live extraction board using documents, AI-generated readings, and validation summary posture.
 - `My Submissions`: operator-facing history of submissions and evidence.
 
 Why it exists:
-- Supports live data capture, evidence intake, and submission tracking against real source and site data.
+- Supports live data capture, evidence intake, AI-assisted review posture, and submission tracking against real source and site data.
 
 Audit notes:
 - Data-entry roles cannot use the same lane as final approval.
@@ -401,14 +403,17 @@ Primary routes:
 Live KPI blocks:
 - `Latest FY tCO2e`: latest visible annual emissions total.
 - `Open Filings`: filings not yet closed.
-- `Completed Outflow`: recorded financial outflow in INR.
+- `Completed Outflow`: recorded financial outflow in INR for internal finance audiences only.
+- `Reporting Years`: curated external reporting coverage without exposing internal outflow.
 - `Verified Exports`: export rows carrying verification status.
+- `Available Lots` / `Completed Trades`: market-lane metrics for the trader audience.
 
 Live menus:
 - `Carbon Liability`: finance exposure and liability posture.
 - `Credit Market`: live carbon-credit surface.
 - `Board Packs`: executive and stakeholder reporting.
 - `Annual Emissions`: rollup behind board and finance reporting.
+- `Carbon Offsets`: live offset inventory and retirement posture used by sustainability and tightly scoped finance roles.
 
 Why it exists:
 - Supports read-focused finance, executive, and controlled external reporting on live data.
@@ -416,6 +421,8 @@ Why it exists:
 Audit notes:
 - Executive and external users consume approved data downstream of review and verification.
 - `lender_viewer` remains intentionally constrained and read-focused.
+- `investor_viewer` and `lender_viewer` do not receive internal payment-outflow detail on dashboard home or curated reporting lanes.
+- `carbon_credit_trader` can inspect liability, offsets, and reporting context, but trade execution remains separated from filing and approval authority.
 
 ### Verification Workspace
 Primary roles:
@@ -435,7 +442,9 @@ Primary routes:
 Live KPI blocks:
 - `Active Engagements`: visible verification rows.
 - `Open Findings`: unresolved findings.
+- `Accepted Responses`: client responses already carrying verifier acceptance.
 - `Final Statements`: verification rows carrying final statement dates.
+- `Invalid Signoffs`: signoff rows marked invalid and needing investigation.
 - `Signoff Events`: visible signoff-chain activity.
 
 Live menus:
@@ -930,6 +939,7 @@ Each role below is documented against the current live frontend.
   - `KPI - Open Records`: own records not yet accepted.
   - `KPI - Evidence Pending`: own evidence awaiting review closure.
   - `Menu - Activity Entry`: primary capture route.
+  - `Menu - AI Invoice Parse`: live AI extraction review lane for scoped evidence and AI-generated readings.
   - `Menu - My Submissions`: personal submission history.
 - Why this matters: this is the main manual data-capture role in the live portal.
 - Guardrail: operators cannot review or finally approve their own work.
@@ -943,6 +953,7 @@ Each role below is documented against the current live frontend.
   - `KPI - Visible Sites`: site scope posture.
   - `KPI - Registered Sources`: visible source-register footprint.
   - `Menu - Activity Entry`: site-level capture pipeline.
+  - `Menu - AI Invoice Parse`: evidence extraction and review posture for the current site scope.
   - `Menu - Source Register`: facility/source coverage review.
 - Why this matters: gives facility operations a live, scoped data lane.
 - Guardrail: facility views must remain inside site scope and review controls.
@@ -957,6 +968,7 @@ Each role below is documented against the current live frontend.
   - `KPI - Open Filings`: filing backlog relevant to executive posture.
   - `Menu - Board Packs`: executive reporting surface.
   - `Menu - Carbon Liability`: liability context.
+  - `Menu - Carbon Offsets`: portfolio posture when finance needs offset inventory context.
 - Why this matters: gives finance leadership live reporting without operational mutation.
 - Guardrail: executive visibility remains read-oriented.
 
@@ -970,6 +982,7 @@ Each role below is documented against the current live frontend.
   - `KPI - Verified Exports`: verified export-row count.
   - `Menu - Carbon Liability`: primary liability workspace.
   - `Menu - Board Packs`: reporting context.
+  - `Menu - Carbon Offsets`: live offset-inventory context for liability and retirement analysis.
 - Why this matters: supports deeper finance analysis on live emissions and filing posture.
 - Guardrail: financial analysis does not replace approval controls.
 
@@ -979,11 +992,14 @@ Each role below is documented against the current live frontend.
 - Current live workspace: Executive and External Reporting Workspace
 - What this role does: reviews live carbon-credit posture and market-facing activity support.
 - Current live features:
+  - `KPI - Available Lots`: unretired offset lots visible to the market lane.
+  - `KPI - Completed Trades`: completed market-linked tickets recorded in the live ledger.
   - `Menu - Credit Market`: primary carbon-credit route.
+  - `Menu - Carbon Offsets`: linked offset inventory and retirement posture.
   - `Menu - Carbon Liability`: liability context for trading decisions.
   - `Menu - Board Packs`: reporting backdrop.
 - Why this matters: gives the carbon-market lane a real route in the live portal.
-- Guardrail: own-trade approval still requires a second authorized user.
+- Guardrail: own-trade approval still requires a second authorized user, and this role only receives read-only access to the liability and reporting context routes.
 
 ### 40. Executive Viewer
 - Status: `Live dedicated workspace`
@@ -1016,7 +1032,7 @@ Each role below is documented against the current live frontend.
   - `KPI - Active Engagements`: current verification volume.
   - `KPI - Open Findings`: unresolved assurance posture.
   - `Menu - Active RFIs`: main findings and response queue.
-  - `Menu - Assurance Vault`: evidence and statement review.
+  - `Menu - Assurance Vault`: evidence, accreditation, and statement review.
 - Why this matters: this is the main lead-verifier operational lane.
 - Guardrail: must remain independent from client operational roles.
 
@@ -1028,6 +1044,7 @@ Each role below is documented against the current live frontend.
 - Current live features:
   - `KPI - Final Statements`: final-opinion posture.
   - `KPI - Signoff Events`: visible signoff-chain activity.
+  - `KPI - Invalid Signoffs`: integrity issues visible before final opinion work.
   - `Menu - Assurance Vault`: primary final-opinion surface.
   - `Menu - Active RFIs`: supporting findings context.
 - Why this matters: closes assurance work in the live portal.
@@ -1041,6 +1058,7 @@ Each role below is documented against the current live frontend.
 - Current live features:
   - `KPI - Active Engagements`: visible verification scope.
   - `Menu - Data Sampling`: primary ISO-oriented route.
+  - `Signal - Unreviewed Evidence`: evidence pressure visible before opinion work.
   - `Menu - Assurance Vault`: evidence context.
 - Why this matters: provides an ISO-specialist lane without mixing with client operations.
 - Guardrail: ISO duties remain fully separated from client operational roles.
@@ -1053,7 +1071,7 @@ Each role below is documented against the current live frontend.
 - Current live features:
   - `KPI - Open Findings`: CBAM-related assurance backlog.
   - `Menu - Active RFIs`: primary findings route.
-  - `Menu - Data Sampling`: evidence sampling posture.
+  - `Menu - Data Sampling`: evidence sampling and materiality posture.
 - Why this matters: gives CBAM assurance a live verifier workspace.
 - Guardrail: requires accreditation-backed independence.
 
@@ -1064,6 +1082,7 @@ Each role below is documented against the current live frontend.
 - What this role does: works review-stage findings and evidence follow-up.
 - Current live features:
   - `KPI - Open Findings`: visible review workload.
+  - `KPI - Accepted Responses`: accepted remediation responses already recorded.
   - `Menu - Active RFIs`: primary review-stage route.
   - `Menu - Assurance Vault`: evidence follow-up context.
 - Why this matters: supports assurance review before final opinion.
@@ -1076,6 +1095,7 @@ Each role below is documented against the current live frontend.
 - What this role does: reviews regulated evidence and assurance output in a time-boxed lane.
 - Current live features:
   - `KPI - Final Statements`: visible completed assurance outputs.
+  - `Signal - Accreditation & Independence`: verifier posture visible in the vault.
   - `Menu - Assurance Vault`: primary read-focused evidence route.
   - `Menu - Active RFIs`: supporting context where allowed.
 - Why this matters: supports controlled inspection visibility on live evidence.
@@ -1089,9 +1109,10 @@ Each role below is documented against the current live frontend.
 - Current live features:
   - `Menu - Board Packs`: primary investor reporting route.
   - `KPI - Latest FY tCO2e`: high-level emissions baseline.
+  - `KPI - Reporting Years`: curated reporting coverage without payment-ledger detail.
   - `KPI - Verified Exports`: verified export posture where visible.
 - Why this matters: provides a controlled external reporting lane.
-- Guardrail: limited to approved and published reporting surfaces.
+- Guardrail: limited to approved and published reporting surfaces, with no internal payment-outflow metrics.
 
 ### 49. Lender Viewer
 - Status: `Live read-focused workspace`
@@ -1101,9 +1122,10 @@ Each role below is documented against the current live frontend.
 - Current live features:
   - `Menu - Board Packs`: primary lender reporting route.
   - `KPI - Open Filings`: filing posture relevant to controlled disclosure.
+  - `KPI - Reporting Years`: curated reporting history without exposure to internal settlement detail.
   - `Signal - Audience posture`: confirms read-only external posture.
 - Why this matters: supports lender visibility without operational sprawl.
-- Guardrail: lender access remains intentionally constrained.
+- Guardrail: lender access remains intentionally constrained and never receives liability-settlement or market-trade controls.
 
 ### 50. Supply Chain Reporter
 - Status: `Live dedicated workspace`

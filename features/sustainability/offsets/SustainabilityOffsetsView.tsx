@@ -70,6 +70,7 @@ export function SustainabilityOffsetsView() {
   const canEditOffsets = roles.some((role) =>
     ["sustainability_head", "esg_manager", "carbon_accountant", "cfo_viewer", "finance_analyst"].includes(role),
   );
+  const isTraderAudience = roles.includes("carbon_credit_trader");
 
   async function loadOffsets() {
     if (!primaryOrgId) {
@@ -118,6 +119,30 @@ export function SustainabilityOffsetsView() {
 
   async function handleCreateOffset() {
     if (!primaryOrgId || !user) {
+      return;
+    }
+
+    if (!canEditOffsets) {
+      setMessage({
+        tone: "warning",
+        text: "This role can review offset inventory but cannot add or amend offset lots in the register.",
+      });
+      return;
+    }
+
+    if (!form.registryId || !form.serialNumber.trim() || !form.projectName.trim() || !form.purchaseDate) {
+      setMessage({
+        tone: "warning",
+        text: "Registry, serial number, project name, and purchase date are required before an offset lot can be saved.",
+      });
+      return;
+    }
+
+    if (Number(form.quantityTco2e) <= 0 || Number(form.vintageYear) <= 0) {
+      setMessage({
+        tone: "warning",
+        text: "Quantity and vintage year must be positive values before the offset record is saved.",
+      });
       return;
     }
 
@@ -192,11 +217,17 @@ export function SustainabilityOffsetsView() {
             <div className={styles.metaList}>
               <div className={styles.alert} data-tone="warning">Offsets are for residual emissions. They do not erase weak source data or delayed reduction action.</div>
               <div className={styles.alert} data-tone="info">Verification standard, serial traceability, and retirement purpose should remain visible to finance and sustainability reviewers.</div>
+              <p className={styles.detailText}>Audience mode: {isTraderAudience ? "Market read-only" : canEditOffsets ? "Portfolio stewardship" : "Read-only oversight"}</p>
             </div>
           </section>
 
           <section className={styles.card}>
             <h2 className={styles.cardTitle}>Add offset lot</h2>
+            {!canEditOffsets ? (
+              <div className={styles.alert} data-tone="info">
+                This role can inspect the live offset register, but only stewardship roles can create or amend offset lots here.
+              </div>
+            ) : null}
             <div className={styles.formGrid}>
               <div className={styles.fieldGroup}><label className={styles.label} htmlFor="offset-registry">Registry</label><select id="offset-registry" className={styles.select} value={form.registryId} onChange={(event) => setForm((current) => ({ ...current, registryId: event.target.value }))}><option value="">Select registry</option>{registries.map((registry) => <option key={registry.id} value={registry.id}>{registry.name}</option>)}</select></div>
               <div className={styles.fieldGroup}><label className={styles.label} htmlFor="offset-serial">Serial number</label><input id="offset-serial" className={styles.input} value={form.serialNumber} onChange={(event) => setForm((current) => ({ ...current, serialNumber: event.target.value }))} /></div>

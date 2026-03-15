@@ -100,6 +100,7 @@ Notes:
 - JWT `app_metadata` is the live frontend auth truth, not stale profile metadata.
 - `board_report_recipient` remains non-interactive even when authenticated.
 - Protected-route misses intentionally use the same generic 404 experience as genuinely missing routes.
+- External reporting audiences now resolve only into curated report routes, while internal finance and market roles retain the deeper liability and market lanes assigned to them.
 
 ## Diagram 3: SoD And Approval Control Flow
 
@@ -181,3 +182,6 @@ Notes:
 - Some richer public intake details still depend on later schema work documented in [DB_FOLLOW_UP.md](./DB_FOLLOW_UP.md).
 - Reporting routes should consume the current views and functions instead of old prototype tables.
 - Sustainability disclosure readiness now depends on live framework, indicator, disclosure, and filing rows rather than legacy compliance widgets.
+- Verification workspaces now surface live response-acceptance posture and signoff-stage integrity from the assurance tables instead of relying on summary counts alone.
+- Carbon offsets now bridge sustainability stewardship and tightly scoped finance market lanes, while external audiences remain confined to curated reporting surfaces.
+- The AI extraction workspace now reads live document, AI-reading, and validation-summary posture while upload and posting mutations remain a later backend follow-up.

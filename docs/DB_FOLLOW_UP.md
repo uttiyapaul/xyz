@@ -221,15 +221,19 @@ Status legend:
 
 - Status: `Planned follow-up`
 - Gap:
-  - the UI contract for AI invoice extraction is live, but document upload,
-    quarantine, parse job tracking, extracted field staging, and approval write
-    paths are not yet wired.
+  - the AI extraction route is now reading live document extraction posture,
+    AI-generated reading review state, and validation-summary data, but the
+    dedicated upload, quarantine, parse-job tracking, extracted-field staging,
+    and approval write paths are not yet wired.
 - Why this matters:
-  - the compliance-safe user experience is in place, but the actual regulated
-    ingestion pipeline still needs its backend contract.
+  - the compliance-safe user experience is now grounded in live rows, but the
+    full regulated ingestion pipeline still needs its backend contract.
 - Current frontend handling:
-  - `features/data/ai-extract/AIExtractionWorkbench.tsx` shows disclosure,
-    review, and security expectations without pretending uploads already work.
+  - `features/data/ai-extract/AIExtractionWorkbench.tsx` reads live
+    `ghg_documents`, `ghg_monthly_readings`, and `mv_ai_validation_summary`
+    posture.
+  - the route truthfully remains read-only for upload and posting actions until
+    the ingestion contract is finished.
 - Affected live surfaces:
   - `/data/ai-extract`
 - Done when:
@@ -256,9 +260,31 @@ Status legend:
   - enriched audit fields are consistently present in the log source and visible
     in the admin ledger.
 
+### 11. Privileged Step-Up For Final Opinion And Signoff
+
+- Status: `Planned follow-up`
+- Gap:
+  - verifier final-opinion and privileged signoff routes now surface the live
+    integrity posture, but the explicit step-up re-authentication control is
+    intentionally deferred until the MFA phase.
+- Why this matters:
+  - the frontend already shows accreditation, independence, and invalid-signoff
+    pressure, but final-opinion and privileged signoff actions should still
+    require a stronger confirmation control before production hardening.
+- Current frontend handling:
+  - assurance workspaces remain read-focused for final-opinion posture.
+  - verifier vault surfaces signoff integrity and independence context so users
+    can review the state before later step-up controls are added.
+- Affected live surfaces:
+  - `/audit/vault`
+  - future signoff execution flows
+- Done when:
+  - privileged assurance actions require explicit step-up re-authentication and
+    the UI reads that result from the live auth/security layer.
+
 ## Verification Needed Against Future Dumps
 
-### 11. `record_mfa_verification(...)`
+### 12. `record_mfa_verification(...)`
 
 - Status: `Verification needed`
 - Current state:
@@ -269,7 +295,7 @@ Status legend:
   - confirm whether this should exist as a function, replace it with another
     verification flow, or remove references to it.
 
-### 12. `carbon_credits`
+### 13. `carbon_credits`
 
 - Status: `Verification needed`
 - Current state:

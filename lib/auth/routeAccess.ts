@@ -111,6 +111,38 @@ const GOVERNANCE_GRIEVANCE_ROUTE_ROLES: PlatformRole[] = Array.from(
   new Set<PlatformRole>(["grievance_officer", "dpo"]),
 );
 
+const SUSTAINABILITY_OFFSET_ROUTE_ROLES: PlatformRole[] = Array.from(
+  new Set<PlatformRole>([
+    ...SUSTAINABILITY_WORKSPACE_ROLES,
+    "carbon_accountant",
+    "cfo_viewer",
+    "finance_analyst",
+    "carbon_credit_trader",
+  ]),
+);
+
+const FINANCE_REPORT_ROUTE_ROLES: PlatformRole[] = [
+  "cfo_viewer",
+  "finance_analyst",
+  "carbon_credit_trader",
+  "executive_viewer",
+  "investor_viewer",
+  "lender_viewer",
+];
+
+const FINANCE_LIABILITY_ROUTE_ROLES: PlatformRole[] = [
+  "cfo_viewer",
+  "finance_analyst",
+  "carbon_credit_trader",
+  "executive_viewer",
+];
+
+const FINANCE_MARKET_ROUTE_ROLES: PlatformRole[] = [
+  "carbon_credit_trader",
+  "finance_analyst",
+  "cfo_viewer",
+];
+
 /**
  * Route rules are ordered from most specific to least specific so narrow paths
  * like `/dashboard/platform-superadmin` win before the general `/dashboard`
@@ -183,6 +215,11 @@ export const APP_ROUTE_ACCESS_RULES: RouteAccessRule[] = [
     allowedRoles: Array.from(new Set<PlatformRole>([...ORG_MANAGEMENT_ROLES, ...ORG_INTEGRATION_ROLES])),
   },
   {
+    prefix: "/sustainability/offsets",
+    description: "Offset portfolio workspace shared between sustainability ownership and tightly scoped finance roles.",
+    allowedRoles: SUSTAINABILITY_OFFSET_ROUTE_ROLES,
+  },
+  {
     prefix: "/sustainability/disclosures",
     description: "Framework disclosure workspace for ESG, filing, and sustainability oversight roles.",
     allowedRoles: SUSTAINABILITY_WORKSPACE_ROLES,
@@ -218,9 +255,30 @@ export const APP_ROUTE_ACCESS_RULES: RouteAccessRule[] = [
     allowedRoles: DATA_ENTRY_ROUTE_ROLES,
   },
   {
+    prefix: "/finance/carbon-credits",
+    description: "Carbon-credit transaction and portfolio lane for tightly scoped finance roles.",
+    allowedRoles: FINANCE_MARKET_ROUTE_ROLES,
+  },
+  {
+    prefix: "/finance/liability",
+    description: "Carbon-liability forecasting lane for internal executive and finance roles.",
+    allowedRoles: FINANCE_LIABILITY_ROUTE_ROLES,
+  },
+  {
+    prefix: "/finance/reports",
+    description: "Curated reporting surface for executive and external audiences.",
+    allowedRoles: FINANCE_REPORT_ROUTE_ROLES,
+  },
+  {
     prefix: "/finance",
     description: "Executive finance and board-reporting workspace.",
-    allowedRoles: EXECUTIVE_WORKSPACE_ROLES,
+    allowedRoles: Array.from(
+      new Set<PlatformRole>([
+        ...FINANCE_REPORT_ROUTE_ROLES,
+        ...FINANCE_LIABILITY_ROUTE_ROLES,
+        ...FINANCE_MARKET_ROUTE_ROLES,
+      ]),
+    ),
   },
   {
     prefix: "/audit",

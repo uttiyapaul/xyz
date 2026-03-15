@@ -4,8 +4,17 @@ import styles from "@/features/portal/WorkspaceShell.module.css";
 import { useAuditVaultData } from "@/features/audit/useAuditWorkspaceData";
 
 export function AuditVaultView() {
-  const { loading, error, statements, finalStatements, verifiedSubmissions, lockedSubmissions, signoffEvents } =
-    useAuditVaultData();
+  const {
+    loading,
+    error,
+    statements,
+    finalStatements,
+    verifiedSubmissions,
+    lockedSubmissions,
+    signoffEvents,
+    invalidSignoffs,
+    materialMisstatements,
+  } = useAuditVaultData();
 
   if (loading) {
     return (
@@ -60,6 +69,39 @@ export function AuditVaultView() {
             <p className={styles.metricValue}>{signoffEvents}</p>
             <p className={styles.metricHint}>Signature-chain events visible for the current assurance scope.</p>
           </article>
+          <article className={styles.metricCard}>
+            <p className={styles.metricLabel}>Invalid Signoffs</p>
+            <p className={styles.metricValue}>{invalidSignoffs}</p>
+            <p className={styles.metricHint}>Signoff rows already marked invalid and needing investigation.</p>
+          </article>
+          <article className={styles.metricCard}>
+            <p className={styles.metricLabel}>Misstatement Flags</p>
+            <p className={styles.metricValue}>{materialMisstatements}</p>
+            <p className={styles.metricHint}>Verification rows explicitly flagging a material misstatement finding.</p>
+          </article>
+        </section>
+
+        <section className={styles.card}>
+          <div className={styles.cardHeader}>
+            <div>
+              <h2 className={styles.cardTitle}>Final Opinion Guardrails</h2>
+              <p className={styles.cardDescription}>
+                Accreditation, independence declarations, and signoff integrity stay visible here so final-opinion
+                roles can review the live assurance posture without blending into client remediation work.
+              </p>
+            </div>
+          </div>
+          <div className={styles.cardSection}>
+            <div className={styles.stack}>
+              <div className={styles.alert} data-tone="warning">
+                Final verifier opinion remains separate from client-side data correction and response logging.
+              </div>
+              <div className={styles.alert} data-tone="info">
+                Step-up authentication for final opinion actions is intentionally still held for the MFA phase, but the
+                vault already surfaces the signoff integrity posture needed before that control is added.
+              </div>
+            </div>
+          </div>
         </section>
 
         <section className={styles.card}>
@@ -102,9 +144,29 @@ export function AuditVaultView() {
                       </td>
                       <td className={styles.tableCell}>
                         <div className={styles.rowTitle}>{statement.verificationStatus}</div>
+                        <div className={styles.rowMeta}>
+                          {statement.verifierOrganization} | {statement.verifierStandard}
+                        </div>
+                        <div className={styles.rowMeta}>
+                          Assurance: {statement.assuranceLevel.replace(/_/g, " ")} | Accreditation:{" "}
+                          {statement.verifierAccreditationNo ?? "not recorded"}
+                        </div>
                         <div className={styles.rowMeta}>Opinion: {statement.opinion}</div>
                         <div className={styles.rowMeta}>
-                          Final statement: {statement.finalStatementDate ?? "Pending finalization"}
+                          Draft statement:{" "}
+                          {statement.draftStatementDate
+                            ? new Date(statement.draftStatementDate).toLocaleDateString("en-IN", { dateStyle: "medium" })
+                            : "Pending draft"}{" "}
+                          | Final statement:{" "}
+                          {statement.finalStatementDate
+                            ? new Date(statement.finalStatementDate).toLocaleDateString("en-IN", { dateStyle: "medium" })
+                            : "Pending finalization"}
+                        </div>
+                        <div className={styles.rowMeta}>
+                          Verified total:{" "}
+                          {statement.totalVerifiedTco2e == null
+                            ? "not recorded"
+                            : `${statement.totalVerifiedTco2e.toLocaleString("en-IN", { maximumFractionDigits: 2 })} tCO2e`}
                         </div>
                       </td>
                       <td className={styles.tableCell}>
@@ -115,6 +177,28 @@ export function AuditVaultView() {
                           <span className={styles.badge} data-tone={statement.documentCount > 0 ? "info" : "warning"}>
                             {statement.documentCount} document{statement.documentCount === 1 ? "" : "s"}
                           </span>
+                          {statement.materialMisstatementFound ? (
+                            <span className={styles.badge} data-tone="danger">
+                              misstatement flagged
+                            </span>
+                          ) : null}
+                          {statement.invalidSignoffCount > 0 ? (
+                            <span className={styles.badge} data-tone="danger">
+                              {statement.invalidSignoffCount} invalid
+                            </span>
+                          ) : null}
+                        </div>
+                        <div className={styles.rowMeta}>
+                          Stages: {statement.signoffStages.length > 0 ? statement.signoffStages.join(", ") : "No signoff stages recorded"}
+                        </div>
+                        <div className={styles.rowMeta}>
+                          Latest signoff:{" "}
+                          {statement.latestSignoffAt
+                            ? new Date(statement.latestSignoffAt).toLocaleDateString("en-IN", { dateStyle: "medium" })
+                            : "Not recorded"}
+                        </div>
+                        <div className={styles.rowMeta}>
+                          Independence: {statement.independenceDeclaration}
                         </div>
                       </td>
                     </tr>

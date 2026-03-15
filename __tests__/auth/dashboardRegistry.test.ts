@@ -73,4 +73,27 @@ describe("dashboard registry", () => {
       ]),
     );
   });
+
+  it("keeps external reporting roles on curated report shortcuts", () => {
+    const lenderShortcuts = getDashboardShortcutCards("lender_viewer").map((shortcut) => shortcut.href);
+
+    expect(lenderShortcuts).toEqual(
+      expect.arrayContaining(["/finance/reports", "/dashboard/reports"]),
+    );
+    expect(lenderShortcuts).not.toContain("/finance/liability");
+    expect(lenderShortcuts).not.toContain("/finance/carbon-credits");
+  });
+
+  it("gives the carbon credit trader both market and offset shortcuts", () => {
+    const traderShortcuts = getDashboardShortcutCards("carbon_credit_trader").map((shortcut) => shortcut.href);
+
+    expect(traderShortcuts).toEqual(
+      expect.arrayContaining([
+        "/finance/carbon-credits",
+        "/sustainability/offsets",
+        "/finance/liability",
+        "/finance/reports",
+      ]),
+    );
+  });
 });

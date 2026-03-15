@@ -54,6 +54,7 @@ export function FinanceCarbonCreditsView() {
   const [form, setForm] = useState(INITIAL_FORM);
 
   const canTradeCredits = roles.some((role) => ["carbon_credit_trader", "finance_analyst"].includes(role));
+  const marketAudienceLabel = canTradeCredits ? "Trader-enabled" : "Read-only oversight";
 
   async function loadCarbonCreditWorkspace() {
     if (!primaryOrgId) {
@@ -105,6 +106,34 @@ export function FinanceCarbonCreditsView() {
 
   async function handleCreateTransaction() {
     if (!primaryOrgId || !user) {
+      return;
+    }
+
+    if (!canTradeCredits) {
+      setMessage({
+        tone: "warning",
+        text: "This role can review market posture but cannot create trade tickets. Ticket creation is limited to trader-enabled finance roles.",
+      });
+      return;
+    }
+
+    const hasInrAmount = form.amountInr.trim().length > 0 && Number(form.amountInr) > 0;
+    const hasUsdAmount = form.amountUsd.trim().length > 0 && Number(form.amountUsd) > 0;
+    const needsOffsetLink = ["carbon_credit_sale", "offset_retirement"].includes(form.transactionType);
+
+    if (!hasInrAmount && !hasUsdAmount) {
+      setMessage({
+        tone: "warning",
+        text: "Enter a positive INR or USD amount before saving a market ticket.",
+      });
+      return;
+    }
+
+    if (needsOffsetLink && !form.carbonOffsetId) {
+      setMessage({
+        tone: "warning",
+        text: "Sale and retirement tickets must point to a linked offset lot so the market trail stays auditable.",
+      });
       return;
     }
 
@@ -170,11 +199,17 @@ export function FinanceCarbonCreditsView() {
             <div className={styles.metaList}>
               <div className={styles.alert} data-tone="warning">This UI must never show full card details or processor tokens. Payment storage stays out of PCI scope by design.</div>
               <div className={styles.alert} data-tone="info">Marketplace tickets should still reference a real offset lot whenever a purchase or sale affects emissions claims.</div>
+              <p className={styles.detailText}>Audience mode: {marketAudienceLabel}</p>
             </div>
           </section>
 
           <section className={styles.card}>
             <h2 className={styles.cardTitle}>Log trade ticket</h2>
+            {!canTradeCredits ? (
+              <div className={styles.alert} data-tone="info">
+                This role can review the market ledger and linked offsets, but ticket creation stays restricted to the trader-enabled finance lane.
+              </div>
+            ) : null}
             <div className={styles.formGrid}>
               <div className={styles.fieldGroup}><label className={styles.label} htmlFor="trade-type">Transaction type</label><select id="trade-type" className={styles.select} value={form.transactionType} onChange={(event) => setForm((current) => ({ ...current, transactionType: event.target.value }))}><option value="carbon_credit_purchase">Credit purchase</option><option value="carbon_credit_sale">Credit sale</option><option value="offset_retirement">Offset retirement</option><option value="marketplace_fee">Marketplace fee</option></select></div>
               <div className={styles.fieldGroup}><label className={styles.label} htmlFor="trade-offset">Offset lot</label><select id="trade-offset" className={styles.select} value={form.carbonOffsetId} onChange={(event) => setForm((current) => ({ ...current, carbonOffsetId: event.target.value }))}><option value="">No linked lot</option>{offsets.map((offset) => <option key={offset.id} value={offset.id}>{offset.project_name}</option>)}</select></div>

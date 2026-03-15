@@ -2,10 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 
 import {
+  getUserRoles,
   getUserPrimaryRole,
   type PlatformRole,
 } from "@/lib/auth/roles";
-import { canRoleAccessPath, getRouteAccessRule } from "@/lib/auth/routeAccess";
+import { getPatchedUserFromSession } from "@/lib/auth/sessionClaims";
+import { canAnyRoleAccessPath, getRouteAccessRule } from "@/lib/auth/routeAccess";
 
 /**
  * A2Z Carbon Solutions — request proxy
@@ -238,6 +240,7 @@ export async function proxy(req: NextRequest): Promise<NextResponse> {
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
   let isAuthed = false;
   let primaryRole: PlatformRole | null = null;
+  let effectiveRoles: PlatformRole[] = [];
 
   if (supabaseUrl && supabaseKey) {
     const supabase = createServerClient(supabaseUrl, supabaseKey, {
@@ -264,15 +267,25 @@ export async function proxy(req: NextRequest): Promise<NextResponse> {
       },
     });
 
-    const { data: { user } } = await supabase.auth.getUser();
+    const [{ data: { user } }, { data: { session } }] = await Promise.all([
+      supabase.auth.getUser(),
+      supabase.auth.getSession(),
+    ]);
+    const authUser = session ? getPatchedUserFromSession(session) : user;
+
     isAuthed = !!user;
-    primaryRole = user ? getUserPrimaryRole(user) : null;
+    if (authUser) {
+      const rolesFromClaims = getUserRoles(authUser);
+      primaryRole = getUserPrimaryRole(authUser);
+      effectiveRoles = rolesFromClaims.length > 0 ? rolesFromClaims : [primaryRole];
+    }
 
     // Set user context headers for downstream use
     if (user) {
       response.headers.set("x-user-id", user.id);
       response.headers.set("x-user-email", user.email ?? "");
       response.headers.set("x-user-role", primaryRole ?? user.role ?? "authenticated");
+      response.headers.set("x-user-roles", effectiveRoles.join(","));
     }
   }
 
@@ -289,7 +302,7 @@ export async function proxy(req: NextRequest): Promise<NextResponse> {
 
   const matchedRouteRule = getRouteAccessRule(pathname);
 
-  if (isAuthed && primaryRole && matchedRouteRule && !canRoleAccessPath(primaryRole, pathname)) {
+  if (isAuthed && effectiveRoles.length > 0 && matchedRouteRule && !canAnyRoleAccessPath(effectiveRoles, pathname)) {
     return createOpaqueNotFoundResponse(req, pathname);
   }
 

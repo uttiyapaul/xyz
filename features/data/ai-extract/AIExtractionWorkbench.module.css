@@ -33,6 +33,44 @@
   line-height: 1.7;
 }
 
+.metricsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-4);
+}
+
+.metricCard {
+  background: linear-gradient(180deg, rgba(16, 19, 29, 0.98), rgba(10, 12, 18, 0.96));
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  box-shadow: var(--shadow-soft);
+}
+
+.metricLabel {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.metricValue {
+  margin: var(--space-3) 0 0;
+  color: var(--text-strong);
+  font-family: var(--font-mono);
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.metricHint {
+  margin: var(--space-2) 0 0;
+  color: var(--text-soft);
+  font-size: 0.84rem;
+  line-height: 1.6;
+}
+
 .grid {
   display: grid;
   grid-template-columns: minmax(0, 1.3fr) minmax(280px, 0.9fr);
@@ -67,6 +105,12 @@
   background: var(--status-surface-info);
   color: var(--status-info);
   line-height: 1.6;
+}
+
+.alert[data-tone="warning"] {
+  border-color: rgba(245, 158, 11, 0.28);
+  background: var(--status-surface-warning);
+  color: var(--status-warning);
 }
 
 .stack {
@@ -105,6 +149,10 @@
 .table {
   width: 100%;
   border-collapse: collapse;
+}
+
+.tableWrapper {
+  overflow-x: auto;
 }
 
 .tableHeaderCell,
@@ -155,10 +203,51 @@
   color: var(--status-success);
 }
 
+.primaryText {
+  margin: 0;
+  color: var(--text-strong);
+  font-weight: 600;
+}
+
+.metaText {
+  margin: var(--space-1) 0 0;
+  color: var(--text-soft);
+  font-size: 0.84rem;
+  line-height: 1.6;
+}
+
+.listHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
 .notice {
   margin-top: var(--space-4);
   color: var(--text-soft);
   font-size: 0.85rem;
+  line-height: 1.6;
+}
+
+.emptyState {
+  display: grid;
+  gap: var(--space-3);
+  min-height: 160px;
+  place-items: center;
+  text-align: center;
+}
+
+.emptyTitle {
+  margin: 0;
+  color: var(--text-strong);
+  font-size: 1rem;
+}
+
+.emptyDescription {
+  margin: 0;
+  max-width: 52ch;
+  color: var(--text-muted);
   line-height: 1.6;
 }
 

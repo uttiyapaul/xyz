@@ -687,6 +687,46 @@ export function getDashboardShortcutCards(role: PlatformRole): DashboardShortcut
     ];
   }
 
+  if (role === "carbon_credit_trader") {
+    return [
+      {
+        label: "Credit Market",
+        href: "/finance/carbon-credits",
+        description: "Track trade tickets, linked offset lots, and settlement posture in the market lane.",
+      },
+      {
+        label: "Carbon Offsets",
+        href: "/sustainability/offsets",
+        description: "Review the live offset portfolio and retirement posture before a trade or retirement ticket is logged.",
+      },
+      {
+        label: "Carbon Liability",
+        href: "/finance/liability",
+        description: "Review internal exposure context before credit execution decisions are escalated.",
+      },
+      {
+        label: "Board Packs",
+        href: "/finance/reports",
+        description: "Consume the curated executive summary without exposing full market settlement detail externally.",
+      },
+    ];
+  }
+
+  if (role === "investor_viewer" || role === "lender_viewer") {
+    return [
+      {
+        label: "Board Packs",
+        href: "/finance/reports",
+        description: "Consume curated reporting approved for this external audience.",
+      },
+      {
+        label: "Annual Emissions",
+        href: "/dashboard/reports",
+        description: "Review the approved emissions baseline that underpins the curated report view.",
+      },
+    ];
+  }
+
   switch (profile.family) {
     case "platform":
       return profile.role === "platform_superadmin" || profile.role === "platform_admin"
@@ -815,16 +855,36 @@ export function getDashboardShortcutCards(role: PlatformRole): DashboardShortcut
         },
       ];
     case "executive":
+      if (role === "finance_analyst" || role === "cfo_viewer") {
+        return [
+          {
+            label: "Finance Liability",
+            href: "/finance/liability",
+            description: "Review carbon liability posture for the organizations visible to your session.",
+          },
+          {
+            label: "Reports",
+            href: "/finance/reports",
+            description: "Consume curated executive and stakeholder reporting surfaces.",
+          },
+          {
+            label: "Credit Market",
+            href: "/finance/carbon-credits",
+            description: "Track internal credit-market activity where the role is allowed to inspect it.",
+          },
+        ];
+      }
+
       return [
-        {
-          label: "Finance Liability",
-          href: "/finance/liability",
-          description: "Review carbon liability posture for the organizations visible to your session.",
-        },
         {
           label: "Reports",
           href: "/finance/reports",
-          description: "Consume curated executive and stakeholder reporting surfaces.",
+          description: "Consume curated executive reporting surfaces grounded in approved data.",
+        },
+        {
+          label: "Finance Liability",
+          href: "/finance/liability",
+          description: "Review internal liability posture without exposing market settlement or external-only disclosures.",
         },
         {
           label: "Annual Emissions",

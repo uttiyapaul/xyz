@@ -4,8 +4,16 @@ import styles from "@/features/portal/WorkspaceShell.module.css";
 import { useAuditSamplingData } from "@/features/audit/useAuditWorkspaceData";
 
 export function AuditSamplingView() {
-  const { loading, error, samplingRows, activeEngagements, visitedSites, candidateRecords, evidenceDocuments } =
-    useAuditSamplingData();
+  const {
+    loading,
+    error,
+    samplingRows,
+    activeEngagements,
+    visitedSites,
+    candidateRecords,
+    evidenceDocuments,
+    unreviewedEvidence,
+  } = useAuditSamplingData();
 
   if (loading) {
     return (
@@ -60,6 +68,11 @@ export function AuditSamplingView() {
             <p className={styles.metricValue}>{evidenceDocuments}</p>
             <p className={styles.metricHint}>Documents already attached to active submission and verification scope.</p>
           </article>
+          <article className={styles.metricCard}>
+            <p className={styles.metricLabel}>Unreviewed Evidence</p>
+            <p className={styles.metricValue}>{unreviewedEvidence}</p>
+            <p className={styles.metricHint}>Evidence documents still missing verifier review acknowledgement.</p>
+          </article>
         </section>
 
         <section className={styles.card}>
@@ -88,6 +101,7 @@ export function AuditSamplingView() {
                     <th className={styles.tableHeaderCell}>Engagement</th>
                     <th className={styles.tableHeaderCell}>Site Coverage</th>
                     <th className={styles.tableHeaderCell}>Sample Density</th>
+                    <th className={styles.tableHeaderCell}>Assurance Pressure</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -96,12 +110,21 @@ export function AuditSamplingView() {
                       <td className={styles.tableCell}>
                         <div className={styles.rowTitle}>{row.verifierOrganization}</div>
                         <div className={styles.rowMeta}>
-                          FY {row.fyYear} | {row.status} | Materiality {row.materialityThresholdPct}%
+                          FY {row.fyYear} | {row.status} | {row.assuranceLevel.replace(/_/g, " ")}
+                        </div>
+                        <div className={styles.rowMeta}>
+                          Materiality {row.materialityThresholdPct}% | {row.scopesVerifiedLabel}
                         </div>
                       </td>
                       <td className={styles.tableCell}>
                         <div className={styles.rowTitle}>{row.siteVisitCount} visited site(s)</div>
                         <div className={styles.rowMeta}>{row.sitesVisitedLabel}</div>
+                        <div className={styles.rowMeta}>
+                          Latest visit:{" "}
+                          {row.latestVisitDate
+                            ? new Date(row.latestVisitDate).toLocaleDateString("en-IN", { dateStyle: "medium" })
+                            : "not recorded"}
+                        </div>
                       </td>
                       <td className={styles.tableCell}>
                         <div className={styles.rowMeta}>
@@ -109,6 +132,22 @@ export function AuditSamplingView() {
                         </div>
                         <div className={styles.rowMeta}>
                           Evidence docs: <span className={styles.emphasis}>{row.evidenceDocumentCount}</span>
+                        </div>
+                      </td>
+                      <td className={styles.tableCell}>
+                        <div className={styles.badgeRow}>
+                          <span className={styles.badge} data-tone={row.unreviewedEvidenceCount > 0 ? "warning" : "success"}>
+                            {row.unreviewedEvidenceCount} unreviewed
+                          </span>
+                          {row.materialMisstatementFound ? (
+                            <span className={styles.badge} data-tone="danger">
+                              misstatement flagged
+                            </span>
+                          ) : (
+                            <span className={styles.badge} data-tone="success">
+                              no misstatement flag
+                            </span>
+                          )}
                         </div>
                       </td>
                     </tr>

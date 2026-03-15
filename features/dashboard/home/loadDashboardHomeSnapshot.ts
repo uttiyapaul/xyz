@@ -741,40 +741,173 @@ async function loadExecutiveContent(requestClient: SupabaseClient, context: Dash
     };
   }
 
-  const [emissionsResponse, filingResponse, paymentResponse, productResponse] = await Promise.all([
+  const [emissionsResponse, filingResponse, paymentResponse, productResponse, offsetResponse] = await Promise.all([
     requestClient.rpc("get_my_annual_emissions"),
     requestClient.from("regulatory_filings").select("filing_type, status, due_date").in("organization_id", scopedOrgIds).order("due_date"),
-    requestClient.from("payment_transactions").select("amount_inr, status, created_at").in("organization_id", scopedOrgIds).order("created_at", { ascending: false }).limit(120),
+    requestClient
+      .from("payment_transactions")
+      .select("transaction_type, amount_inr, status, created_at")
+      .in("organization_id", scopedOrgIds)
+      .order("created_at", { ascending: false })
+      .limit(120),
     requestClient.from("product_emissions").select("reporting_period, exported_to_eu, default_value_used, ai_calculated, is_verified").in("organization_id", scopedOrgIds).order("reporting_period", { ascending: false }).limit(120),
+    requestClient
+      .from("carbon_offsets")
+      .select("is_retired")
+      .in("organization_id", scopedOrgIds)
+      .limit(160),
   ]);
 
-  if (emissionsResponse.error || filingResponse.error || paymentResponse.error || productResponse.error) {
+  if (emissionsResponse.error || filingResponse.error || paymentResponse.error || productResponse.error || offsetResponse.error) {
     throw new Error("Executive reporting data is unavailable.");
   }
 
   const emissions = ((emissionsResponse.data ?? []) as Array<{ organization_id: string; fy_year: string; tco2e_total: number }>).filter((row) => scopedOrgIds.includes(row.organization_id));
   const filings = (filingResponse.data ?? []) as Array<{ filing_type: string; status: string; due_date: string }>;
-  const payments = (paymentResponse.data ?? []) as Array<{ amount_inr: number | null; status: string; created_at: string }>;
+  const payments = (paymentResponse.data ?? []) as Array<{
+    transaction_type: string;
+    amount_inr: number | null;
+    status: string;
+    created_at: string;
+  }>;
   const productRows = (productResponse.data ?? []) as Array<{ reporting_period: string; exported_to_eu: boolean | null; default_value_used: boolean | null; ai_calculated: boolean | null; is_verified: boolean | null }>;
+  const offsets = (offsetResponse.data ?? []) as Array<{ is_retired: boolean | null }>;
+  const isExternalAudience = context.profile.family === "external";
+  const isTraderAudience = context.role === "carbon_credit_trader";
   const latestEmission = emissions.slice().sort((left, right) => right.fy_year.localeCompare(left.fy_year))[0];
   const openFilings = filings.filter((filing) => !["submitted", "accepted"].includes(filing.status));
   const completedOutflow = payments.filter((payment) => payment.status === "completed").reduce((sum, payment) => sum + Number(payment.amount_inr ?? 0), 0);
   const exportRows = productRows.filter((row) => row.exported_to_eu);
+  const reportingYears = new Set(emissions.map((row) => row.fy_year)).size;
+  const marketTransactions = payments.filter((payment) =>
+    ["carbon_credit_purchase", "carbon_credit_sale", "offset_retirement", "marketplace_fee"].includes(payment.transaction_type),
+  );
+  const completedTrades = marketTransactions.filter((payment) => payment.status === "completed").length;
+  const pendingTrades = marketTransactions.filter((payment) => payment.status === "pending" || payment.status === "processing").length;
+  const availableOffsetLots = offsets.filter((offset) => !offset.is_retired).length;
+
+  const metrics: DashboardHomeMetric[] = isExternalAudience
+    ? [
+        {
+          label: "Latest FY tCO2e",
+          value: latestEmission ? formatDecimal(Number(latestEmission.tco2e_total)) : "0",
+          hint: "Latest approved annual emissions total visible to this external audience.",
+        },
+        {
+          label: "Open Filings",
+          value: formatNumber(openFilings.length),
+          hint: "Regulatory filing rows not yet closed or accepted.",
+        },
+        {
+          label: "Reporting Years",
+          value: formatNumber(reportingYears),
+          hint: "Financial years visible in the curated reporting inventory.",
+        },
+        {
+          label: "Verified Exports",
+          value: formatNumber(exportRows.filter((row) => row.is_verified).length),
+          hint: "EU-export product rows already carrying verification status.",
+        },
+      ]
+    : isTraderAudience
+      ? [
+          {
+            label: "Available Lots",
+            value: formatNumber(availableOffsetLots),
+            hint: "Unretired offset lots currently visible for trade and retirement decisions.",
+          },
+          {
+            label: "Completed Trades",
+            value: formatNumber(completedTrades),
+            hint: "Market-linked tickets already marked completed in the visible ledger.",
+          },
+          {
+            label: "Pending Trade Tickets",
+            value: formatNumber(pendingTrades),
+            hint: "Trade tickets still waiting for settlement or processor completion.",
+          },
+          {
+            label: "Verified Exports",
+            value: formatNumber(exportRows.filter((row) => row.is_verified).length),
+            hint: "EU-export product rows already carrying verification status.",
+          },
+        ]
+      : [
+          {
+            label: "Latest FY tCO2e",
+            value: latestEmission ? formatDecimal(Number(latestEmission.tco2e_total)) : "0",
+            hint: "Latest annual emissions total visible to this audience.",
+          },
+          {
+            label: "Open Filings",
+            value: formatNumber(openFilings.length),
+            hint: "Regulatory filing rows not yet closed or accepted.",
+          },
+          {
+            label: "Completed Outflow",
+            value: formatNumber(Math.round(completedOutflow)),
+            hint: "Completed finance outflow recorded in INR.",
+          },
+          {
+            label: "Verified Exports",
+            value: formatNumber(exportRows.filter((row) => row.is_verified).length),
+            hint: "EU-export product rows already carrying verification status.",
+          },
+        ];
+
+  const signals: DashboardHomeSignal[] = isTraderAudience
+    ? [
+        {
+          title: "Market posture",
+          meta: `${formatNumber(availableOffsetLots)} available lot(s) and ${formatNumber(pendingTrades)} pending trade ticket(s) are visible in the market lane.`,
+          badge: "Market lane",
+          tone: pendingTrades > 0 ? "warning" : "info",
+        },
+        {
+          title: "Disclosure quality",
+          meta: `${formatNumber(exportRows.filter((row) => row.default_value_used).length)} export row(s) still rely on default values and ${formatNumber(exportRows.filter((row) => row.ai_calculated).length)} are AI calculated.`,
+          badge: "Quality",
+          tone: exportRows.some((row) => row.default_value_used || row.ai_calculated) ? "warning" : "success",
+        },
+      ]
+    : [
+        {
+          title: "Disclosure quality",
+          meta: `${formatNumber(exportRows.filter((row) => row.default_value_used).length)} export row(s) still rely on default values and ${formatNumber(exportRows.filter((row) => row.ai_calculated).length)} are AI calculated.`,
+          badge: "Quality",
+          tone: exportRows.some((row) => row.default_value_used || row.ai_calculated) ? "warning" : "success",
+        },
+        {
+          title: "Audience posture",
+          meta: isExternalAudience
+            ? "This role is limited to approved, read-only reporting surfaces and does not receive payment-outflow detail on dashboard home."
+            : "Executive visibility remains downstream of review, approval, and verifier workflows.",
+          badge: "Read focused",
+          tone: "info",
+        },
+      ];
+
+  const queueSource = isTraderAudience
+    ? (marketTransactions.length > 0 ? marketTransactions : productRows)
+    : openFilings.length > 0
+      ? openFilings
+      : productRows;
 
   return {
-    metrics: [
-      { label: "Latest FY tCO2e", value: latestEmission ? formatDecimal(Number(latestEmission.tco2e_total)) : "0", hint: "Latest annual emissions total visible to this audience." },
-      { label: "Open Filings", value: formatNumber(openFilings.length), hint: "Regulatory filing rows not yet closed or accepted." },
-      { label: "Completed Outflow", value: formatNumber(Math.round(completedOutflow)), hint: "Completed finance outflow recorded in INR." },
-      { label: "Verified Exports", value: formatNumber(exportRows.filter((row) => row.is_verified).length), hint: "EU-export product rows already carrying verification status." },
-    ],
-    signals: [
-      { title: "Disclosure quality", meta: `${formatNumber(exportRows.filter((row) => row.default_value_used).length)} export row(s) still rely on default values and ${formatNumber(exportRows.filter((row) => row.ai_calculated).length)} are AI calculated.`, badge: "Quality", tone: exportRows.some((row) => row.default_value_used || row.ai_calculated) ? "warning" : "success" },
-      { title: "Audience posture", meta: context.profile.family === "external" ? "This role is limited to approved, read-only reporting surfaces." : "Executive visibility remains downstream of review, approval, and verifier workflows.", badge: "Read focused", tone: "info" },
-    ],
-    queue: (openFilings.length > 0 ? openFilings : productRows).slice(0, 5).map((row) => {
+    metrics,
+    signals,
+    queue: queueSource.slice(0, 5).map((row) => {
       if ("filing_type" in row) {
         return { title: humanizeToken(row.filing_type), meta: `Due ${formatDate(row.due_date)} | ${humanizeToken(row.status)}`, badge: "Filing", tone: toneForStatus(row.status) };
+      }
+
+      if ("transaction_type" in row) {
+        return {
+          title: humanizeToken(row.transaction_type),
+          meta: `Status ${humanizeToken(row.status)} | ${row.amount_inr != null ? `INR ${formatNumber(Math.round(row.amount_inr))}` : "Amount not recorded"}`,
+          badge: "Trade ticket",
+          tone: toneForStatus(row.status),
+        };
       }
 
       return { title: `Export row ${formatDate(row.reporting_period)}`, meta: `${row.is_verified ? "Verified" : "Unverified"} | ${row.default_value_used ? "Default value" : "Source data"}`, badge: "Product emissions", tone: row.is_verified ? "success" : "warning" };

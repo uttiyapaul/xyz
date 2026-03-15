@@ -69,6 +69,27 @@ describe("route access matrix", () => {
     expect(canRoleAccessPath("data_entry_operator", "/sustainability/disclosures")).toBe(false);
   });
 
+  it("keeps external finance audiences on curated report routes instead of deeper internal finance lanes", () => {
+    expect(canRoleAccessPath("investor_viewer", "/finance/reports")).toBe(true);
+    expect(canRoleAccessPath("lender_viewer", "/finance/reports")).toBe(true);
+    expect(canRoleAccessPath("investor_viewer", "/finance/liability")).toBe(false);
+    expect(canRoleAccessPath("lender_viewer", "/finance/liability")).toBe(false);
+    expect(canRoleAccessPath("lender_viewer", "/finance/carbon-credits")).toBe(false);
+    expect(canRoleAccessPath("carbon_credit_trader", "/finance/reports")).toBe(true);
+    expect(canRoleAccessPath("carbon_credit_trader", "/finance/liability")).toBe(true);
+    expect(canRoleAccessPath("finance_analyst", "/finance/liability")).toBe(true);
+    expect(canRoleAccessPath("carbon_credit_trader", "/finance/carbon-credits")).toBe(true);
+  });
+
+  it("keeps the offset register available to stewardship and tightly scoped finance roles only", () => {
+    expect(canRoleAccessPath("sustainability_head", "/sustainability/offsets")).toBe(true);
+    expect(canRoleAccessPath("carbon_accountant", "/sustainability/offsets")).toBe(true);
+    expect(canRoleAccessPath("finance_analyst", "/sustainability/offsets")).toBe(true);
+    expect(canRoleAccessPath("carbon_credit_trader", "/sustainability/offsets")).toBe(true);
+    expect(canRoleAccessPath("investor_viewer", "/sustainability/offsets")).toBe(false);
+    expect(canRoleAccessPath("data_entry_operator", "/sustainability/offsets")).toBe(false);
+  });
+
   it("keeps governance routes fenced to governance roles while still letting platform admins inspect them", () => {
     expect(canRoleAccessPath("dpo", "/governance/privacy")).toBe(true);
     expect(canRoleAccessPath("grievance_officer", "/governance/privacy")).toBe(false);

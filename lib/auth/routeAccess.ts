@@ -15,6 +15,7 @@ import {
   CONSULTANT_WORKSPACE_ROLES,
   DATA_PIPELINE_WORKSPACE_ROLES,
   EXECUTIVE_WORKSPACE_ROLES,
+  GOVERNANCE_WORKSPACE_ROLES,
   INTERACTIVE_DASHBOARD_ROLES,
   PLATFORM_CONTROL_ROLES,
   SUSTAINABILITY_WORKSPACE_ROLES,
@@ -80,6 +81,12 @@ const DASHBOARD_REPORT_ROUTE_ROLES: PlatformRole[] = Array.from(
   ]),
 );
 
+const GOVERNANCE_PRIVACY_ROUTE_ROLES: PlatformRole[] = ["dpo"];
+
+const GOVERNANCE_GRIEVANCE_ROUTE_ROLES: PlatformRole[] = Array.from(
+  new Set<PlatformRole>(["grievance_officer", "dpo"]),
+);
+
 /**
  * Route rules are ordered from most specific to least specific so narrow paths
  * like `/dashboard/platform-superadmin` win before the general `/dashboard`
@@ -135,6 +142,21 @@ export const APP_ROUTE_ACCESS_RULES: RouteAccessRule[] = [
     prefix: "/sustainability",
     description: "Targets, CBAM, and sustainability planning workspace.",
     allowedRoles: SUSTAINABILITY_WORKSPACE_ROLES,
+  },
+  {
+    prefix: "/governance/privacy",
+    description: "Privacy governance workspace for DSAR, ROPA, DPIA, consent, and transfer oversight.",
+    allowedRoles: GOVERNANCE_PRIVACY_ROUTE_ROLES,
+  },
+  {
+    prefix: "/governance/grievances",
+    description: "Incident escalation and grievance oversight workspace for governance roles.",
+    allowedRoles: GOVERNANCE_GRIEVANCE_ROUTE_ROLES,
+  },
+  {
+    prefix: "/governance",
+    description: "Governance workspace umbrella for privacy and grievance response roles.",
+    allowedRoles: GOVERNANCE_WORKSPACE_ROLES,
   },
   {
     prefix: "/accounting",

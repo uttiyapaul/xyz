@@ -65,6 +65,9 @@ const NAV_ITEMS: NavItem[] = [
   { group: "Organization", label: "Facilities & Sites", href: "/org/facilities", icon: Building2 },
   { group: "Organization", label: "Data Integrations", href: "/org/integrations", icon: LinkIcon },
 
+  { group: "Governance", label: "Privacy Operations", href: "/governance/privacy", icon: ShieldCheck },
+  { group: "Governance", label: "Incident Escalations", href: "/governance/grievances", icon: AlertTriangle },
+
   { group: "Sustainability", label: "Emissions Targets", href: "/sustainability/targets", icon: Target },
   { group: "Sustainability", label: "CBAM Declarations", href: "/sustainability/cbam-reports", icon: FileSpreadsheet },
   { group: "Sustainability", label: "Carbon Offsets", href: "/sustainability/offsets", icon: Leaf },

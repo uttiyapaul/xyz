@@ -110,3 +110,4 @@ When there is a conflict between speed and completeness, use this frontend-only 
 - Document important assumptions, scope rules, side effects, and why a decision exists when that context is not obvious from the code alone.
 - Prefer concise file headers, function descriptions, and targeted inline comments over long comment blocks.
 - Do not add filler comments that only restate the code literally; comments must explain intent, behavior, constraints, or integration details.
+- Whenever a role gains a new live route, KPI, menu item, shortcut, guardrail, or restriction, update [docs/ActiveRoleListandFeatures.md](./ActiveRoleListandFeatures.md) in the same PR so training and audit documentation stays current.

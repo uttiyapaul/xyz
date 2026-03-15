@@ -62,4 +62,12 @@ describe("route access matrix", () => {
     expect(canRoleAccessPath("sustainability_head", "/dashboard/reports")).toBe(true);
     expect(canRoleAccessPath("supply_chain_reporter", "/dashboard/reports")).toBe(false);
   });
+
+  it("keeps governance routes fenced to governance roles while still letting platform admins inspect them", () => {
+    expect(canRoleAccessPath("dpo", "/governance/privacy")).toBe(true);
+    expect(canRoleAccessPath("grievance_officer", "/governance/privacy")).toBe(false);
+    expect(canRoleAccessPath("grievance_officer", "/governance/grievances")).toBe(true);
+    expect(canRoleAccessPath("platform_admin", "/governance/privacy")).toBe(true);
+    expect(canRoleAccessPath("client_admin", "/governance/grievances")).toBe(false);
+  });
 });

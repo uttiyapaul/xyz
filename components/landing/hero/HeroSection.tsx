@@ -5,14 +5,13 @@ import { useState } from "react";
 import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
 import DataStreamCanvas from "./DataStreamCanvas";
-import HeroSkeleton from "./HeroSkeleton";
 
 /* ─────────────────────────────────────────────
    Dynamic import — three-globe needs the browser
    ───────────────────────────────────────────── */
 const GlobeCanvas = dynamic(() => import("./GlobeCanvas"), {
   ssr: false,
-  loading: () => <HeroSkeleton />,
+  loading: () => null,
 });
 
 /* ─────────────────────────────────────────────

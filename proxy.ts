@@ -35,6 +35,10 @@ const PUBLIC_ROUTES = new Set([
   "/auth/suspended",
   "/auth/offboarded",
   "/calculator",                 // Public CBAM calculator
+  "/privacy",
+  "/privacy/request",
+  "/cookies",
+  "/terms",
 ]);
 
 // Public metadata and root-level assets requested by browsers outside normal navigation.

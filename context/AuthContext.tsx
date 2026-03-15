@@ -10,6 +10,7 @@ import {
   isPlatformRole,
   type PlatformRole,
 } from "@/lib/auth/roles";
+import { getPatchedUserFromSession } from "@/lib/auth/sessionClaims";
 import { buildSessionScope } from "@/lib/auth/sessionScope";
 import { supabase } from "@/lib/supabase/client";
 
@@ -53,18 +54,6 @@ const defaultState: AuthState = {
 
 const AuthContext = createContext<AuthState>(defaultState);
 
-function decodeJwtClaims(accessToken: string): Record<string, unknown> {
-  try {
-    const payload = accessToken.split(".")[1];
-    const normalized = payload.replace(/-/g, "+").replace(/_/g, "/");
-    const padded = normalized + "=".repeat((4 - (normalized.length % 4)) % 4);
-    return JSON.parse(atob(padded));
-  } catch (error) {
-    console.error("Failed to decode JWT claims:", error);
-    return {};
-  }
-}
-
 function extractRoles(metaRoles: unknown, primaryRole: unknown): PlatformRole[] {
   if (Array.isArray(metaRoles)) {
     const roles = metaRoles.filter(isPlatformRole);
@@ -84,17 +73,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { ...defaultState, isLoading: false };
     }
 
-    const jwtClaims = decodeJwtClaims(session.access_token);
-    const meta = (jwtClaims.app_metadata as Record<string, unknown>) ?? {};
-
-    const patchedUser: User = {
-      ...session.user,
-      app_metadata: {
-        ...session.user.app_metadata,
-        ...meta,
-      },
-    };
-
+    const patchedUser: User = getPatchedUserFromSession(session);
     const patchedMeta = patchedUser.app_metadata ?? {};
     const sessionScope = buildSessionScope(patchedMeta);
     const roles = extractRoles(patchedMeta.roles, patchedMeta.primary_role);

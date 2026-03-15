@@ -13,6 +13,7 @@ import type { PlatformRole } from "@/lib/auth/roles";
 
 export type DashboardFamily =
   | "platform"
+  | "governance"
   | "consulting"
   | "organization"
   | "sustainability"
@@ -135,8 +136,8 @@ export const DASHBOARD_PROFILES: Record<PlatformRole, DashboardProfile> = {
     role: "dpo",
     title: "Data protection officer",
     summary: "Privacy and regulatory oversight workspace.",
-    preferredPath: "/dashboard",
-    family: "platform",
+    preferredPath: "/governance/privacy",
+    family: "governance",
     interactive: true,
     guardrail: "The DPO must remain independent from the same organisation's access administration.",
   },
@@ -144,8 +145,8 @@ export const DASHBOARD_PROFILES: Record<PlatformRole, DashboardProfile> = {
     role: "grievance_officer",
     title: "Grievance officer",
     summary: "Compliance and grievance management workspace.",
-    preferredPath: "/dashboard",
-    family: "platform",
+    preferredPath: "/governance/grievances",
+    family: "governance",
     interactive: true,
     guardrail: "Issue-handling oversight should remain independent from data approval actions.",
   },
@@ -606,6 +607,46 @@ export function getDashboardShortcutCards(role: PlatformRole): DashboardShortcut
     ];
   }
 
+  if (role === "dpo") {
+    return [
+      {
+        label: "Privacy Operations",
+        href: "/governance/privacy",
+        description: "Track DSAR, ROPA, DPIA, transfer, and consent posture from one governance workspace.",
+      },
+      {
+        label: "Incident Escalations",
+        href: "/governance/grievances",
+        description: "Review escalated incidents and response pressure without stepping into org-admin duties.",
+      },
+      {
+        label: "Account Settings",
+        href: "/dashboard/settings",
+        description: "Review session posture while privileged governance actions stay separate.",
+      },
+    ];
+  }
+
+  if (role === "grievance_officer") {
+    return [
+      {
+        label: "Incident Escalations",
+        href: "/governance/grievances",
+        description: "Track grievance-linked incidents, escalations, and consent withdrawals visible in the live schema.",
+      },
+      {
+        label: "Dashboard Home",
+        href: "/dashboard",
+        description: "Return to the governance launchpad for current queue and scope posture.",
+      },
+      {
+        label: "Account Settings",
+        href: "/dashboard/settings",
+        description: "Review account and session posture without entering privileged admin routes.",
+      },
+    ];
+  }
+
   switch (profile.family) {
     case "platform":
       return profile.role === "platform_superadmin" || profile.role === "platform_admin"
@@ -638,6 +679,24 @@ export function getDashboardShortcutCards(role: PlatformRole): DashboardShortcut
               description: "Review account, session, and personal workspace posture.",
             },
           ];
+    case "governance":
+      return [
+        {
+          label: "Privacy Operations",
+          href: "/governance/privacy",
+          description: "Review DSAR, DPIA, transfer, consent, and incident posture from the live privacy workspace.",
+        },
+        {
+          label: "Incident Escalations",
+          href: "/governance/grievances",
+          description: "Track incident, escalation, and grievance-response pressure visible in the current schema.",
+        },
+        {
+          label: "Account Settings",
+          href: "/dashboard/settings",
+          description: "Review session posture without mixing governance duties into admin control routes.",
+        },
+      ];
     case "organization":
       return [
         {

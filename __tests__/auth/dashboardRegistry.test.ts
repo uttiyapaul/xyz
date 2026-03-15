@@ -25,6 +25,11 @@ describe("dashboard registry", () => {
     expect(getDashboardProfile("data_approver").preferredPath).toBe("/accounting/approvals");
   });
 
+  it("routes governance roles into dedicated governance workspaces", () => {
+    expect(getDashboardProfile("dpo").preferredPath).toBe("/governance/privacy");
+    expect(getDashboardProfile("grievance_officer").preferredPath).toBe("/governance/grievances");
+  });
+
   it("keeps integration-only roles away from team-management shortcuts", () => {
     const apiKeyManagerShortcuts = getDashboardShortcutCards("api_key_manager").map((shortcut) => shortcut.href);
 
@@ -32,5 +37,17 @@ describe("dashboard registry", () => {
       expect.arrayContaining(["/org/integrations", "/dashboard/settings"]),
     );
     expect(apiKeyManagerShortcuts).not.toContain("/org/users");
+  });
+
+  it("gives the DPO governance shortcuts instead of only the generic platform home", () => {
+    const dpoShortcuts = getDashboardShortcutCards("dpo").map((shortcut) => shortcut.href);
+
+    expect(dpoShortcuts).toEqual(
+      expect.arrayContaining([
+        "/governance/privacy",
+        "/governance/grievances",
+        "/dashboard/settings",
+      ]),
+    );
   });
 });

@@ -203,11 +203,14 @@ export const PLATFORM_WORKSPACE_ROLES: PlatformRole[] = [
   "platform_finance",
   "platform_data_scientist",
   "platform_support",
-  "dpo",
-  "grievance_officer",
 ];
 
 export const CARBON_ACCOUNTING_WORKSPACE_ROLES: PlatformRole[] = ["carbon_accountant"];
+
+export const GOVERNANCE_WORKSPACE_ROLES: PlatformRole[] = [
+  "dpo",
+  "grievance_officer",
+];
 
 export const SUSTAINABILITY_WORKSPACE_ROLES: PlatformRole[] = [
   "sustainability_head",
@@ -268,6 +271,7 @@ export const NON_INTERACTIVE_ROLES: PlatformRole[] = [
 export const INTERACTIVE_DASHBOARD_ROLES: PlatformRole[] = Array.from(
   new Set<PlatformRole>([
     ...PLATFORM_WORKSPACE_ROLES,
+    ...GOVERNANCE_WORKSPACE_ROLES,
     ...CARBON_ACCOUNTING_WORKSPACE_ROLES,
     ...SUSTAINABILITY_WORKSPACE_ROLES,
     ...CLIENT_ADMIN_WORKSPACE_ROLES,

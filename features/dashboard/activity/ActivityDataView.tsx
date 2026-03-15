@@ -3,6 +3,8 @@
 import { useEffect, useState, type FormEvent } from "react";
 
 import { useAuth } from "@/context/AuthContext";
+import shellStyles from "@/features/portal/WorkspaceShell.module.css";
+import viewStyles from "@/features/dashboard/shared/DashboardWorkspace.module.css";
 import { filterRowsByScopeId } from "@/lib/auth/sessionScope";
 import { supabase } from "@/lib/supabase/client";
 
@@ -144,10 +146,27 @@ function getDefaultReportingDate(): string {
   return new Date().toISOString().split("T")[0];
 }
 
+function getStatusTone(status: string): "success" | "warning" | "danger" | "info" {
+  if (status === "accepted" || status === "approved" || status === "completed") {
+    return "success";
+  }
+
+  if (status === "rejected" || status === "failed") {
+    return "danger";
+  }
+
+  if (status === "pending" || status === "validated" || status === "under_review") {
+    return "warning";
+  }
+
+  return "info";
+}
+
 export function ActivityDataView() {
   const { primaryOrgId, siteScopeIds, user, isLoading: authLoading } = useAuth();
   const [sources, setSources] = useState<EmissionSource[]>([]);
   const [activities, setActivities] = useState<ActivityRecord[]>([]);
+  const [message, setMessage] = useState<{ tone: "success" | "warning" | "danger"; text: string } | null>(null);
   const [form, setForm] = useState({
     source_id: "",
     quantity: "",
@@ -240,10 +259,15 @@ export function ActivityDataView() {
           };
         }),
       );
+      setMessage(null);
     } catch (error) {
       console.error("Error loading activity data:", error);
       setSources([]);
       setActivities([]);
+      setMessage({
+        tone: "danger",
+        text: "Activity data could not be loaded from the live schema right now.",
+      });
     } finally {
       setLoading(false);
     }
@@ -262,6 +286,7 @@ export function ActivityDataView() {
     }
 
     setSaving(true);
+    setMessage(null);
 
     try {
       const dateParts = getDateParts(form.reporting_period);
@@ -292,304 +317,242 @@ export function ActivityDataView() {
         unit: "kWh",
         reporting_period: getDefaultReportingDate(),
       });
+      setMessage({
+        tone: "success",
+        text: "Activity entry saved. It is now waiting in the review queue with the source-derived field mapping.",
+      });
       await loadData(orgId);
     } catch (error) {
       console.error("Error creating activity entry:", error);
+      setMessage({
+        tone: "danger",
+        text: "The activity entry could not be saved. Check the source selection and current row-level access, then try again.",
+      });
     } finally {
       setSaving(false);
     }
   }
 
   const selectedSource = sources.find((source) => source.id === form.source_id);
+  const pendingActivities = activities.filter((activity) => activity.status === "pending").length;
 
   if (authLoading || (orgId && loading)) {
     return (
-      <div style={{ padding: "40px", textAlign: "center", color: "#9CA3AF" }}>
-        Loading activity data...
+      <div className={shellStyles.page}>
+        <header className={shellStyles.header}>
+          <p className={shellStyles.eyebrow}>Data Input Workspace</p>
+          <h1 className={shellStyles.title}>Loading activity data...</h1>
+        </header>
       </div>
     );
   }
 
   if (!orgId) {
     return (
-      <div style={{ padding: "32px", color: "#E8E6DE", minHeight: "100vh", background: "#050508" }}>
-        <div
-          style={{ padding: "24px", background: "#0D0D14", border: "1px solid #1A1A24", borderRadius: "8px" }}
-        >
-          <h1 style={{ fontSize: "24px", color: "#FAFAF8", margin: "0 0 8px" }}>Activity Data Entry</h1>
-          <p style={{ fontSize: "14px", color: "#9CA3AF", margin: 0 }}>
-            No organization is available in your current session scope yet.
-          </p>
-        </div>
+      <div className={shellStyles.page}>
+        <header className={shellStyles.header}>
+          <p className={shellStyles.eyebrow}>Data Input Workspace</p>
+          <h1 className={shellStyles.title}>Activity Data Entry</h1>
+          <p className={shellStyles.subtitle}>No organization is available in your current session scope yet.</p>
+        </header>
       </div>
     );
   }
 
   return (
-    <div style={{ fontFamily: "system-ui", background: "#050508", color: "#E8E6DE", minHeight: "100vh" }}>
-      <div style={{ padding: "20px 32px", borderBottom: "1px solid #111120", background: "#07070E" }}>
-        <h1 style={{ fontSize: "24px", color: "#FAFAF8", margin: 0 }}>Activity Data Entry</h1>
-      </div>
-
-      <div style={{ padding: "24px 32px", display: "grid", gridTemplateColumns: "400px 1fr", gap: "24px" }}>
-        <div>
-          <div style={{ background: "#0D0D14", border: "1px solid #1A1A24", borderRadius: "6px", padding: "20px" }}>
-            <h2 style={{ fontSize: "16px", color: "#FAFAF8", marginBottom: "16px" }}>New Activity</h2>
-            <p style={{ fontSize: "12px", color: "#6B7280", marginTop: 0, marginBottom: "16px" }}>
-              The selected source now drives facility, field key, and a compatible activity type automatically.
+    <div className={shellStyles.page}>
+      <header className={shellStyles.header}>
+        <p className={shellStyles.eyebrow}>Data Input Workspace</p>
+        <div className={shellStyles.headerRow}>
+          <div className={shellStyles.titleBlock}>
+            <h1 className={shellStyles.title}>Activity Data Entry</h1>
+            <p className={shellStyles.subtitle}>
+              Manual entries stay source-driven so facility, field key, and activity type remain aligned with the live
+              source register.
             </p>
-            <form onSubmit={handleSubmit}>
-              <div style={{ marginBottom: "16px" }}>
-                <label style={{ fontSize: "11px", color: "#6B7280", display: "block", marginBottom: "6px" }}>
-                  SOURCE
-                </label>
-                <select
-                  value={form.source_id}
-                  onChange={(event) => setForm({ ...form, source_id: event.target.value })}
-                  style={{
-                    width: "100%",
-                    padding: "10px",
-                    background: "#07070E",
-                    border: "1px solid #1A1A24",
-                    borderRadius: "4px",
-                    color: "#FAFAF8",
-                    fontSize: "14px",
-                  }}
-                  required
-                >
-                  <option value="">Select...</option>
-                  {sources.map((source) => (
-                    <option key={source.id} value={source.id}>
-                      {source.source_name} (Scope {source.scope})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div
-                style={{
-                  marginBottom: "16px",
-                  padding: "12px",
-                  background: "#07070E",
-                  border: "1px solid #1A1A24",
-                  borderRadius: "4px",
-                }}
-              >
-                <div style={{ fontSize: "11px", color: "#6B7280", marginBottom: "4px" }}>AUTO-DERIVED TYPE</div>
-                <div style={{ fontSize: "13px", color: "#FAFAF8" }}>
-                  {selectedSource ? deriveActivityType(selectedSource).replace(/_/g, " ") : "Select a source"}
-                </div>
-              </div>
-
-              <div style={{ marginBottom: "16px" }}>
-                <label style={{ fontSize: "11px", color: "#6B7280", display: "block", marginBottom: "6px" }}>
-                  QUANTITY
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={form.quantity}
-                  onChange={(event) => setForm({ ...form, quantity: event.target.value })}
-                  style={{
-                    width: "100%",
-                    padding: "10px",
-                    background: "#07070E",
-                    border: "1px solid #1A1A24",
-                    borderRadius: "4px",
-                    color: "#FAFAF8",
-                    fontSize: "14px",
-                  }}
-                  required
-                />
-              </div>
-
-              <div style={{ marginBottom: "16px" }}>
-                <label style={{ fontSize: "11px", color: "#6B7280", display: "block", marginBottom: "6px" }}>
-                  UNIT
-                </label>
-                <select
-                  value={form.unit}
-                  onChange={(event) => setForm({ ...form, unit: event.target.value })}
-                  style={{
-                    width: "100%",
-                    padding: "10px",
-                    background: "#07070E",
-                    border: "1px solid #1A1A24",
-                    borderRadius: "4px",
-                    color: "#FAFAF8",
-                    fontSize: "14px",
-                  }}
-                >
-                  <option value="kWh">kWh</option>
-                  <option value="L">Liters</option>
-                  <option value="m3">m3</option>
-                  <option value="kg">kg</option>
-                  <option value="tonnes">tonnes</option>
-                </select>
-              </div>
-
-              <div style={{ marginBottom: "16px" }}>
-                <label style={{ fontSize: "11px", color: "#6B7280", display: "block", marginBottom: "6px" }}>
-                  REPORTING DATE
-                </label>
-                <input
-                  type="date"
-                  value={form.reporting_period}
-                  onChange={(event) => setForm({ ...form, reporting_period: event.target.value })}
-                  style={{
-                    width: "100%",
-                    padding: "10px",
-                    background: "#07070E",
-                    border: "1px solid #1A1A24",
-                    borderRadius: "4px",
-                    color: "#FAFAF8",
-                    fontSize: "14px",
-                  }}
-                  required
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={saving}
-                style={{
-                  width: "100%",
-                  padding: "12px",
-                  background: "#F59E0B",
-                  border: "none",
-                  borderRadius: "4px",
-                  color: "#000",
-                  fontSize: "14px",
-                  fontWeight: "600",
-                  cursor: "pointer",
-                  opacity: saving ? 0.7 : 1,
-                }}
-              >
-                {saving ? "Saving..." : "Add Activity"}
-              </button>
-            </form>
           </div>
         </div>
+      </header>
 
-        <div>
-          <div style={{ background: "#0D0D14", border: "1px solid #1A1A24", borderRadius: "6px", overflow: "hidden" }}>
-            <div style={{ padding: "16px 20px", borderBottom: "1px solid #1A1A24" }}>
-              <h2 style={{ fontSize: "16px", color: "#FAFAF8", margin: 0 }}>Recent Activities</h2>
+      <main className={shellStyles.body}>
+        {message ? (
+          <div className={shellStyles.alert} data-tone={message.tone}>
+            {message.text}
+          </div>
+        ) : null}
+
+        <section className={shellStyles.metricsGrid}>
+          <article className={shellStyles.metricCard}>
+            <p className={shellStyles.metricLabel}>Available Sources</p>
+            <p className={shellStyles.metricValue}>{sources.length}</p>
+            <p className={shellStyles.metricHint}>Source rows visible to the current site and organization scope.</p>
+          </article>
+          <article className={shellStyles.metricCard}>
+            <p className={shellStyles.metricLabel}>Recent Entries</p>
+            <p className={shellStyles.metricValue}>{activities.length}</p>
+            <p className={shellStyles.metricHint}>The most recent manual entries loaded from the live ledger.</p>
+          </article>
+          <article className={shellStyles.metricCard}>
+            <p className={shellStyles.metricLabel}>Pending Review</p>
+            <p className={shellStyles.metricValue}>{pendingActivities}</p>
+            <p className={shellStyles.metricHint}>Entries still moving through review or approval.</p>
+          </article>
+          <article className={shellStyles.metricCard}>
+            <p className={shellStyles.metricLabel}>Sites In Scope</p>
+            <p className={shellStyles.metricValue}>{new Set(sources.map((source) => source.site_id).filter(Boolean)).size}</p>
+            <p className={shellStyles.metricHint}>Distinct sites represented by the currently visible source rows.</p>
+          </article>
+        </section>
+
+        <section className={viewStyles.twoColumn}>
+          <section className={shellStyles.card}>
+            <div className={shellStyles.cardHeader}>
+              <div>
+                <h2 className={shellStyles.cardTitle}>New Activity</h2>
+                <p className={shellStyles.cardDescription}>
+                  The selected source now drives facility, field key, and a compatible activity type automatically.
+                </p>
+              </div>
             </div>
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
-              <thead>
-                <tr style={{ background: "#07070E" }}>
-                  <th
-                    style={{
-                      padding: "12px 20px",
-                      textAlign: "left",
-                      fontSize: "11px",
-                      color: "#6B7280",
-                      fontWeight: "500",
-                    }}
+            <div className={shellStyles.cardSection}>
+              <form className={viewStyles.sectionStack} onSubmit={handleSubmit}>
+                <div className={viewStyles.fieldGroup}>
+                  <label className={viewStyles.label} htmlFor="activity-source">
+                    Source
+                  </label>
+                  <select
+                    id="activity-source"
+                    className={viewStyles.select}
+                    value={form.source_id}
+                    onChange={(event) => setForm({ ...form, source_id: event.target.value })}
+                    required
                   >
-                    DATE
-                  </th>
-                  <th
-                    style={{
-                      padding: "12px 20px",
-                      textAlign: "left",
-                      fontSize: "11px",
-                      color: "#6B7280",
-                      fontWeight: "500",
-                    }}
-                  >
-                    SOURCE
-                  </th>
-                  <th
-                    style={{
-                      padding: "12px 20px",
-                      textAlign: "left",
-                      fontSize: "11px",
-                      color: "#6B7280",
-                      fontWeight: "500",
-                    }}
-                  >
-                    SITE
-                  </th>
-                  <th
-                    style={{
-                      padding: "12px 20px",
-                      textAlign: "left",
-                      fontSize: "11px",
-                      color: "#6B7280",
-                      fontWeight: "500",
-                    }}
-                  >
-                    TYPE
-                  </th>
-                  <th
-                    style={{
-                      padding: "12px 20px",
-                      textAlign: "right",
-                      fontSize: "11px",
-                      color: "#6B7280",
-                      fontWeight: "500",
-                    }}
-                  >
-                    QUANTITY
-                  </th>
-                  <th
-                    style={{
-                      padding: "12px 20px",
-                      textAlign: "left",
-                      fontSize: "11px",
-                      color: "#6B7280",
-                      fontWeight: "500",
-                    }}
-                  >
-                    STATUS
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {activities.map((activity) => (
-                  <tr key={activity.id} style={{ borderBottom: "1px solid #111120" }}>
-                    <td style={{ padding: "12px 20px", fontSize: "13px", color: "#9CA3AF" }}>
-                      {activity.reporting_period}
-                    </td>
-                    <td style={{ padding: "12px 20px", fontSize: "13px", color: "#FAFAF8" }}>
-                      {activity.source_name}
-                    </td>
-                    <td style={{ padding: "12px 20px", fontSize: "13px", color: "#9CA3AF" }}>
-                      {activity.site_name}
-                    </td>
-                    <td style={{ padding: "12px 20px", fontSize: "13px", color: "#6B7280" }}>
-                      {activity.activity_type.replace(/_/g, " ")}
-                    </td>
-                    <td style={{ padding: "12px 20px", fontSize: "13px", color: "#F59E0B", textAlign: "right" }}>
-                      {activity.quantity.toLocaleString()} {activity.unit}
-                    </td>
-                    <td
-                      style={{
-                        padding: "12px 20px",
-                        fontSize: "12px",
-                        color: "#9CA3AF",
-                        textTransform: "uppercase",
-                      }}
-                    >
-                      {activity.status}
-                    </td>
-                  </tr>
-                ))}
+                    <option value="">Select...</option>
+                    {sources.map((source) => (
+                      <option key={source.id} value={source.id}>
+                        {source.source_name} (Scope {source.scope})
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-                {activities.length === 0 && (
-                  <tr>
-                    <td colSpan={6} style={{ padding: "32px", textAlign: "center", color: "#6B7280" }}>
-                      No activity entries found yet.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
+                <div className={viewStyles.derivedCard}>
+                  <p className={viewStyles.derivedLabel}>Auto-derived type</p>
+                  <p className={viewStyles.derivedValue}>
+                    {selectedSource ? deriveActivityType(selectedSource).replace(/_/g, " ") : "Select a source"}
+                  </p>
+                </div>
+
+                <div className={viewStyles.fieldGroup}>
+                  <label className={viewStyles.label} htmlFor="activity-quantity">
+                    Quantity
+                  </label>
+                  <input
+                    id="activity-quantity"
+                    className={viewStyles.input}
+                    type="number"
+                    step="0.01"
+                    value={form.quantity}
+                    onChange={(event) => setForm({ ...form, quantity: event.target.value })}
+                    required
+                  />
+                </div>
+
+                <div className={viewStyles.fieldGroup}>
+                  <label className={viewStyles.label} htmlFor="activity-unit">
+                    Unit
+                  </label>
+                  <select
+                    id="activity-unit"
+                    className={viewStyles.select}
+                    value={form.unit}
+                    onChange={(event) => setForm({ ...form, unit: event.target.value })}
+                  >
+                    <option value="kWh">kWh</option>
+                    <option value="L">Liters</option>
+                    <option value="m3">m3</option>
+                    <option value="kg">kg</option>
+                    <option value="tonnes">tonnes</option>
+                  </select>
+                </div>
+
+                <div className={viewStyles.fieldGroup}>
+                  <label className={viewStyles.label} htmlFor="activity-reporting-date">
+                    Reporting date
+                  </label>
+                  <input
+                    id="activity-reporting-date"
+                    className={viewStyles.input}
+                    type="date"
+                    value={form.reporting_period}
+                    onChange={(event) => setForm({ ...form, reporting_period: event.target.value })}
+                    required
+                  />
+                </div>
+
+                <div className={viewStyles.buttonRow}>
+                  <button type="submit" disabled={saving} className={viewStyles.submitButton}>
+                    {saving ? "Saving..." : "Add activity"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </section>
+
+          <section className={shellStyles.card}>
+            <div className={shellStyles.cardHeader}>
+              <div>
+                <h2 className={shellStyles.cardTitle}>Recent Activities</h2>
+                <p className={shellStyles.cardDescription}>
+                  Recent rows stay visible here so operators can confirm the correct source mapping before the review
+                  lane picks them up.
+                </p>
+              </div>
+            </div>
+            {activities.length === 0 ? (
+              <div className={shellStyles.emptyState}>
+                <h3 className={shellStyles.emptyTitle}>No activity entries found yet.</h3>
+                <p className={shellStyles.emptyDescription}>
+                  Once you submit activity rows they will appear here with the derived source and review status.
+                </p>
+              </div>
+            ) : (
+              <div className={shellStyles.tableWrapper}>
+                <table className={shellStyles.table}>
+                  <thead>
+                    <tr>
+                      <th className={shellStyles.tableHeaderCell}>Date</th>
+                      <th className={shellStyles.tableHeaderCell}>Source</th>
+                      <th className={shellStyles.tableHeaderCell}>Site</th>
+                      <th className={shellStyles.tableHeaderCell}>Type</th>
+                      <th className={shellStyles.tableHeaderCell}>Quantity</th>
+                      <th className={shellStyles.tableHeaderCell}>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {activities.map((activity) => (
+                      <tr key={activity.id}>
+                        <td className={shellStyles.tableCell}>{activity.reporting_period}</td>
+                        <td className={shellStyles.tableCell}>{activity.source_name}</td>
+                        <td className={shellStyles.tableCell}>{activity.site_name}</td>
+                        <td className={shellStyles.tableCell}>{activity.activity_type.replace(/_/g, " ")}</td>
+                        <td className={shellStyles.tableCell}>
+                          {activity.quantity.toLocaleString("en-IN")} {activity.unit}
+                        </td>
+                        <td className={shellStyles.tableCell}>
+                          <span className={shellStyles.badge} data-tone={getStatusTone(activity.status)}>
+                            {activity.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
+        </section>
+      </main>
     </div>
   );
 }

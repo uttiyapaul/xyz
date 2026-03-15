@@ -1,10 +1,5 @@
-import { SkeletonPage } from "@/components/layout/SkeletonPage";
+import { ConsultingPortfolioView } from "@/features/consulting/portfolio/ConsultingPortfolioView";
 
 export default function ConsultingPortfolioPage() {
-  return (
-    <SkeletonPage 
-      title="Client Portfolio" 
-      description="Multi-tenant switchboard allowing consultants to securely navigate between different authorized client accounts."
-    />
-  );
+  return <ConsultingPortfolioView />;
 }

@@ -1,10 +1,5 @@
-import { SkeletonPage } from "@/components/layout/SkeletonPage";
+import { ConsultingScenarioView } from "@/features/consulting/scenario/ConsultingScenarioView";
 
 export default function ConsultingScenarioPage() {
-  return (
-    <SkeletonPage 
-      title="Scenario Modeler" 
-      description="Sandbox environment to securely test decarbonization strategies, CCS impacts, and abatement cost models on client data."
-    />
-  );
+  return <ConsultingScenarioView />;
 }

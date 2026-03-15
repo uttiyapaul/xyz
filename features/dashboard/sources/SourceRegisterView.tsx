@@ -3,6 +3,8 @@
 import { useEffect, useState, type FormEvent } from "react";
 
 import { useAuth } from "@/context/AuthContext";
+import viewStyles from "@/features/dashboard/shared/DashboardWorkspace.module.css";
+import shellStyles from "@/features/portal/WorkspaceShell.module.css";
 import { filterRowsByScopeId } from "@/lib/auth/sessionScope";
 import { supabase } from "@/lib/supabase/client";
 
@@ -65,6 +67,7 @@ export function SourceRegisterView() {
   const { primaryOrgId, siteScopeIds, user, isLoading: authLoading } = useAuth();
   const [sites, setSites] = useState<Site[]>([]);
   const [sources, setSources] = useState<EmissionSource[]>([]);
+  const [message, setMessage] = useState<{ tone: "success" | "warning" | "danger"; text: string } | null>(null);
   const [form, setForm] = useState({
     source_name: "",
     scope: "1",
@@ -123,10 +126,15 @@ export function SourceRegisterView() {
 
       setSites(nextSites);
       setSources(nextSources);
+      setMessage(null);
     } catch (error) {
       console.error("Error loading source register:", error);
       setSites([]);
       setSources([]);
+      setMessage({
+        tone: "danger",
+        text: "Source register data could not be loaded right now.",
+      });
     } finally {
       setLoading(false);
     }
@@ -140,6 +148,7 @@ export function SourceRegisterView() {
     }
 
     setSaving(true);
+    setMessage(null);
 
     try {
       const scope = Number(form.scope);
@@ -164,223 +173,226 @@ export function SourceRegisterView() {
       }
 
       setForm({ source_name: "", scope: "1", category: "", site_id: "" });
+      setMessage({
+        tone: "success",
+        text: `Source saved to the live register for ${getCurrentFiscalYearLabel()}.`,
+      });
       await loadData(orgId);
     } catch (error) {
       console.error("Error creating source register entry:", error);
+      setMessage({
+        tone: "danger",
+        text: "The source could not be created. Check the current scope and required fields, then try again.",
+      });
     } finally {
       setSaving(false);
     }
   }
 
+  const scopeOneCount = sources.filter((source) => source.scope === 1).length;
+  const scopeTwoCount = sources.filter((source) => source.scope === 2).length;
+  const scopeThreeCount = sources.filter((source) => source.scope === 3).length;
+
   if (authLoading || (orgId && loading)) {
     return (
-      <div style={{ padding: "40px", textAlign: "center", color: "#9CA3AF" }}>
-        Loading source register...
+      <div className={shellStyles.page}>
+        <header className={shellStyles.header}>
+          <p className={shellStyles.eyebrow}>Data Input Workspace</p>
+          <h1 className={shellStyles.title}>Loading source register...</h1>
+        </header>
       </div>
     );
   }
 
   if (!orgId) {
     return (
-      <div style={{ padding: "32px", color: "#E8E6DE", minHeight: "100vh", background: "#050508" }}>
-        <div
-          style={{ padding: "24px", background: "#0D0D14", border: "1px solid #1A1A24", borderRadius: "8px" }}
-        >
-          <h1 style={{ fontSize: "24px", color: "#FAFAF8", margin: "0 0 8px" }}>Emission Sources</h1>
-          <p style={{ fontSize: "14px", color: "#9CA3AF", margin: 0 }}>
-            No organization is available in your current session scope yet.
-          </p>
-        </div>
+      <div className={shellStyles.page}>
+        <header className={shellStyles.header}>
+          <p className={shellStyles.eyebrow}>Data Input Workspace</p>
+          <h1 className={shellStyles.title}>Emission Sources</h1>
+          <p className={shellStyles.subtitle}>No organization is available in your current session scope yet.</p>
+        </header>
       </div>
     );
   }
 
   return (
-    <div style={{ fontFamily: "system-ui", background: "#050508", color: "#E8E6DE", minHeight: "100vh" }}>
-      <div style={{ padding: "20px 32px", borderBottom: "1px solid #111120", background: "#07070E" }}>
-        <h1 style={{ fontSize: "24px", color: "#FAFAF8", margin: 0 }}>Emission Sources</h1>
-      </div>
-
-      <div style={{ padding: "24px 32px", display: "grid", gridTemplateColumns: "400px 1fr", gap: "24px" }}>
-        <div>
-          <div style={{ background: "#0D0D14", border: "1px solid #1A1A24", borderRadius: "6px", padding: "20px" }}>
-            <h2 style={{ fontSize: "16px", color: "#FAFAF8", marginBottom: "16px" }}>New Source</h2>
-            <p style={{ fontSize: "12px", color: "#6B7280", marginTop: 0, marginBottom: "16px" }}>
-              Entries now write to the live GHG source register for {getCurrentFiscalYearLabel()}.
+    <div className={shellStyles.page}>
+      <header className={shellStyles.header}>
+        <p className={shellStyles.eyebrow}>Data Input Workspace</p>
+        <div className={shellStyles.headerRow}>
+          <div className={shellStyles.titleBlock}>
+            <h1 className={shellStyles.title}>Emission Sources</h1>
+            <p className={shellStyles.subtitle}>
+              The working source register writes to the live schema and keeps scope, site, and fiscal-year context
+              visible for downstream activity capture.
             </p>
-            <form onSubmit={handleSubmit}>
-              <div style={{ marginBottom: "16px" }}>
-                <label style={{ fontSize: "11px", color: "#6B7280", display: "block", marginBottom: "6px" }}>
-                  SOURCE NAME
-                </label>
-                <input
-                  type="text"
-                  value={form.source_name}
-                  onChange={(event) => setForm({ ...form, source_name: event.target.value })}
-                  placeholder="e.g. Natural Gas Boiler"
-                  style={{
-                    width: "100%",
-                    padding: "10px",
-                    background: "#07070E",
-                    border: "1px solid #1A1A24",
-                    borderRadius: "4px",
-                    color: "#FAFAF8",
-                    fontSize: "14px",
-                  }}
-                  required
-                />
-              </div>
-
-              <div style={{ marginBottom: "16px" }}>
-                <label style={{ fontSize: "11px", color: "#6B7280", display: "block", marginBottom: "6px" }}>
-                  SCOPE
-                </label>
-                <select
-                  value={form.scope}
-                  onChange={(event) => setForm({ ...form, scope: event.target.value })}
-                  style={{
-                    width: "100%",
-                    padding: "10px",
-                    background: "#07070E",
-                    border: "1px solid #1A1A24",
-                    borderRadius: "4px",
-                    color: "#FAFAF8",
-                    fontSize: "14px",
-                  }}
-                >
-                  <option value="1">Scope 1 - Direct</option>
-                  <option value="2">Scope 2 - Purchased energy</option>
-                  <option value="3">Scope 3 - Value chain</option>
-                </select>
-              </div>
-
-              <div style={{ marginBottom: "16px" }}>
-                <label style={{ fontSize: "11px", color: "#6B7280", display: "block", marginBottom: "6px" }}>
-                  CATEGORY
-                </label>
-                <input
-                  type="text"
-                  value={form.category}
-                  onChange={(event) => setForm({ ...form, category: event.target.value })}
-                  placeholder="e.g. Stationary combustion"
-                  style={{
-                    width: "100%",
-                    padding: "10px",
-                    background: "#07070E",
-                    border: "1px solid #1A1A24",
-                    borderRadius: "4px",
-                    color: "#FAFAF8",
-                    fontSize: "14px",
-                  }}
-                />
-              </div>
-
-              <div style={{ marginBottom: "16px" }}>
-                <label style={{ fontSize: "11px", color: "#6B7280", display: "block", marginBottom: "6px" }}>
-                  SITE (OPTIONAL)
-                </label>
-                <select
-                  value={form.site_id}
-                  onChange={(event) => setForm({ ...form, site_id: event.target.value })}
-                  style={{
-                    width: "100%",
-                    padding: "10px",
-                    background: "#07070E",
-                    border: "1px solid #1A1A24",
-                    borderRadius: "4px",
-                    color: "#FAFAF8",
-                    fontSize: "14px",
-                  }}
-                >
-                  <option value="">None</option>
-                  {sites.map((site) => (
-                    <option key={site.id} value={site.id}>
-                      {site.site_name} - {site.city}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <button
-                type="submit"
-                disabled={saving}
-                style={{
-                  width: "100%",
-                  padding: "12px",
-                  background: "#F59E0B",
-                  border: "none",
-                  borderRadius: "4px",
-                  color: "#000",
-                  fontSize: "14px",
-                  fontWeight: "600",
-                  cursor: "pointer",
-                  opacity: saving ? 0.7 : 1,
-                }}
-              >
-                {saving ? "Saving..." : "Add Source"}
-              </button>
-            </form>
           </div>
         </div>
+      </header>
 
-        <div>
-          <div style={{ background: "#0D0D14", border: "1px solid #1A1A24", borderRadius: "6px", overflow: "hidden" }}>
-            <div style={{ padding: "16px 20px", borderBottom: "1px solid #1A1A24" }}>
-              <h2 style={{ fontSize: "16px", color: "#FAFAF8", margin: 0 }}>Active Source Register</h2>
+      <main className={shellStyles.body}>
+        {message ? (
+          <div className={shellStyles.alert} data-tone={message.tone}>
+            {message.text}
+          </div>
+        ) : null}
+
+        <section className={shellStyles.metricsGrid}>
+          <article className={shellStyles.metricCard}>
+            <p className={shellStyles.metricLabel}>Register Rows</p>
+            <p className={shellStyles.metricValue}>{sources.length}</p>
+            <p className={shellStyles.metricHint}>Source rows visible to the current site and organization scope.</p>
+          </article>
+          <article className={shellStyles.metricCard}>
+            <p className={shellStyles.metricLabel}>Scope 1</p>
+            <p className={shellStyles.metricValue}>{scopeOneCount}</p>
+            <p className={shellStyles.metricHint}>Direct-emission sources currently in scope.</p>
+          </article>
+          <article className={shellStyles.metricCard}>
+            <p className={shellStyles.metricLabel}>Scope 2</p>
+            <p className={shellStyles.metricValue}>{scopeTwoCount}</p>
+            <p className={shellStyles.metricHint}>Purchased-energy sources currently in scope.</p>
+          </article>
+          <article className={shellStyles.metricCard}>
+            <p className={shellStyles.metricLabel}>Scope 3</p>
+            <p className={shellStyles.metricValue}>{scopeThreeCount}</p>
+            <p className={shellStyles.metricHint}>Value-chain sources currently in scope.</p>
+          </article>
+        </section>
+
+        <section className={viewStyles.twoColumn}>
+          <section className={shellStyles.card}>
+            <div className={shellStyles.cardHeader}>
+              <div>
+                <h2 className={shellStyles.cardTitle}>New Source</h2>
+                <p className={shellStyles.cardDescription}>
+                  Entries here write directly to the live GHG source register for the active organization.
+                </p>
+              </div>
             </div>
-            <div style={{ padding: "20px" }}>
-              {[1, 2, 3].map((scope) => {
-                const scopeSources = sources.filter((source) => source.scope === scope);
-                if (scopeSources.length === 0) {
-                  return null;
-                }
+            <div className={shellStyles.cardSection}>
+              <form className={viewStyles.sectionStack} onSubmit={handleSubmit}>
+                <div className={viewStyles.fieldGroup}>
+                  <label className={viewStyles.label} htmlFor="source-name">
+                    Source name
+                  </label>
+                  <input
+                    id="source-name"
+                    className={viewStyles.input}
+                    type="text"
+                    value={form.source_name}
+                    onChange={(event) => setForm({ ...form, source_name: event.target.value })}
+                    placeholder="e.g. Natural Gas Boiler"
+                    required
+                  />
+                </div>
 
-                return (
-                  <div key={scope} style={{ marginBottom: "24px" }}>
-                    <h3
-                      style={{
-                        fontSize: "14px",
-                        color: scope === 1 ? "#EF4444" : scope === 2 ? "#F59E0B" : "#06B6D4",
-                        marginBottom: "12px",
-                      }}
-                    >
-                      {getScopeLabel(scope)}
-                    </h3>
-                    <div style={{ display: "grid", gap: "8px" }}>
-                      {scopeSources.map((source) => (
-                        <div
-                          key={source.id}
-                          style={{
-                            background: "#07070E",
-                            border: "1px solid #1A1A24",
-                            borderRadius: "4px",
-                            padding: "12px",
-                          }}
-                        >
-                          <div style={{ fontSize: "14px", color: "#FAFAF8", marginBottom: "4px" }}>
-                            {source.source_name}
-                          </div>
-                          <div style={{ fontSize: "11px", color: "#6B7280" }}>
-                            <span>{source.source_category || "General"}</span>
-                            <span> | Site: {source.site_name}</span>
-                            <span> | FY: {source.fy_year}</span>
-                          </div>
+                <div className={viewStyles.fieldGroup}>
+                  <label className={viewStyles.label} htmlFor="source-scope">
+                    Scope
+                  </label>
+                  <select
+                    id="source-scope"
+                    className={viewStyles.select}
+                    value={form.scope}
+                    onChange={(event) => setForm({ ...form, scope: event.target.value })}
+                  >
+                    <option value="1">Scope 1 - Direct</option>
+                    <option value="2">Scope 2 - Purchased energy</option>
+                    <option value="3">Scope 3 - Value chain</option>
+                  </select>
+                </div>
+
+                <div className={viewStyles.fieldGroup}>
+                  <label className={viewStyles.label} htmlFor="source-category">
+                    Category
+                  </label>
+                  <input
+                    id="source-category"
+                    className={viewStyles.input}
+                    type="text"
+                    value={form.category}
+                    onChange={(event) => setForm({ ...form, category: event.target.value })}
+                    placeholder="e.g. Stationary combustion"
+                  />
+                </div>
+
+                <div className={viewStyles.fieldGroup}>
+                  <label className={viewStyles.label} htmlFor="source-site">
+                    Site (optional)
+                  </label>
+                  <select
+                    id="source-site"
+                    className={viewStyles.select}
+                    value={form.site_id}
+                    onChange={(event) => setForm({ ...form, site_id: event.target.value })}
+                  >
+                    <option value="">None</option>
+                    {sites.map((site) => (
+                      <option key={site.id} value={site.id}>
+                        {site.site_name} - {site.city}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className={viewStyles.buttonRow}>
+                  <button type="submit" disabled={saving} className={viewStyles.submitButton}>
+                    {saving ? "Saving..." : "Add source"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </section>
+
+          <section className={shellStyles.card}>
+            <div className={shellStyles.cardHeader}>
+              <div>
+                <h2 className={shellStyles.cardTitle}>Active Source Register</h2>
+                <p className={shellStyles.cardDescription}>
+                  Grouped by scope so teams can confirm coverage before entering activity data.
+                </p>
+              </div>
+            </div>
+            <div className={shellStyles.cardSection}>
+              {sources.length === 0 ? (
+                <div className={shellStyles.emptyState}>
+                  <h3 className={shellStyles.emptyTitle}>No sources found in the live register yet.</h3>
+                  <p className={shellStyles.emptyDescription}>
+                    Add the first source to start activity capture and reporting alignment.
+                  </p>
+                </div>
+              ) : (
+                <div className={viewStyles.sectionStack}>
+                  {[1, 2, 3].map((scope) => {
+                    const scopeSources = sources.filter((source) => source.scope === scope);
+                    if (scopeSources.length === 0) {
+                      return null;
+                    }
+
+                    return (
+                      <section key={scope} className={viewStyles.scopeSection} data-scope={scope}>
+                        <h3 className={viewStyles.scopeHeading}>{getScopeLabel(scope)}</h3>
+                        <div className={viewStyles.sourceList}>
+                          {scopeSources.map((source) => (
+                            <article key={source.id} className={viewStyles.sourceCard}>
+                              <h4 className={viewStyles.sourceTitle}>{source.source_name}</h4>
+                              <p className={viewStyles.sourceMeta}>
+                                {source.source_category || "General"} | Site: {source.site_name} | FY: {source.fy_year}
+                              </p>
+                            </article>
+                          ))}
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
-
-              {sources.length === 0 && (
-                <div style={{ color: "#6B7280", fontSize: "13px", textAlign: "center", padding: "20px 0" }}>
-                  No sources found in the live register yet.
+                      </section>
+                    );
+                  })}
                 </div>
               )}
             </div>
-          </div>
-        </div>
-      </div>
+          </section>
+        </section>
+      </main>
     </div>
   );
 }

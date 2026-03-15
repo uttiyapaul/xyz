@@ -25,6 +25,7 @@ import { canRoleAccessPath, getRouteAccessRule } from "@/lib/auth/routeAccess";
 // ---------------------------------------------------------------------------
 const PUBLIC_ROUTES = new Set([
   "/",                           // Public landing page
+  "/__opaque-not-found",
   "/auth/login",
   "/auth/register",
   "/auth/forgot-password",
@@ -50,6 +51,7 @@ const PUBLIC_FILE_ROUTES = new Set([
 ]);
 
 const AUTH_ROUTES = new Set(["/auth/login", "/auth/register"]);
+const OPAQUE_NOT_FOUND_ROUTE = "/__opaque-not-found";
 
 const API_WRITE_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
@@ -150,6 +152,30 @@ function generateTraceId(): string {
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("")
     .replace(/(.{8})(.{4})(.{4})(.{4})(.{12})/, "$1-$2-$3-$4-$5");
+}
+
+/**
+ * Route-enumeration prevention.
+ *
+ * Protected routes must not reveal whether they exist. Unauthorized and
+ * non-existent route hits therefore collapse into the same generic 404
+ * response, with no route-path echo in the body.
+ */
+function createOpaqueNotFoundResponse(req: NextRequest, pathname: string): NextResponse {
+  if (pathname.startsWith("/api/")) {
+    return new NextResponse(
+      JSON.stringify({ error: "Not Found", code: "NOT_FOUND" }),
+      {
+        status: 404,
+        headers: {
+          "Content-Type": "application/json",
+          "Cache-Control": "no-store",
+        },
+      },
+    );
+  }
+
+  return NextResponse.rewrite(new URL(OPAQUE_NOT_FOUND_ROUTE, req.url));
 }
 
 // ---------------------------------------------------------------------------
@@ -258,15 +284,13 @@ export async function proxy(req: NextRequest): Promise<NextResponse> {
     pathname.match(/\.(ico|png|jpg|svg|webp|woff2?)$/) !== null;
 
   if (!isPublic && !isAuthed) {
-    const loginUrl = new URL("/auth/login", req.url);
-    loginUrl.searchParams.set("redirect", pathname);
-    return NextResponse.redirect(loginUrl);
+    return createOpaqueNotFoundResponse(req, pathname);
   }
 
   const matchedRouteRule = getRouteAccessRule(pathname);
 
   if (isAuthed && primaryRole && matchedRouteRule && !canRoleAccessPath(primaryRole, pathname)) {
-    return NextResponse.redirect(new URL("/dashboard", req.url));
+    return createOpaqueNotFoundResponse(req, pathname);
   }
 
   // Redirect authenticated users away from auth pages

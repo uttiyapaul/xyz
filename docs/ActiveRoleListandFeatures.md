@@ -1,6 +1,6 @@
 # Active Role List and Features
 
-Last updated: 2026-03-15
+Last updated: 2026-03-16
 
 ## Purpose
 
@@ -10,6 +10,7 @@ Why this file exists:
 - It records what each role can actually do in the current frontend.
 - It documents the live menus, KPI blocks, shortcuts, scope behavior, and guardrails for training, audit, onboarding, and QA.
 - It must stay aligned with the real implementation in `lib/auth/roles.ts`, `lib/auth/dashboardRegistry.ts`, `lib/auth/routeAccess.ts`, and the live routes under `app/`.
+- It pairs with [OrganizationFlowCharts.md](./OrganizationFlowCharts.md), which shows the same system visually across auth, SoD, and data movement.
 
 Update rule:
 - Update this file in the same PR whenever a role gains a new live route, KPI block, shortcut, control, or restriction.
@@ -97,6 +98,7 @@ Live menus:
 - `Global Audit Logs`: shows platform-wide audit events and control changes.
 - `System Health`: shows operational readiness and system posture.
 - `Global Config`: shows global feature/control posture.
+- `System Settings`: shows live security, incident, backup, and enforcement posture without faking mutation flows.
 
 Why it exists:
 - This is the control-plane workspace for the platform operator tier.
@@ -105,36 +107,87 @@ Audit notes:
 - Must remain isolated from client operational roles.
 - Platform control access is intentionally narrower than the full platform staff category.
 
-### Platform Shared Workspace
+### Platform Operations Workspace
 Primary roles:
 - `platform_developer`
-- `digital_twin_engineer`
-- `platform_crm`
-- `platform_sales`
-- `platform_finance`
-- `platform_data_scientist`
 - `platform_support`
 
 Primary routes:
-- `/dashboard`
+- `/dashboard/platform/operations`
 - `/dashboard/settings`
 
 Live KPI blocks:
-- `Organizations`: shows organization count inside the authenticated scope.
-- `Site Scope`: shows whether the session is site-constrained or effectively "All".
-- `Entity Scope`: shows whether legal-entity scope is constrained or effectively "All".
-- `Primary Route`: shows the preferred landing path registered for the role.
+- `Global Flags`: shows globally enabled feature flags.
+- `Active Throttles`: shows live endpoint throttle posture.
+- `High-Risk Sessions`: surfaces elevated-risk active sessions.
+- `Retry Queue`: shows queued webhook delivery retries.
 
 Live menus and shortcuts:
-- `Dashboard Hub`: shared platform launchpad while dedicated routes are still being phased in.
+- `Platform Ops`: dedicated engineering and support board.
+- `Dashboard Hub`: shared launchpad for scope posture and cross-role signals.
 - `Settings`: account and session posture review.
 
 Why it exists:
-- Keeps non-control platform staff in a live shared workspace instead of granting them admin routes by default.
+- Gives engineering and support staff a real live platform lane without unlocking admin-only control-plane mutations.
 
 Audit notes:
-- Shared workspace access does not replace control-plane separation.
-- Role-specific guardrails still apply even inside the shared home.
+- Read-first by design.
+- Retry, audit, and session pressure remain visible without exposing secret infrastructure operations.
+
+### Platform Commercial Workspace
+Primary roles:
+- `platform_crm`
+- `platform_sales`
+- `platform_finance`
+
+Primary routes:
+- `/dashboard/platform/commercial`
+- `/dashboard/settings`
+
+Live KPI blocks:
+- `Fresh Leads`: recent lead volume from the live intake table.
+- `Active Tenants`: active tenant footprint in the live registry.
+- `Subscription Revenue`: completed subscription-payment value recorded in INR.
+- `Reporting-Active Tenants`: organizations with recent submission activity.
+
+Live menus and shortcuts:
+- `Commercial Pulse`: dedicated demand, tenant, and revenue board.
+- `Dashboard Hub`: shared platform launchpad for scope posture.
+- `Settings`: account and session posture review.
+
+Why it exists:
+- Keeps commercial staff in a DB-backed workspace without exposing client operational flows or admin control surfaces.
+
+Audit notes:
+- Lead emails stay masked in the UI.
+- Tenant-readiness posture must not be mistaken for operational data authority.
+
+### Platform Models Workspace
+Primary roles:
+- `digital_twin_engineer`
+- `platform_data_scientist`
+
+Primary routes:
+- `/dashboard/platform/models`
+- `/dashboard/settings`
+
+Live KPI blocks:
+- `Active Twin Models`: active digital-twin models in the registry.
+- `Scenario Runs`: current synthetic scenario rows.
+- `Display Approved`: scenarios approved for display while staying non-reportable.
+- `Flagged AI Records`: audit-flagged rows from AI validation summary.
+
+Live menus and shortcuts:
+- `Models & Twins`: dedicated digital-twin and AI-validation board.
+- `Dashboard Hub`: shared launchpad for role posture.
+- `Settings`: account and session posture review.
+
+Why it exists:
+- Gives modeling and data-science roles a real frontend lane while keeping the synthetic/non-reportable boundary explicit.
+
+Audit notes:
+- Scenario data remains synthetic and non-reportable.
+- AI model visibility must not expose deployment endpoints or bypass verified-data controls.
 
 ### Governance Workspace
 Primary roles:
@@ -241,6 +294,7 @@ Primary roles:
 
 Primary routes:
 - `/sustainability/targets`
+- `/sustainability/disclosures`
 - `/sustainability/cbam-reports`
 - `/sustainability/offsets`
 - `/dashboard/reports`
@@ -248,12 +302,15 @@ Primary routes:
 Live KPI blocks:
 - `Targets`: visible target rows.
 - `On Track`: targets currently meeting the glidepath.
+- `Mandatory Completed`: mandatory disclosure indicators already carrying saved values.
+- `Frameworks Ready`: frameworks whose mandatory indicators are complete for filing preparation.
 - `Open Filings`: filing rows not yet closed or accepted.
 - `EU Export Rows`: product-emission rows marked as exported to the EU.
 
 Live menus and shortcuts:
 - `Emissions Targets`: target posture and planning view.
-- `CBAM Declarations`: disclosure and filing workspace.
+- `Disclosure Hub`: framework disclosure, provenance, and filing-readiness workspace.
+- `CBAM Declarations`: filing and declaration workspace.
 - `Carbon Offsets`: offset-related sustainability view.
 - `Annual Emissions`: live emissions rollup feeding reports and filings.
 
@@ -442,20 +499,21 @@ Each role below is documented against the current live frontend.
   - `KPI - Webhook Alerts`: surfaces integration failures needing follow-up.
   - `Menu - RBAC Controls`: reviews the platform permission model.
   - `Menu - System Health`: monitors operational posture.
+  - `Menu - System Settings`: reviews live security, backup, and enforcement posture.
 - Why this matters: keeps daily platform administration separate from the broader superadmin lane.
 - Guardrail: broad rights, but narrower than `platform_superadmin`.
 
 ### 3. Platform Developer
-- Status: `Live shared family workspace`
-- Primary route: `/dashboard`
-- Current live workspace: Platform Shared Workspace
-- What this role does: uses the shared live platform home while dedicated engineering surfaces are still being phased in.
+- Status: `Live dedicated workspace`
+- Primary route: `/dashboard/platform/operations`
+- Current live workspace: Platform Operations Workspace
+- What this role does: reviews rollout posture, rate-limit baselines, retry pressure, and audit-visible operations signals from a dedicated engineering lane.
 - Current live features:
-  - `KPI - Organizations`: shows current platform-visible scope.
-  - `KPI - Primary Route`: confirms current frontend landing contract.
-  - `Menu - Dashboard Hub`: shared launchpad for platform staff.
-  - `Menu - Settings`: account and session posture.
-- Why this matters: gives a live, auditable starting point without granting control-plane pages.
+  - `KPI - Global Flags`: shows current full-platform rollout count.
+  - `KPI - Active Throttles`: shows live endpoint-throttle posture.
+  - `Menu - Platform Ops`: dedicated engineering workspace for live platform posture.
+  - `Menu - Dashboard Hub`: shared launchpad for scope posture.
+- Why this matters: gives engineering a real operations lane without granting control-plane mutation pages.
 - Guardrail: engineering access must not overrule verified or approved data states.
 
 ### 4. Platform Auditor
@@ -472,74 +530,80 @@ Each role below is documented against the current live frontend.
 - Guardrail: remains independent and read-focused relative to client operations.
 
 ### 5. Digital Twin Engineer
-- Status: `Live shared family workspace`
-- Primary route: `/dashboard`
-- Current live workspace: Platform Shared Workspace
-- What this role does: uses the shared platform home for modeling and simulation-oriented work until dedicated digital-twin routes are built.
+- Status: `Live dedicated workspace`
+- Primary route: `/dashboard/platform/models`
+- Current live workspace: Platform Models Workspace
+- What this role does: reviews digital-twin models, scenario posture, and synthetic-run status from a dedicated modeling lane.
 - Current live features:
-  - `KPI - Site Scope`: shows current site visibility posture.
-  - `Menu - Dashboard Hub`: shared live launchpad.
-  - `Menu - Settings`: account and session posture.
-- Why this matters: gives the role live context without implying approval or control authority.
+  - `KPI - Active Twin Models`: shows current active model count in the registry.
+  - `KPI - Scenario Runs`: shows live synthetic scenario count.
+  - `Menu - Models & Twins`: dedicated digital-twin workspace.
+  - `Menu - Dashboard Hub`: shared launchpad for role posture.
+- Why this matters: gives the role a real modeling lane without implying approval or control authority.
 - Guardrail: modeling access must stay separate from approval-grade compliance actions.
 
 ### 6. Platform CRM
-- Status: `Live shared family workspace`
-- Primary route: `/dashboard`
-- Current live workspace: Platform Shared Workspace
-- What this role does: uses a commercial relationship workspace based on live scoped visibility.
+- Status: `Live dedicated workspace`
+- Primary route: `/dashboard/platform/commercial`
+- Current live workspace: Platform Commercial Workspace
+- What this role does: reviews masked lead demand, tenant readiness, and recent reporting activity from a commercial relationship lane.
 - Current live features:
-  - `KPI - Organizations`: shows the current visible tenant footprint.
+  - `KPI - Fresh Leads`: shows recent live lead volume.
+  - `KPI - Active Tenants`: shows active tenant footprint in the registry.
+  - `Menu - Commercial Pulse`: dedicated demand and tenant-readiness board.
   - `Menu - Dashboard Hub`: shared platform entry point.
-  - `Menu - Settings`: personal and session posture.
-- Why this matters: keeps commercial staff inside a defined live lane.
+- Why this matters: keeps CRM work inside a defined live lane with truthful tenant and demand context.
 - Guardrail: commercial access must not bypass tenant-scoped operational controls.
 
 ### 7. Platform Sales
-- Status: `Live shared family workspace`
-- Primary route: `/dashboard`
-- Current live workspace: Platform Shared Workspace
-- What this role does: uses the shared live workspace for pipeline and account support context.
+- Status: `Live dedicated workspace`
+- Primary route: `/dashboard/platform/commercial`
+- Current live workspace: Platform Commercial Workspace
+- What this role does: uses the commercial board for live lead, tenant, and reporting-activity context during pipeline work.
 - Current live features:
-  - `KPI - Organizations`: visible commercial footprint.
+  - `KPI - Reporting-Active Tenants`: shows organizations with recent submission activity.
+  - `KPI - Fresh Leads`: shows recent pipeline demand.
+  - `Menu - Commercial Pulse`: dedicated commercial workspace.
   - `Menu - Dashboard Hub`: shared launchpad.
-  - `Menu - Settings`: profile and session review.
 - Why this matters: preserves a real portal lane for sales without leaking operational authority.
 - Guardrail: visibility remains commercial and limited by need.
 
 ### 8. Platform Finance
-- Status: `Live shared family workspace`
-- Primary route: `/dashboard`
-- Current live workspace: Platform Shared Workspace
-- What this role does: uses the shared live platform home for platform-finance awareness and posture tracking.
+- Status: `Live dedicated workspace`
+- Primary route: `/dashboard/platform/commercial`
+- Current live workspace: Platform Commercial Workspace
+- What this role does: reviews platform subscription revenue, tenant readiness, and payment-processor posture from the commercial board.
 - Current live features:
-  - `KPI - Entity Scope`: shows current legal-entity visibility posture.
+  - `KPI - Subscription Revenue`: shows completed subscription-payment value in INR.
+  - `KPI - Active Tenants`: shows live tenant footprint.
+  - `Menu - Commercial Pulse`: dedicated commercial workspace.
   - `Menu - Dashboard Hub`: shared platform landing page.
-  - `Menu - Settings`: account posture and session controls.
 - Why this matters: keeps platform-finance visibility distinct from client carbon-finance workflows.
 - Guardrail: must remain separate from client finance execution lanes.
 
 ### 9. Platform Data Scientist
-- Status: `Live shared family workspace`
-- Primary route: `/dashboard`
-- Current live workspace: Platform Shared Workspace
-- What this role does: uses a live shared home for AI and data-quality oriented review.
+- Status: `Live dedicated workspace`
+- Primary route: `/dashboard/platform/models`
+- Current live workspace: Platform Models Workspace
+- What this role does: reviews AI validation summary, public AI model posture, and synthetic scenario confidence from the dedicated model lane.
 - Current live features:
-  - `KPI - Organizations`: shows the current data-science visibility footprint.
+  - `KPI - Flagged AI Records`: shows audit-flagged validation rows.
+  - `KPI - Display Approved`: shows scenarios approved for display.
+  - `Menu - Models & Twins`: dedicated AI and digital-twin workspace.
   - `Menu - Dashboard Hub`: shared launchpad.
-  - `Menu - Settings`: account posture review.
-- Why this matters: provides a real DB-connected home while deeper analytical surfaces continue to evolve.
+- Why this matters: provides a real DB-connected model lane instead of only a generic shared home.
 - Guardrail: analytical access supports the pipeline but does not overrule verified data.
 
 ### 10. Platform Support
-- Status: `Live shared family workspace`
-- Primary route: `/dashboard`
-- Current live workspace: Platform Shared Workspace
-- What this role does: uses the shared platform home for short-lived support visibility and troubleshooting context.
+- Status: `Live dedicated workspace`
+- Primary route: `/dashboard/platform/operations`
+- Current live workspace: Platform Operations Workspace
+- What this role does: uses the operations board for short-lived support visibility across retries, session posture, and audit-visible signals.
 - Current live features:
-  - `KPI - Organizations`: shows support visibility scope.
+  - `KPI - Retry Queue`: shows webhook delivery backlog needing follow-up.
+  - `KPI - High-Risk Sessions`: shows elevated-risk active sessions.
+  - `Menu - Platform Ops`: dedicated operations workspace.
   - `Menu - Dashboard Hub`: shared support landing page.
-  - `Menu - Settings`: account and session review.
 - Why this matters: gives support a live lane without opening platform-admin pages.
 - Guardrail: support access is temporary and must remain tightly controlled.
 
@@ -654,6 +718,7 @@ Each role below is documented against the current live frontend.
   - `KPI - Targets`: visible target inventory.
   - `KPI - On Track`: visible glidepath posture.
   - `Menu - Emissions Targets`: target and strategy review.
+  - `Menu - Disclosure Hub`: framework completeness and filing-readiness posture.
   - `Menu - CBAM Declarations`: filing posture from approved data.
 - Why this matters: this is the strategic group-level climate lane.
 - Guardrail: group oversight must still respect org, site, and legal-entity scope.
@@ -665,7 +730,9 @@ Each role below is documented against the current live frontend.
 - What this role does: consolidates sustainability and reporting posture across visible group scope.
 - Current live features:
   - `KPI - Open Filings`: current filing backlog.
+  - `KPI - Frameworks Ready`: disclosure frameworks whose mandatory indicators are complete.
   - `Menu - Emissions Targets`: consolidated target posture.
+  - `Menu - Disclosure Hub`: framework completion and provenance review.
   - `Menu - CBAM Declarations`: disclosure readiness.
   - `Shortcut - Annual Emissions`: live rollup behind consolidation.
 - Why this matters: supports cross-entity consolidation on real reporting data.
@@ -679,6 +746,7 @@ Each role below is documented against the current live frontend.
 - Current live features:
   - `KPI - EU Export Rows`: export-related emissions visibility.
   - `Menu - Emissions Targets`: country-level planning and performance.
+  - `Menu - Disclosure Hub`: framework disclosure readiness for the active reporting year.
   - `Menu - CBAM Declarations`: country-level filing posture.
 - Why this matters: supports localized sustainability management on live data.
 - Guardrail: country views must still respect inherited assignment scope.
@@ -691,6 +759,7 @@ Each role below is documented against the current live frontend.
 - Current live features:
   - `KPI - Targets`: visible regional target rows.
   - `Menu - Annual Emissions`: live report workspace.
+  - `Menu - Disclosure Hub`: framework completeness and filing-readiness context.
   - `Menu - Emissions Targets`: strategy context.
 - Why this matters: supports regional analysis without mixing in approval authority.
 - Guardrail: analysis remains read-heavy and downstream of approvals.
@@ -742,6 +811,7 @@ Each role below is documented against the current live frontend.
   - `KPI - Targets`: visible target program.
   - `KPI - On Track`: glidepath posture.
   - `Menu - Emissions Targets`: strategy and target management.
+  - `Menu - Disclosure Hub`: framework disclosures and provenance posture.
   - `Menu - CBAM Declarations`: disclosure posture.
 - Why this matters: this is the main climate strategy lane for the tenant.
 - Guardrail: final submission stays downstream of review, approval, and signoff checks.
@@ -754,6 +824,7 @@ Each role below is documented against the current live frontend.
 - Current live features:
   - `KPI - Open Filings`: CBAM-related filing backlog.
   - `KPI - EU Export Rows`: export-linked emissions footprint.
+  - `Menu - Disclosure Hub`: framework disclosure and readiness workspace.
   - `Menu - CBAM Declarations`: primary filing route.
   - `Shortcut - Annual Emissions`: live inventory behind filing work.
 - Why this matters: provides the regulated filing lane for CBAM work.
@@ -768,6 +839,7 @@ Each role below is documented against the current live frontend.
   - `KPI - Targets`: ESG target inventory.
   - `KPI - SBTi posture`: target alignment signal.
   - `Menu - Emissions Targets`: ESG strategy lane.
+  - `Menu - Disclosure Hub`: framework disclosure and provenance management.
   - `Menu - Carbon Offsets`: offset-related sustainability view.
 - Why this matters: aligns disclosure and planning with live climate data.
 - Guardrail: should consume approved data and not short-circuit accounting controls.
@@ -792,6 +864,7 @@ Each role below is documented against the current live frontend.
 - What this role does: prepares and tracks regulated filings using approved disclosure data.
 - Current live features:
   - `KPI - Open Filings`: current filing backlog.
+  - `Menu - Disclosure Hub`: primary framework disclosure and completeness workspace.
   - `Menu - CBAM Declarations`: filing preparation and review.
   - `Shortcut - Annual Emissions`: live emissions rollup behind filings.
 - Why this matters: gives filing operators a dedicated live disclosure surface.
@@ -805,6 +878,7 @@ Each role below is documented against the current live frontend.
 - Current live features:
   - `KPI - EU Export Rows`: export-facing product-emission visibility.
   - `Menu - Annual Emissions`: live reporting workspace.
+  - `Menu - Disclosure Hub`: framework completeness, provenance, and filing-readiness context.
   - `Menu - CBAM Declarations`: disclosure context for supply-chain analysis.
 - Why this matters: supports supply-chain emissions insight on approved data.
 - Guardrail: analysis remains downstream of validated activity data.

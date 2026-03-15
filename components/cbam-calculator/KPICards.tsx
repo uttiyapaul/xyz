@@ -1,6 +1,7 @@
 "use client";
 
 import { AnimNum } from "./AnimNum";
+import styles from "./CBAMCalculator.module.css";
 
 interface KPICardsProps {
   cost2026: number;
@@ -11,78 +12,30 @@ interface KPICardsProps {
 
 export function KPICards({ cost2026, cost2030, cost2034, inrRate }: KPICardsProps) {
   const cards = [
-    { label: "2026 (2.5%)",  val: cost2026, inrVal: cost2026 * inrRate, tag: "First year",  color: "#F59E0B" },
-    { label: "2030 (48.5%)", val: cost2030, inrVal: cost2030 * inrRate, tag: "Mid-point",   color: "#F97316" },
-    { label: "2034 (100%)",  val: cost2034, inrVal: cost2034 * inrRate, tag: "Full CBAM",   color: "#EF4444" },
-  ];
+    { label: "2026 (2.5%)", value: cost2026, inrValue: cost2026 * inrRate, tag: "First year", tone: "amber" },
+    { label: "2030 (48.5%)", value: cost2030, inrValue: cost2030 * inrRate, tag: "Mid-point", tone: "orange" },
+    { label: "2034 (100%)", value: cost2034, inrValue: cost2034 * inrRate, tag: "Full CBAM", tone: "red" },
+  ] as const;
 
   return (
-    <div>
-      <div
-        style={{
-          fontFamily: "'DM Mono',monospace",
-          fontSize: "9px",
-          color: "#4B5563",
-          letterSpacing: "2px",
-          textTransform: "uppercase",
-          marginBottom: "12px",
-        }}
-      >
-        ANNUAL CBAM EXPOSURE — INDIA DEFAULT VALUES
-      </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px" }}>
-        {cards.map((c, i) => (
-          <div
-            key={i}
-            style={{
-              background: "#0D0D14",
-              border: `1px solid ${c.color}40`,
-              borderRadius: "4px",
-              padding: "16px",
-              animation: "fadeUp 0.4s ease forwards",
-              animationDelay: `${i * 0.1}s`,
-              opacity: 0,
-            }}
-          >
-            <div
-              style={{
-                fontFamily: "'DM Mono',monospace",
-                fontSize: "9px",
-                color: c.color,
-                letterSpacing: "1.5px",
-                marginBottom: "10px",
-                textTransform: "uppercase",
-              }}
-            >
-              {c.label}
+    <section>
+      <p className={styles.sectionEyebrow}>Annual CBAM Exposure - India Default Values</p>
+      <div className={styles.kpiGrid}>
+        {cards.map((card) => (
+          <article key={card.label} className={styles.kpiCard} data-tone={card.tone}>
+            <p className={styles.kpiLabel} data-tone={card.tone}>
+              {card.label}
+            </p>
+            <div className={styles.kpiValue}>
+              <AnimNum value={card.value} prefix="EUR " />
             </div>
-            <div
-              style={{
-                fontFamily: "'DM Mono',monospace",
-                fontSize: "20px",
-                color: "#FAFAF8",
-                fontWeight: "500",
-                marginBottom: "4px",
-              }}
-            >
-              <AnimNum value={c.val} prefix="€" />
+            <div className={styles.kpiSecondary} data-tone={card.tone}>
+              <AnimNum value={card.inrValue} prefix="INR " />
             </div>
-            <div
-              style={{
-                fontFamily: "'DM Mono',monospace",
-                fontSize: "13px",
-                color: c.color,
-                marginBottom: "8px",
-              }}
-            >
-              <AnimNum value={c.inrVal} prefix="₹" />
-            </div>
-            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: "9px", color: "#374151" }}>
-              {c.tag}
-            </div>
-          </div>
+            <div className={styles.kpiHint}>{card.tag}</div>
+          </article>
         ))}
       </div>
-    </div>
+    </section>
   );
 }

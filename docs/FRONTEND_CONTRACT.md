@@ -16,9 +16,11 @@ Use these in order:
 1. Live SQL dump in `.aiassistant/Rules/full_dump.sql`
 2. `A2Z_Carbon_Full_Audit_Report_2026.docx` for regulatory and frontend compliance obligations
 3. [docs/FRONTEND_AUDIT_2026_ACTIONS.md](./FRONTEND_AUDIT_2026_ACTIONS.md) for frontend-only execution guidance extracted from that audit
-4. `carbonA2Z_Role_Architecture.txt`
-5. `carbonA2Z_Frontend_Implementation_Plan.md`
-6. Current repo code, only where it does not conflict with the above
+4. [docs/DB_FOLLOW_UP.md](./DB_FOLLOW_UP.md) for schema and backend gaps the frontend is intentionally tracking for later phases
+5. [docs/OrganizationFlowCharts.md](./OrganizationFlowCharts.md) for the living visual map of organization, auth, SoD, and data movement
+6. `carbonA2Z_Role_Architecture.txt`
+7. `carbonA2Z_Frontend_Implementation_Plan.md`
+8. Current repo code, only where it does not conflict with the above
 
 ## Confirmed Live Objects
 
@@ -92,6 +94,14 @@ These may exist in a newer environment, but they are not present in the checked-
 - Mask secrets by default in the UI; full reveal must require explicit user action
 - All user-facing errors must provide a clear next step and must not expose raw provider or model details
 
+## Route Enumeration Prevention
+
+- Return the same generic `404 Not Found` experience for unauthorised protected routes and genuinely non-existent routes.
+- Never return `403 Forbidden` for unauthenticated route hits on protected pages or protected API paths.
+- Never redirect blocked protected-route hits to `/auth/login` or `/dashboard`, because that makes route existence easier to infer.
+- Never include the attempted route path in user-facing error messages, notice copy, or API error bodies for blocked routes.
+- Treat "not allowed" and "does not exist" as intentionally indistinguishable to the caller unless a later audit-approved exception is documented here first.
+
 ## Audit Priority Order
 
 When there is a conflict between speed and completeness, use this frontend-only remediation order from the 2026 audit:
@@ -111,3 +121,5 @@ When there is a conflict between speed and completeness, use this frontend-only 
 - Prefer concise file headers, function descriptions, and targeted inline comments over long comment blocks.
 - Do not add filler comments that only restate the code literally; comments must explain intent, behavior, constraints, or integration details.
 - Whenever a role gains a new live route, KPI, menu item, shortcut, guardrail, or restriction, update [docs/ActiveRoleListandFeatures.md](./ActiveRoleListandFeatures.md) in the same PR so training and audit documentation stays current.
+- Whenever frontend work reveals a missing DB object, a schema workaround, or a backend-owned compliance gap, update [docs/DB_FOLLOW_UP.md](./DB_FOLLOW_UP.md) in the same PR so later database work has a trustworthy handoff list.
+- Whenever frontend work changes organization topology, auth flow, route access, SoD behavior, or core data movement, update [docs/OrganizationFlowCharts.md](./OrganizationFlowCharts.md) in the same PR so the visual system map stays trustworthy.

@@ -63,11 +63,11 @@ export const DASHBOARD_PROFILES: Record<PlatformRole, DashboardProfile> = {
   platform_developer: {
     role: "platform_developer",
     title: "Platform developer",
-    summary: "Shared platform engineering workspace for feature delivery and systems maintenance.",
-    preferredPath: "/dashboard",
+    summary: "Platform operations workspace for rollout, delivery, and systems maintenance posture.",
+    preferredPath: "/dashboard/platform/operations",
     family: "platform",
     interactive: true,
-    guardrail: "Use the shared platform workspace until dedicated engineering surfaces are built.",
+    guardrail: "Engineering visibility supports delivery and resilience work, not client-side approval authority.",
   },
   platform_auditor: {
     role: "platform_auditor",
@@ -82,7 +82,7 @@ export const DASHBOARD_PROFILES: Record<PlatformRole, DashboardProfile> = {
     role: "digital_twin_engineer",
     title: "Digital twin engineer",
     summary: "Platform engineering workspace for scenario, modeling, and simulation functions.",
-    preferredPath: "/dashboard",
+    preferredPath: "/dashboard/platform/models",
     family: "platform",
     interactive: true,
     guardrail: "Modeling access should stay separate from approval-grade compliance actions.",
@@ -91,7 +91,7 @@ export const DASHBOARD_PROFILES: Record<PlatformRole, DashboardProfile> = {
     role: "platform_crm",
     title: "Platform CRM",
     summary: "Commercial relationship and platform engagement workspace.",
-    preferredPath: "/dashboard",
+    preferredPath: "/dashboard/platform/commercial",
     family: "platform",
     interactive: true,
     guardrail: "Commercial access should not bypass tenant-scoped operational controls.",
@@ -100,7 +100,7 @@ export const DASHBOARD_PROFILES: Record<PlatformRole, DashboardProfile> = {
     role: "platform_sales",
     title: "Platform sales",
     summary: "Sales-oriented platform workspace for pipeline and account support.",
-    preferredPath: "/dashboard",
+    preferredPath: "/dashboard/platform/commercial",
     family: "platform",
     interactive: true,
     guardrail: "Sales visibility remains commercial and should not expose client operations beyond need.",
@@ -108,8 +108,8 @@ export const DASHBOARD_PROFILES: Record<PlatformRole, DashboardProfile> = {
   platform_finance: {
     role: "platform_finance",
     title: "Platform finance",
-    summary: "Platform revenue and billing oversight within the shared control workspace.",
-    preferredPath: "/dashboard",
+    summary: "Platform revenue, billing, and tenant-readiness workspace for commercial oversight.",
+    preferredPath: "/dashboard/platform/commercial",
     family: "platform",
     interactive: true,
     guardrail: "Platform finance is separate from client carbon-finance decision flows.",
@@ -118,7 +118,7 @@ export const DASHBOARD_PROFILES: Record<PlatformRole, DashboardProfile> = {
     role: "platform_data_scientist",
     title: "Platform data scientist",
     summary: "AI and data-quality exploration workspace for platform-level modeling.",
-    preferredPath: "/dashboard",
+    preferredPath: "/dashboard/platform/models",
     family: "platform",
     interactive: true,
     guardrail: "Analytical access should support the pipeline, not overrule verified data states.",
@@ -127,7 +127,7 @@ export const DASHBOARD_PROFILES: Record<PlatformRole, DashboardProfile> = {
     role: "platform_support",
     title: "Platform support",
     summary: "Short-lived operational support workspace for troubleshooting and guidance.",
-    preferredPath: "/dashboard",
+    preferredPath: "/dashboard/platform/operations",
     family: "platform",
     interactive: true,
     guardrail: "Support access is time-boxed and should be treated as a temporary operational window.",
@@ -647,6 +647,46 @@ export function getDashboardShortcutCards(role: PlatformRole): DashboardShortcut
     ];
   }
 
+  if (role === "cbam_compliance_officer" || role === "regulatory_filing_agent") {
+    return [
+      {
+        label: "Disclosure Hub",
+        href: "/sustainability/disclosures",
+        description: "Prepare framework disclosures, provenance, and completeness before final filing actions begin.",
+      },
+      {
+        label: "CBAM Reports",
+        href: "/sustainability/cbam-reports",
+        description: "Track filing windows, due dates, and declaration posture against the live submission pipeline.",
+      },
+      {
+        label: "Annual Emissions",
+        href: "/dashboard/reports",
+        description: "Review the live annual inventory that underpins disclosure and declaration work.",
+      },
+    ];
+  }
+
+  if (role === "regional_analyst" || role === "supply_chain_analyst") {
+    return [
+      {
+        label: "Annual Emissions",
+        href: "/dashboard/reports",
+        description: "Analyze the live annual inventory before comparing disclosure or supply-chain posture.",
+      },
+      {
+        label: "Disclosure Hub",
+        href: "/sustainability/disclosures",
+        description: "Review framework completeness, filing readiness, and provenance without entering admin-only controls.",
+      },
+      {
+        label: "CBAM Reports",
+        href: "/sustainability/cbam-reports",
+        description: "Check declaration timing and filing status alongside the current emissions rollup.",
+      },
+    ];
+  }
+
   switch (profile.family) {
     case "platform":
       return profile.role === "platform_superadmin" || profile.role === "platform_admin"
@@ -669,9 +709,14 @@ export function getDashboardShortcutCards(role: PlatformRole): DashboardShortcut
           ]
         : [
             {
+              label: "Primary Workspace",
+              href: profile.preferredPath,
+              description: `Open the dedicated ${profile.title.toLowerCase()} workspace registered in the route matrix.`,
+            },
+            {
               label: "Dashboard Home",
               href: "/dashboard",
-              description: "Use the shared platform launchpad while dedicated role routes are phased in.",
+              description: "Return to the shared platform launchpad for scope posture and cross-role signals.",
             },
             {
               label: "Account Settings",
@@ -723,14 +768,14 @@ export function getDashboardShortcutCards(role: PlatformRole): DashboardShortcut
           description: "Track targets and strategy inside the organizations and entities assigned to you.",
         },
         {
-          label: "CBAM Reports",
-          href: "/sustainability/cbam-reports",
-          description: "Prepare declarations and regulated disclosures from scoped, approved data.",
+          label: "Disclosure Hub",
+          href: "/sustainability/disclosures",
+          description: "Manage framework disclosures, provenance, and filing readiness from live organization data.",
         },
         {
-          label: "Annual Emissions",
-          href: "/dashboard/reports",
-          description: "Review the live annual emissions model feeding disclosures and executive reporting.",
+          label: "CBAM Reports",
+          href: "/sustainability/cbam-reports",
+          description: "Prepare declarations and filing windows from scoped, approved data.",
         },
       ];
     case "accounting":

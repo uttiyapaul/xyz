@@ -1,5 +1,8 @@
 "use client";
 
+import styles from "./CBAMCalculator.module.css";
+import { formatEur } from "./formatters";
+
 interface YearRow {
   year: number;
   costDefault: number;
@@ -12,146 +15,82 @@ interface TrajectoryChartProps {
   inrRate: number;
 }
 
+/**
+ * Visual comparison between default and verified annual CBAM exposure.
+ *
+ * Why this exists:
+ * - Uses SVG width attributes for the computed bars so the chart remains free
+ *   of inline CSS even though bar lengths are data-driven.
+ * - Keeps the chart readable with or without the inline value label depending
+ *   on available bar width.
+ */
 export function TrajectoryChart({ data, inrRate }: TrajectoryChartProps) {
-  const maxCost = Math.max(...data.map((d) => d.costDefault));
+  const maxCost = Math.max(...data.map((row) => row.costDefault));
 
   if (maxCost === 0) {
-    return (
-      <div
-        style={{
-          textAlign: "center",
-          color: "#4B5563",
-          padding: "40px 0",
-          fontFamily: "monospace",
-          fontSize: "12px",
-        }}
-      >
-        Enter export volume to see projection
-      </div>
-    );
+    return <div className={styles.trajectoryEmpty}>Enter export volume to see the yearly cost projection.</div>;
   }
 
   return (
-    <div style={{ padding: "4px 0" }}>
-      {/* Legend */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          marginBottom: "10px",
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            gap: "20px",
-            fontSize: "10px",
-            fontFamily: "monospace",
-          }}
-        >
-          <span style={{ color: "#F59E0B" }}>▬ India default values</span>
-          <span style={{ color: "#22C55E" }}>▬ Verified actual emissions</span>
-        </div>
+    <div>
+      <div className={styles.chartLegend}>
+        <span className={styles.legendItem}>
+          <span className={styles.legendSwatchDefault} aria-hidden="true" />
+          India default values
+        </span>
+        <span className={styles.legendItem}>
+          <span className={styles.legendSwatchActual} aria-hidden="true" />
+          Verified actual emissions
+        </span>
       </div>
 
-      {/* Rows */}
-      {data.map((d) => {
-        const wD = (d.costDefault / maxCost) * 100;
-        const wA = (d.costActual  / maxCost) * 100;
-        const isKey = d.year === 2026 || d.year === 2030 || d.year === 2034;
+      <div className={styles.trajectoryList}>
+        {data.map((row) => {
+          const defaultWidth = (row.costDefault / maxCost) * 100;
+          const actualWidth = (row.costActual / maxCost) * 100;
+          const isKeyYear = row.year === 2026 || row.year === 2030 || row.year === 2034;
+          const labelX = Math.min(Math.max(defaultWidth - 2, 18), 97);
 
-        return (
-          <div
-            key={d.year}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "10px",
-              marginBottom: "6px",
-            }}
-          >
-            {/* Year label */}
-            <span
-              style={{
-                fontFamily: "'DM Mono', monospace",
-                fontSize: "11px",
-                width: "36px",
-                flexShrink: 0,
-                color: isKey ? "#FAFAF8" : "#6B7280",
-                fontWeight: isKey ? "700" : "400",
-              }}
-            >
-              {d.year}
-            </span>
+          return (
+            <div key={row.year} className={styles.trajectoryRow}>
+              <span className={`${styles.trajectoryYear} ${isKeyYear ? styles.trajectoryYearKey : ""}`}>
+                {row.year}
+              </span>
 
-            {/* Bar track */}
-            <div style={{ flex: 1, position: "relative", height: "24px" }}>
-              {/* Default bar */}
-              <div
-                style={{
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  height: "24px",
-                  width: `${wD}%`,
-                  background: isKey ? "#F59E0B" : "#F59E0B55",
-                  borderRadius: "2px",
-                  transition: "width 0.6s ease",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "flex-end",
-                  paddingRight: "6px",
-                }}
-              >
-                {wD > 25 && (
-                  <span
-                    style={{
-                      fontSize: "10px",
-                      fontFamily: "'DM Mono', monospace",
-                      color: "#000",
-                      fontWeight: "700",
-                    }}
-                  >
-                    €{Math.round(d.costDefault).toLocaleString("en-IN")}
-                  </span>
-                )}
+              <div className={styles.trajectoryTrack}>
+                <svg
+                  className={styles.trajectorySvg}
+                  viewBox="0 0 100 24"
+                  preserveAspectRatio="none"
+                  aria-label={`Projected default cost ${formatEur(row.costDefault)} and verified cost ${formatEur(row.costActual)} for ${row.year}`}
+                >
+                  <rect
+                    className={`${styles.trajectoryDefaultBar} ${isKeyYear ? styles.trajectoryDefaultBarKey : ""}`}
+                    x="0"
+                    y="0"
+                    width={defaultWidth}
+                    height="24"
+                    rx="3"
+                    ry="3"
+                  />
+                  <rect className={styles.trajectoryActualBar} x="0" y="6" width={actualWidth} height="12" rx="2" ry="2" />
+                  {defaultWidth > 28 ? (
+                    <text className={styles.trajectoryInlineValue} x={labelX} y="15">
+                      {formatEur(row.costDefault)}
+                    </text>
+                  ) : null}
+                </svg>
               </div>
 
-              {/* Actual/verified bar overlay */}
-              <div
-                style={{
-                  position: "absolute",
-                  top: "6px",
-                  left: 0,
-                  height: "12px",
-                  width: `${wA}%`,
-                  background: "#22C55E",
-                  borderRadius: "1px",
-                  opacity: 0.85,
-                  transition: "width 0.6s ease 0.1s",
-                }}
-              />
-            </div>
-
-            {/* Saving label */}
-            {d.saving > 0 && (
-              <span
-                style={{
-                  fontFamily: "'DM Mono', monospace",
-                  fontSize: "10px",
-                  color: "#22C55E",
-                  width: "90px",
-                  flexShrink: 0,
-                  textAlign: "right",
-                }}
-              >
-                save ₹
-                {Math.round((d.saving * inrRate) / 100000).toLocaleString("en-IN")}L
+              <span className={styles.trajectorySave}>
+                {row.saving > 0
+                  ? `save INR ${Math.round((row.saving * inrRate) / 100000).toLocaleString("en-IN")}L`
+                  : "-"}
               </span>
-            )}
-          </div>
-        );
-      })}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

@@ -1,347 +1,522 @@
-// @ts-nocheck
 "use client";
 
 import { useEffect } from "react";
+import { supabase } from "@/lib/supabase/client";
+
+type CookiePreferences = {
+  necessary: true;
+  analytics: boolean;
+  marketing: boolean;
+  ts: number;
+};
+
+declare global {
+  interface Window {
+    a2zCookies?: CookiePreferences;
+    scrollToSection?: (sectionId: string) => void;
+    switchScope?: (scopeId: string) => void;
+    toggleFaq?: (item: HTMLElement) => void;
+    submitDemoForm?: (event: Event) => Promise<void>;
+  }
+}
+
+function getInput(id: string): HTMLInputElement | null {
+  const node = document.getElementById(id);
+  return node instanceof HTMLInputElement ? node : null;
+}
+
+function getSelect(id: string): HTMLSelectElement | null {
+  const node = document.getElementById(id);
+  return node instanceof HTMLSelectElement ? node : null;
+}
+
+function setFieldInvalidState(
+  field: HTMLInputElement | HTMLSelectElement | null,
+  isInvalid: boolean,
+) {
+  if (!field) {
+    return;
+  }
+
+  field.classList.toggle("field-invalid", isInvalid);
+  field.setAttribute("aria-invalid", isInvalid ? "true" : "false");
+}
+
+function ensureStatusNode(container: ParentNode | null): HTMLParagraphElement | null {
+  if (!container) {
+    return null;
+  }
+
+  const existing = document.getElementById("df-status");
+  if (existing instanceof HTMLParagraphElement) {
+    return existing;
+  }
+
+  const statusNode = document.createElement("p");
+  statusNode.id = "df-status";
+  statusNode.className = "df-note";
+  statusNode.setAttribute("role", "status");
+  container.appendChild(statusNode);
+  return statusNode;
+}
 
 export default function LandingScripts() {
   useEffect(() => {
-    
-    // Cookie Banner Logic
-    const cookieBanner = document.getElementById("cookie-banner");
-    const acceptBtn = document.getElementById("cookie-accept");
-    const saveBtn = document.getElementById("cookie-save");
-    const rejectBtn = document.getElementById("cookie-reject");
-    const analyticsToggle = document.getElementById("ck-analytics") as HTMLInputElement | null;
-    const marketingToggle = document.getElementById("ck-marketing") as HTMLInputElement | null;
+    const cleanupFns: Array<() => void> = [];
+    const observers: Array<{ disconnect: () => void }> = [];
     const cookieKey = "a2z_cookies";
 
-    const hideCookie = () => cookieBanner?.classList.remove("show");
-    const showCookie = () => cookieBanner?.classList.add("show");
-    
-    const saveCookie = () => {
-      const payload = {
-        analytics: analyticsToggle ? (analyticsToggle as HTMLInputElement).checked : false,
-        marketing: marketingToggle ? (marketingToggle as HTMLInputElement).checked : false,
-        ts: Date.now(),
-      };
+    /**
+     * Public landing interactions stay in one controller so the public markup
+     * can remain declarative while behavior stays typed, reviewable, and free
+     * of inline script attributes.
+     */
+    const cookieBanner = document.getElementById("cookie-banner");
+    const cookieActions = cookieBanner?.querySelector(".ck-actions");
+    const cookieAccept = document.getElementById("cookie-accept");
+    const cookieSave = document.getElementById("cookie-save");
+    const cookieReject = document.getElementById("cookie-reject");
+    const analyticsToggle = getInput("ck-analytics");
+    const marketingToggle = getInput("ck-marketing");
+    const mainNav = document.getElementById("main-nav");
+    let cookieTimeout: number | null = null;
+
+    const readCookiePreferences = (): CookiePreferences | null => {
       try {
-        localStorage.setItem(cookieKey, JSON.stringify(payload));
-      } catch (e) {}
-      hideCookie();
+        const rawValue = localStorage.getItem(cookieKey);
+        if (!rawValue) {
+          return null;
+        }
+
+        const parsed = JSON.parse(rawValue) as Partial<CookiePreferences>;
+        return {
+          necessary: true,
+          analytics: Boolean(parsed.analytics),
+          marketing: Boolean(parsed.marketing),
+          ts: typeof parsed.ts === "number" ? parsed.ts : Date.now(),
+        };
+      } catch {
+        return null;
+      }
     };
 
-    let hasPrefs = false;
-    try {
-      hasPrefs = !!localStorage.getItem(cookieKey);
-    } catch (e) {
-      hasPrefs = false;
+    const hideCookieBanner = () => cookieBanner?.classList.remove("show");
+    const showCookieBanner = () => cookieBanner?.classList.add("show");
+
+    const persistCookiePreferences = (
+      analytics: boolean,
+      marketing: boolean,
+    ) => {
+      const preferences: CookiePreferences = {
+        necessary: true,
+        analytics,
+        marketing,
+        ts: Date.now(),
+      };
+
+      try {
+        localStorage.setItem(cookieKey, JSON.stringify(preferences));
+      } catch {
+        // The banner should still close even if storage is unavailable.
+      }
+
+      window.a2zCookies = preferences;
+      hideCookieBanner();
+    };
+
+    const savedPreferences = readCookiePreferences();
+    if (savedPreferences) {
+      window.a2zCookies = savedPreferences;
+      if (analyticsToggle) {
+        analyticsToggle.checked = savedPreferences.analytics;
+      }
+      if (marketingToggle) {
+        marketingToggle.checked = savedPreferences.marketing;
+      }
+    } else {
+      cookieTimeout = window.setTimeout(showCookieBanner, 500);
     }
-    // Auto-show logic
-    if (!hasPrefs) {
-      // small delay to let mount happen
-      setTimeout(showCookie, 500);
+
+    if (cookieBanner && cookieActions && window.innerWidth <= 640) {
+      const existingManageButton = cookieBanner.querySelector(".ck-manage-mobile");
+      if (!existingManageButton) {
+        const manageButton = document.createElement("button");
+        manageButton.type = "button";
+        manageButton.className = "ck-manage-mobile";
+        manageButton.textContent = "Manage";
+        manageButton.setAttribute("aria-expanded", "false");
+
+        const handleManage = () => {
+          const isExpanded = cookieBanner.classList.toggle("expanded");
+          manageButton.textContent = isExpanded ? "Close" : "Manage";
+          manageButton.setAttribute("aria-expanded", String(isExpanded));
+        };
+
+        manageButton.addEventListener("click", handleManage);
+        cleanupFns.push(() => manageButton.removeEventListener("click", handleManage));
+        cookieActions.insertBefore(manageButton, cookieActions.firstChild);
+      }
     }
 
-    if (acceptBtn) acceptBtn.addEventListener("click", () => {
-      if (analyticsToggle) analyticsToggle.checked = true;
-      if (marketingToggle) marketingToggle.checked = true;
-      saveCookie();
-    });
-    
-    if (saveBtn) saveBtn.addEventListener("click", saveCookie);
-    
-    if (rejectBtn) rejectBtn.addEventListener("click", () => {
-      if (analyticsToggle) analyticsToggle.checked = false;
-      if (marketingToggle) marketingToggle.checked = false;
-      saveCookie();
-    });
+    const handleCookieAccept = () => {
+      if (analyticsToggle) {
+        analyticsToggle.checked = true;
+      }
+      if (marketingToggle) {
+        marketingToggle.checked = true;
+      }
+      cookieBanner?.classList.remove("expanded");
+      persistCookiePreferences(true, true);
+    };
 
-    if (window.innerWidth <= 640) {
-  const banner  = document.getElementById("cookie-banner");
-  const actions = banner?.querySelector(".ck-actions");
-  const acceptBtn = document.getElementById("cookie-accept");
+    const handleCookieSave = () => {
+      cookieBanner?.classList.remove("expanded");
+      persistCookiePreferences(
+        analyticsToggle?.checked ?? false,
+        marketingToggle?.checked ?? false,
+      );
+    };
 
-  if (banner && actions) {
-    // Inject "Manage" button
-    const manageBtn = document.createElement("button");
-    manageBtn.className = "ck-manage-mobile";
-    manageBtn.textContent = "Manage";
-    manageBtn.setAttribute("aria-expanded", "false");
+    const handleCookieReject = () => {
+      if (analyticsToggle) {
+        analyticsToggle.checked = false;
+      }
+      if (marketingToggle) {
+        marketingToggle.checked = false;
+      }
+      cookieBanner?.classList.remove("expanded");
+      persistCookiePreferences(false, false);
+    };
 
-    manageBtn.addEventListener("click", () => {
-      const isExpanded = banner.classList.toggle("expanded");
-      manageBtn.setAttribute("aria-expanded", String(isExpanded));
-      manageBtn.textContent = isExpanded ? "Close" : "Manage";
-    });
+    cookieAccept?.addEventListener("click", handleCookieAccept);
+    cookieSave?.addEventListener("click", handleCookieSave);
+    cookieReject?.addEventListener("click", handleCookieReject);
+    cleanupFns.push(() => cookieAccept?.removeEventListener("click", handleCookieAccept));
+    cleanupFns.push(() => cookieSave?.removeEventListener("click", handleCookieSave));
+    cleanupFns.push(() => cookieReject?.removeEventListener("click", handleCookieReject));
 
-    // Insert Manage before the first button in actions
-    actions.insertBefore(manageBtn, actions.firstChild);
+    const scrollToSection = (sectionId: string) => {
+      const target = document.getElementById(sectionId);
+      target?.scrollIntoView({ behavior: "smooth", block: "start" });
+    };
 
-    // Accept all also collapses on mobile
-    acceptBtn?.addEventListener("click", () => {
-      banner.classList.remove("expanded");
-    }, { once: false });
-  }
-}
-
-
-
-'use strict';
-
-/* ══════════════════════════════════════════════
-   SECTION 1: COOKIE CONSENT
-   HOW IT WORKS:
-   - On page load, check localStorage for "a2z_cookies"
-   - If not set, show the banner after 1.2 seconds
-   - Three buttons: Accept All, Save Preferences, Reject Non-Essential
-   - Preferences saved as JSON: {analytics: bool, marketing: bool}
-   - Access saved prefs anywhere via window.a2zCookies
-══════════════════════════════════════════════ */
-const COOKIE_KEY = 'a2z_cookies';
-
-function ckLoad() {
-  const saved = localStorage.getItem(COOKIE_KEY);
-  if (!saved) {
-    setTimeout(() => document.getElementById('cookie-banner').classList.add('show'), 1200);
-  } else {
-    window.a2zCookies = JSON.parse(saved);
-  }
-}
-
-function ckSave(analytics, marketing) {
-  const prefs = { necessary: true, analytics, marketing, ts: Date.now() };
-  localStorage.setItem(COOKIE_KEY, JSON.stringify(prefs));
-  window.a2zCookies = prefs;
-  document.getElementById('cookie-banner').classList.remove('show');
-  // If analytics accepted, load your analytics script here:
-  // if (analytics) loadGoogleAnalytics();
-}
-
-function ckAcceptAll() {
-  document.getElementById('ck-analytics').checked = true;
-  document.getElementById('ck-marketing').checked = true;
-  ckSave(true, true);
-}
-
-function ckRejectAll() {
-  document.getElementById('ck-analytics').checked = false;
-  document.getElementById('ck-marketing').checked = false;
-  ckSave(false, false);
-}
-
-function ckSavePrefs() {
-  ckSave(
-    document.getElementById('ck-analytics').checked,
-    document.getElementById('ck-marketing').checked
-  );
-}
-
-ckLoad();
-
-/* ══════════════════════════════════════════════
-   SECTION 3: INTERACTIVE DASHBOARD SCOPE TABS
-   Clicking Scope 1/2/3 tabs switches the panel.
-   The animated bar chart in Scope 3 re-runs
-   its width animation each time it becomes visible.
-══════════════════════════════════════════════ */
-function switchScope(n) {
-  // Update tab active states
-  document.querySelectorAll('.stab').forEach(t => t.classList.remove('active'));
-  document.getElementById('tab-s' + n).classList.add('active');
-
-  // Update panel visibility
-  document.querySelectorAll('.sp').forEach(p => p.classList.remove('active'));
-  document.getElementById('sp-' + n).classList.add('active');
-
-  // Re-trigger bar chart animation when Scope 3 is selected
-  if (n === '3') {
-    setTimeout(() => {
-      document.querySelectorAll('.s3-bar').forEach(bar => {
-        const w = bar.style.width;
-        bar.style.width = '0%';
-        requestAnimationFrame(() => { bar.style.width = w; });
+    const switchScope = (scopeId: string) => {
+      document.querySelectorAll<HTMLElement>(".stab[data-scope-target]").forEach((tab) => {
+        const isActive = tab.dataset.scopeTarget === scopeId;
+        tab.classList.toggle("active", isActive);
+        tab.setAttribute("aria-selected", isActive ? "true" : "false");
       });
-    }, 50);
-  }
-}
 
-
-/* ══════════════════════════════════════════════
-   SECTION 4: FAQ ACCORDION
-   Click a question to expand/collapse it.
-   Only one question open at a time.
-══════════════════════════════════════════════ */
-function toggleFaq(el) {
-  const isOpen = el.classList.contains('open');
-  document.querySelectorAll('.fq.open').forEach(f => f.classList.remove('open'));
-  if (!isOpen) el.classList.add('open');
-}
-
-
-/* ══════════════════════════════════════════════
-   SECTION 5: SCROLL REVEAL
-   Elements with class "rev" fade up into view
-   as they enter the viewport.
-   Uses IntersectionObserver for performance.
-══════════════════════════════════════════════ */
-const revObserver = new IntersectionObserver(
-  entries => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('vis'); }),
-  { threshold: 0.12, rootMargin: '0px 0px -40px 0px' }
-);
-document.querySelectorAll('.rev').forEach(el => revObserver.observe(el));
-
-
-/* ══════════════════════════════════════════════
-   SECTION 6: COUNTER ANIMATION
-   Elements with class "cu" and data-target count up
-   from 0 to their target value when they enter view.
-   data-dec sets decimal places (default 0).
-══════════════════════════════════════════════ */
-const cuObserver = new IntersectionObserver(entries => {
-  entries.forEach(e => {
-    if (!e.isIntersecting) return;
-    const el = e.target;
-    const target = parseFloat(el.dataset.target);
-    const dec = parseInt(el.dataset.dec || '0');
-    const dur = 1400;
-    const start = performance.now();
-    function tick(now) {
-      const p = Math.min((now - start) / dur, 1);
-      const eased = 1 - Math.pow(1 - p, 3);
-      el.textContent = (target * eased).toFixed(dec);
-      if (p < 1) requestAnimationFrame(tick);
-      else el.textContent = target.toFixed(dec);
-    }
-    requestAnimationFrame(tick);
-    cuObserver.unobserve(el);
-  });
-}, { threshold: 0.5 });
-document.querySelectorAll('.cu').forEach(el => cuObserver.observe(el));
-
-
-/* ══════════════════════════════════════════════
-   SECTION 7: DEMO FORM SUBMISSION
-   
-   HOW TO CONNECT TO SUPABASE:
-   1. Open your Supabase project → Settings → API
-   2. Copy your Project URL and anon key
-   3. Replace SUPABASE_URL and SUPABASE_ANON_KEY below
-   4. The form inserts into your "leads" table
-   
-   The leads table needs these columns:
-     - first_name (text)
-     - last_name (text)
-     - email (text)
-     - company (text)
-     - phone (text, nullable)
-     - interest (text)
-     - sector (text, nullable)
-     - source (text) — will be 'landing-page'
-     - created_at (timestamptz, default now())
-══════════════════════════════════════════════ */
-const SUPABASE_URL = 'https://YOUR_PROJECT.supabase.co';    // ← Replace this
-const SUPABASE_KEY = 'YOUR_ANON_KEY';                       // ← Replace this
-
-async function submitDemoForm(e) {
-  e.preventDefault();
-  const btn = document.getElementById('df-submit');
-  const btnText = document.getElementById('df-btn-text');
-
-  // Basic validation
-  const required = ['df-fname','df-lname','df-email','df-company','df-interest'];
-  let valid = true;
-  required.forEach(id => {
-    const el = document.getElementById(id);
-    if (!el.value.trim()) { el.style.borderColor='var(--status-critical)'; valid = false; }
-    else el.style.borderColor='';
-  });
-  if (!valid) return;
-
-  // Show loading state
-  btn.disabled = true;
-  btnText.textContent = 'Booking…';
-
-  const payload = {
-    first_name: document.getElementById('df-fname').value.trim(),
-    last_name:  document.getElementById('df-lname').value.trim(),
-    email:      document.getElementById('df-email').value.trim(),
-    company:    document.getElementById('df-company').value.trim(),
-    phone:      document.getElementById('df-phone').value.trim() || null,
-    interest:   document.getElementById('df-interest').value,
-    sector:     document.getElementById('df-sector').value || null,
-    source:     'landing-page',
-  };
-
-  try {
-    // Attempt Supabase insert
-    if (SUPABASE_URL !== 'https://YOUR_PROJECT.supabase.co') {
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/leads`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': SUPABASE_KEY,
-          'Authorization': `Bearer ${SUPABASE_KEY}`,
-          'Prefer': 'return=minimal',
-        },
-        body: JSON.stringify(payload),
+      document.querySelectorAll<HTMLElement>(".sp[data-scope-panel]").forEach((panel) => {
+        panel.classList.toggle("active", panel.dataset.scopePanel === scopeId);
       });
-      if (!res.ok) throw new Error('API error ' + res.status);
+    };
+
+    const toggleFaq = (item: HTMLElement) => {
+      const wasOpen = item.classList.contains("open");
+
+      document.querySelectorAll<HTMLElement>(".fq[data-faq-toggle='true']").forEach((faq) => {
+        faq.classList.remove("open");
+        faq.setAttribute("aria-expanded", "false");
+      });
+
+      if (!wasOpen) {
+        item.classList.add("open");
+        item.setAttribute("aria-expanded", "true");
+      }
+    };
+
+    window.a2zCookies = savedPreferences ?? undefined;
+    window.scrollToSection = scrollToSection;
+    window.switchScope = switchScope;
+    window.toggleFaq = toggleFaq;
+
+    document
+      .querySelectorAll<HTMLElement>("[data-scroll-target]")
+      .forEach((button) => {
+        const handleClick = () => {
+          const sectionId = button.dataset.scrollTarget;
+          if (sectionId) {
+            scrollToSection(sectionId);
+          }
+        };
+
+        button.addEventListener("click", handleClick);
+        cleanupFns.push(() => button.removeEventListener("click", handleClick));
+      });
+
+    document
+      .querySelectorAll<HTMLElement>("[data-scope-target]")
+      .forEach((button) => {
+        const handleClick = () => {
+          const scopeId = button.dataset.scopeTarget;
+          if (scopeId) {
+            switchScope(scopeId);
+          }
+        };
+
+        button.addEventListener("click", handleClick);
+        cleanupFns.push(() => button.removeEventListener("click", handleClick));
+      });
+
+    document
+      .querySelectorAll<HTMLElement>(".fq[data-faq-toggle='true']")
+      .forEach((item) => {
+        const handleClick = () => toggleFaq(item);
+        const handleKeyDown = (event: KeyboardEvent) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            toggleFaq(item);
+          }
+        };
+
+        item.addEventListener("click", handleClick);
+        item.addEventListener("keydown", handleKeyDown);
+        cleanupFns.push(() => item.removeEventListener("click", handleClick));
+        cleanupFns.push(() => item.removeEventListener("keydown", handleKeyDown));
+      });
+
+    const revealObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("vis");
+          }
+        });
+      },
+      { threshold: 0.12, rootMargin: "0px 0px -40px 0px" },
+    );
+    observers.push(revealObserver);
+    document.querySelectorAll(".rev").forEach((element) => revealObserver.observe(element));
+
+    const counterObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) {
+            return;
+          }
+
+          const element = entry.target as HTMLElement;
+          const target = Number.parseFloat(element.dataset.target ?? "0");
+          const decimals = Number.parseInt(element.dataset.dec ?? "0", 10);
+          const duration = 1400;
+          const start = performance.now();
+
+          const tick = (now: number) => {
+            const progress = Math.min((now - start) / duration, 1);
+            const eased = 1 - Math.pow(1 - progress, 3);
+            element.textContent = (target * eased).toFixed(decimals);
+
+            if (progress < 1) {
+              requestAnimationFrame(tick);
+            } else {
+              element.textContent = target.toFixed(decimals);
+            }
+          };
+
+          requestAnimationFrame(tick);
+          counterObserver.unobserve(element);
+        });
+      },
+      { threshold: 0.5 },
+    );
+    observers.push(counterObserver);
+    document.querySelectorAll(".cu").forEach((element) => counterObserver.observe(element));
+
+    const sectionObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) {
+            return;
+          }
+
+          const sectionId = entry.target.id;
+          document.querySelectorAll<HTMLElement>(".btb-item").forEach((item) => {
+            item.classList.toggle("active", item.dataset.scrollTarget === sectionId);
+          });
+        });
+      },
+      { threshold: 0.4 },
+    );
+    observers.push(sectionObserver);
+    ["home", "platform", "amine", "ccs"].forEach((sectionId) => {
+      const section = document.getElementById(sectionId);
+      if (section) {
+        sectionObserver.observe(section);
+      }
+    });
+
+    const handleNavScroll = () => {
+      mainNav?.classList.toggle("scrolled", window.scrollY > 60);
+    };
+    window.addEventListener("scroll", handleNavScroll, { passive: true });
+    cleanupFns.push(() => window.removeEventListener("scroll", handleNavScroll));
+    handleNavScroll();
+
+    /**
+     * The public demo form writes into the live `leads` table today.
+     * Because the current landing form is richer than the checked-in schema,
+     * additional booking details are packed into the `source` field until the
+     * later DB follow-up adds a dedicated intake contract.
+     */
+    const demoForm = document.getElementById("demo-form");
+    const demoFormWrap = document.getElementById("demo-form-wrap");
+    const demoSuccess = document.getElementById("df-success");
+    const statusNode = ensureStatusNode(demoFormWrap);
+    const submitButton = document.getElementById("df-submit");
+    const submitButtonLabel = document.getElementById("df-btn-text");
+
+    const setStatus = (tone: "warning" | "success", message: string) => {
+      if (!statusNode) {
+        return;
+      }
+
+      statusNode.textContent = message;
+      statusNode.classList.remove("status-warning", "status-success");
+      statusNode.classList.add(tone === "warning" ? "status-warning" : "status-success");
+    };
+
+    const clearStatus = () => {
+      if (!statusNode) {
+        return;
+      }
+
+      statusNode.textContent = "";
+      statusNode.classList.remove("status-warning", "status-success");
+    };
+
+    const submitDemoForm = async (event: Event) => {
+      event.preventDefault();
+
+      const firstName = getInput("df-fname");
+      const lastName = getInput("df-lname");
+      const email = getInput("df-email");
+      const company = getInput("df-company");
+      const phone = getInput("df-phone");
+      const interest = getSelect("df-interest");
+      const sector = getSelect("df-sector");
+      const consent = getInput("df-consent");
+
+      const firstNameValue = firstName?.value.trim() ?? "";
+      const lastNameValue = lastName?.value.trim() ?? "";
+      const emailValue = email?.value.trim().toLowerCase() ?? "";
+      const companyValue = company?.value.trim() ?? "";
+      const phoneValue = phone?.value.trim() ?? "";
+      const interestValue = interest?.value ?? "";
+      const sectorValue = sector?.value ?? "";
+      const hasConsent = consent?.checked ?? false;
+
+      const requiredFieldResults = [
+        [firstName, firstNameValue.length === 0],
+        [lastName, lastNameValue.length === 0],
+        [email, emailValue.length === 0],
+        [company, companyValue.length === 0],
+        [interest, interestValue.length === 0],
+      ] as const;
+
+      requiredFieldResults.forEach(([field, isInvalid]) => {
+        setFieldInvalidState(field, isInvalid);
+      });
+      setFieldInvalidState(sector, false);
+
+      if (requiredFieldResults.some(([, isInvalid]) => isInvalid)) {
+        clearStatus();
+        setStatus("warning", "Complete every required booking field before submitting the request.");
+        return;
+      }
+
+      const emailLooksValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue);
+      if (!emailLooksValid) {
+        setFieldInvalidState(email, true);
+        clearStatus();
+        setStatus("warning", "Enter a valid work email so the team can confirm your demo slot.");
+        return;
+      }
+
+      if (!hasConsent) {
+        clearStatus();
+        setStatus("warning", "Confirm privacy consent before sending the booking request.");
+        consent?.focus();
+        return;
+      }
+
+      clearStatus();
+
+      if (submitButton instanceof HTMLButtonElement) {
+        submitButton.disabled = true;
+      }
+      if (submitButtonLabel) {
+        submitButtonLabel.textContent = "Booking demo...";
+      }
+
+      const sourcePayload = JSON.stringify({
+        form: "landing-page",
+        first_name: firstNameValue,
+        last_name: lastNameValue,
+        company: companyValue,
+        phone: phoneValue || null,
+        interest: interestValue,
+      });
+
+      const insertPayload: Record<string, string | boolean | null> = {
+        email: emailValue,
+        product_label: companyValue,
+        cn_code: interestValue,
+        consent_accepted: true,
+        source: sourcePayload,
+      };
+
+      if (sectorValue) {
+        insertPayload.sector = sectorValue;
+      }
+
+      const { error } = await supabase.from("leads").insert(insertPayload);
+
+      if (submitButton instanceof HTMLButtonElement) {
+        submitButton.disabled = false;
+      }
+      if (submitButtonLabel) {
+        submitButtonLabel.textContent = "Book My Demo ->";
+      }
+
+      if (error) {
+        clearStatus();
+        setStatus(
+          "warning",
+          "The booking request could not be saved right now. Please try again shortly or contact the team directly.",
+        );
+        return;
+      }
+
+      demoFormWrap?.classList.add("is-hidden");
+      demoSuccess?.classList.add("show");
+      clearStatus();
+      if (demoForm instanceof HTMLFormElement) {
+        demoForm.reset();
+      }
+    };
+
+    window.submitDemoForm = submitDemoForm;
+
+    if (demoForm instanceof HTMLFormElement) {
+      demoForm.addEventListener("submit", submitDemoForm);
+      cleanupFns.push(() => demoForm.removeEventListener("submit", submitDemoForm));
     }
-    // Show success state
-    document.getElementById('demo-form-wrap').style.display = 'none';
-    document.getElementById('df-success').classList.add('show');
-  } catch (err) {
-    // If Supabase not yet wired, still show success (demo mode)
-    console.warn('Form submit error (demo mode):', err);
-    document.getElementById('demo-form-wrap').style.display = 'none';
-    document.getElementById('df-success').classList.add('show');
-  }
-}
 
+    return () => {
+      if (cookieTimeout !== null) {
+        window.clearTimeout(cookieTimeout);
+      }
 
-/* ══════════════════════════════════════════════
-   SECTION 8: NAVBAR SCROLL EFFECT
-   Navbar gets a darker background after scrolling 60px.
-══════════════════════════════════════════════ */
-const nav = document.getElementById('main-nav');
-window.addEventListener('scroll', () => {
-  nav.classList.toggle('scrolled', window.scrollY > 60);
-}, { passive: true });
+      observers.forEach((observer) => observer.disconnect());
+      cleanupFns.forEach((cleanup) => cleanup());
 
-
-/* ══════════════════════════════════════════════
-   SECTION 9: MOBILE BOTTOM TAB BAR — ACTIVE STATE
-   Tracks which section is in view and highlights
-   the matching tab in the bottom bar.
-══════════════════════════════════════════════ */
-function scrollToSection(id) {
-  const el = document.getElementById(id);
-  if (el) el.scrollIntoView({ behavior: 'smooth' });
-}
-
-const tabSections = [
-  { id: 'home',     tab: 'btb-home' },
-  { id: 'platform', tab: 'btb-platform' },
-  { id: 'amine',    tab: 'btb-amine' },
-  { id: 'ccs',      tab: 'btb-ccs' },
-];
-
-const sectionObserver = new IntersectionObserver(entries => {
-  entries.forEach(entry => {
-    if (!entry.isIntersecting) return;
-    const match = tabSections.find(s => s.id === entry.target.id);
-    if (!match) return;
-    document.querySelectorAll('.btb-item').forEach(t => t.classList.remove('active'));
-    const activeTab = document.getElementById(match.tab);
-    if (activeTab) activeTab.classList.add('active');
-  });
-}, { threshold: 0.4 });
-
-tabSections.forEach(s => {
-  const el = document.getElementById(s.id);
-  if (el) sectionObserver.observe(el);
-});
-
+      delete window.scrollToSection;
+      delete window.switchScope;
+      delete window.toggleFaq;
+      delete window.submitDemoForm;
+    };
   }, []);
+
   return null;
 }

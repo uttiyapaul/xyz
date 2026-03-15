@@ -160,9 +160,9 @@ async function loadPlatformContent(context: DashboardLoadContext, organizationNa
       metrics: buildFallbackMetrics(context, organizationNames),
       signals: [
         {
-          title: "Shared platform workspace",
-          meta: "This platform role stays on the shared home until its dedicated workspace is fully built.",
-          badge: "Shared lane",
+          title: "Dedicated platform lane",
+          meta: `This platform role now has a dedicated workspace at ${context.profile.preferredPath} while dashboard home continues to show shared scope posture.`,
+          badge: "Dedicated route",
           tone: "info",
         },
       ],

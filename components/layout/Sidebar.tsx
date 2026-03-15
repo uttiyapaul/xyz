@@ -61,6 +61,10 @@ const NAV_ITEMS: NavItem[] = [
   { group: "Platform Admin", label: "System Health", href: "/admin/health", icon: Activity },
   { group: "Platform Admin", label: "Global Config", href: "/admin/features", icon: Settings2 },
 
+  { group: "Platform Staff", label: "Platform Ops", href: "/dashboard/platform/operations", icon: Activity },
+  { group: "Platform Staff", label: "Commercial Pulse", href: "/dashboard/platform/commercial", icon: Briefcase },
+  { group: "Platform Staff", label: "Models & Twins", href: "/dashboard/platform/models", icon: Beaker },
+
   { group: "Organization", label: "Team Management", href: "/org/users", icon: Users },
   { group: "Organization", label: "Facilities & Sites", href: "/org/facilities", icon: Building2 },
   { group: "Organization", label: "Data Integrations", href: "/org/integrations", icon: LinkIcon },
@@ -69,6 +73,7 @@ const NAV_ITEMS: NavItem[] = [
   { group: "Governance", label: "Incident Escalations", href: "/governance/grievances", icon: AlertTriangle },
 
   { group: "Sustainability", label: "Emissions Targets", href: "/sustainability/targets", icon: Target },
+  { group: "Sustainability", label: "Disclosure Hub", href: "/sustainability/disclosures", icon: FileText },
   { group: "Sustainability", label: "CBAM Declarations", href: "/sustainability/cbam-reports", icon: FileSpreadsheet },
   { group: "Sustainability", label: "Carbon Offsets", href: "/sustainability/offsets", icon: Leaf },
 

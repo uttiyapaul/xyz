@@ -60,6 +60,30 @@ const DASHBOARD_ACTIVITY_ROUTE_ROLES: PlatformRole[] = [
   "facility_manager",
 ];
 
+const PLATFORM_OPERATIONS_ROUTE_ROLES: PlatformRole[] = [
+  "platform_developer",
+  "platform_support",
+];
+
+const PLATFORM_COMMERCIAL_ROUTE_ROLES: PlatformRole[] = [
+  "platform_crm",
+  "platform_sales",
+  "platform_finance",
+];
+
+const PLATFORM_MODELS_ROUTE_ROLES: PlatformRole[] = [
+  "digital_twin_engineer",
+  "platform_data_scientist",
+];
+
+const PLATFORM_SHARED_ROUTE_ROLES: PlatformRole[] = Array.from(
+  new Set<PlatformRole>([
+    ...PLATFORM_OPERATIONS_ROUTE_ROLES,
+    ...PLATFORM_COMMERCIAL_ROUTE_ROLES,
+    ...PLATFORM_MODELS_ROUTE_ROLES,
+  ]),
+);
+
 const DASHBOARD_SOURCE_ROUTE_ROLES: PlatformRole[] = Array.from(
   new Set<PlatformRole>([
     ...ORG_MANAGEMENT_ROLES,
@@ -104,6 +128,26 @@ export const APP_ROUTE_ACCESS_RULES: RouteAccessRule[] = [
     allowedRoles: PLATFORM_CONTROL_ROLES,
   },
   {
+    prefix: "/dashboard/platform/operations",
+    description: "Platform engineering and support workspace for rollout, retry, and session posture.",
+    allowedRoles: PLATFORM_OPERATIONS_ROUTE_ROLES,
+  },
+  {
+    prefix: "/dashboard/platform/commercial",
+    description: "Platform commercial workspace for lead, tenant, and subscription posture.",
+    allowedRoles: PLATFORM_COMMERCIAL_ROUTE_ROLES,
+  },
+  {
+    prefix: "/dashboard/platform/models",
+    description: "Platform modeling workspace for digital twin and AI validation posture.",
+    allowedRoles: PLATFORM_MODELS_ROUTE_ROLES,
+  },
+  {
+    prefix: "/dashboard/platform",
+    description: "Dedicated platform-staff workspace umbrella outside control-plane admin routes.",
+    allowedRoles: PLATFORM_SHARED_ROUTE_ROLES,
+  },
+  {
     prefix: "/dashboard/activity",
     description: "Operational activity capture workspace for scoped data-entry roles.",
     allowedRoles: DASHBOARD_ACTIVITY_ROUTE_ROLES,
@@ -137,6 +181,11 @@ export const APP_ROUTE_ACCESS_RULES: RouteAccessRule[] = [
     prefix: "/org",
     description: "Organization management workspace umbrella.",
     allowedRoles: Array.from(new Set<PlatformRole>([...ORG_MANAGEMENT_ROLES, ...ORG_INTEGRATION_ROLES])),
+  },
+  {
+    prefix: "/sustainability/disclosures",
+    description: "Framework disclosure workspace for ESG, filing, and sustainability oversight roles.",
+    allowedRoles: SUSTAINABILITY_WORKSPACE_ROLES,
   },
   {
     prefix: "/sustainability",

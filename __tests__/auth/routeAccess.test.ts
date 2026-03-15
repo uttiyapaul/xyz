@@ -63,11 +63,28 @@ describe("route access matrix", () => {
     expect(canRoleAccessPath("supply_chain_reporter", "/dashboard/reports")).toBe(false);
   });
 
+  it("keeps the disclosure hub inside sustainability roles", () => {
+    expect(canRoleAccessPath("sustainability_head", "/sustainability/disclosures")).toBe(true);
+    expect(canRoleAccessPath("regulatory_filing_agent", "/sustainability/disclosures")).toBe(true);
+    expect(canRoleAccessPath("data_entry_operator", "/sustainability/disclosures")).toBe(false);
+  });
+
   it("keeps governance routes fenced to governance roles while still letting platform admins inspect them", () => {
     expect(canRoleAccessPath("dpo", "/governance/privacy")).toBe(true);
     expect(canRoleAccessPath("grievance_officer", "/governance/privacy")).toBe(false);
     expect(canRoleAccessPath("grievance_officer", "/governance/grievances")).toBe(true);
     expect(canRoleAccessPath("platform_admin", "/governance/privacy")).toBe(true);
     expect(canRoleAccessPath("client_admin", "/governance/grievances")).toBe(false);
+  });
+
+  it("splits platform staff into dedicated workspace lanes instead of exposing every platform route to every platform role", () => {
+    expect(canRoleAccessPath("platform_developer", "/dashboard/platform/operations")).toBe(true);
+    expect(canRoleAccessPath("platform_support", "/dashboard/platform/operations")).toBe(true);
+    expect(canRoleAccessPath("platform_sales", "/dashboard/platform/operations")).toBe(false);
+    expect(canRoleAccessPath("platform_crm", "/dashboard/platform/commercial")).toBe(true);
+    expect(canRoleAccessPath("platform_finance", "/dashboard/platform/commercial")).toBe(true);
+    expect(canRoleAccessPath("digital_twin_engineer", "/dashboard/platform/models")).toBe(true);
+    expect(canRoleAccessPath("platform_data_scientist", "/dashboard/platform/models")).toBe(true);
+    expect(canRoleAccessPath("platform_support", "/dashboard/platform/models")).toBe(false);
   });
 });

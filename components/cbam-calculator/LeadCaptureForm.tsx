@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { supabase } from "@/lib/supabase/client";
+import styles from "./CBAMCalculator.module.css";
 
 interface LeadCaptureFormProps {
   sector: string;
@@ -15,6 +16,15 @@ interface LeadCaptureFormProps {
   cumulativeSaving: number;
 }
 
+/**
+ * Public calculator lead capture.
+ *
+ * Why this exists:
+ * - Keeps the public calculator connected to the live `leads` table instead of
+ *   falling back to demo-only submission behavior.
+ * - Captures explicit contact consent so the public request flow stays closer
+ *   to audit expectations.
+ */
 export function LeadCaptureForm({
   sector,
   productLabel,
@@ -26,201 +36,136 @@ export function LeadCaptureForm({
   saving2034,
   cumulativeSaving,
 }: LeadCaptureFormProps) {
-  const [email,     setEmail]     = useState("");
+  const [email, setEmail] = useState("");
+  const [consentAccepted, setConsentAccepted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [message, setMessage] = useState<{ tone: "info" | "warning"; text: string } | null>(null);
 
-  const handleSubmit = async () => {
-    if (!email) return;
-    await supabase.from("leads").insert({
-      email,
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const trimmedEmail = email.trim().toLowerCase();
+    const emailLooksValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail);
+
+    if (!emailLooksValid) {
+      setMessage({
+        tone: "warning",
+        text: "Enter a valid work email so the CBAM advisory team can contact you.",
+      });
+      return;
+    }
+
+    if (!consentAccepted) {
+      setMessage({
+        tone: "warning",
+        text: "Confirm contact consent before sending the scoping request.",
+      });
+      return;
+    }
+
+    setSubmitting(true);
+    setMessage(null);
+
+    const { error } = await supabase.from("leads").insert({
+      email: trimmedEmail,
       sector,
-      product_label:        productLabel,
-      cn_code:              cnCode,
-      tonnage_per_year:     tonnage,
-      eua_price:            euaPrice,
-      cost_2026_eur:        cost2026,
-      cost_2034_eur:        cost2034,
-      saving_2034_eur:      saving2034,
+      product_label: productLabel,
+      cn_code: cnCode,
+      tonnage_per_year: tonnage,
+      eua_price: euaPrice,
+      cost_2026_eur: cost2026,
+      cost_2034_eur: cost2034,
+      saving_2034_eur: saving2034,
       cumulative_saving_eur: cumulativeSaving,
+      consent_accepted: true,
+      source: "cbam-calculator",
     });
+
+    setSubmitting(false);
+
+    if (error) {
+      setMessage({
+        tone: "warning",
+        text: "The request could not be saved right now. Please retry in a moment or contact the team from the main site.",
+      });
+      return;
+    }
+
     setSubmitted(true);
-  };
+  }
 
   if (submitted) {
     return (
-      <div
-        style={{
-          background: "#0A1F0F",
-          border: "1px solid #22C55E40",
-          borderRadius: "4px",
-          padding: "28px",
-          textAlign: "center",
-        }}
-      >
-        <div
-          style={{
-            fontFamily: "'DM Mono', monospace",
-            fontSize: "9px",
-            color: "#22C55E",
-            letterSpacing: "3px",
-            marginBottom: "12px",
-            textTransform: "uppercase",
-          }}
-        >
-          RECEIVED
-        </div>
-        <div
-          style={{
-            fontFamily: "'DM Serif Display', serif",
-            fontSize: "20px",
-            color: "#FAFAF8",
-          }}
-        >
-          We&apos;ll be in touch within 24 hours.
-        </div>
-        <div
-          style={{
-            fontFamily: "'DM Mono', monospace",
-            fontSize: "11px",
-            color: "#6B7280",
-            marginTop: "10px",
-          }}
-        >
-          Save this page — numbers update as you change the EUA price slider.
-        </div>
-      </div>
+      <section className={styles.leadSuccess}>
+        <p className={`${styles.leadEyebrow} ${styles.leadEyebrowSuccess}`}>Received</p>
+        <h2 className={styles.leadTitle}>We&apos;ll be in touch within 24 hours.</h2>
+        <p className={styles.helperText}>
+          Your estimate remains on screen and the scoping request is now stored in the live leads pipeline.
+        </p>
+      </section>
     );
   }
 
   return (
-    <div
-      style={{
-        background: "linear-gradient(135deg,#0F0D00,#14100A)",
-        border: "1px solid #F59E0B40",
-        borderRadius: "4px",
-        padding: "24px",
-      }}
-    >
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: "24px",
-          alignItems: "center",
-        }}
-      >
-        {/* Left copy */}
+    <section className={styles.leadCard}>
+      <div className={styles.leadGrid}>
         <div>
-          <div
-            style={{
-              fontFamily: "'DM Mono', monospace",
-              fontSize: "9px",
-              color: "#F59E0B",
-              letterSpacing: "3px",
-              marginBottom: "10px",
-              textTransform: "uppercase",
-            }}
-          >
-            NEXT STEP
-          </div>
-          <div
-            style={{
-              fontFamily: "'DM Serif Display', serif",
-              fontSize: "20px",
-              color: "#FAFAF8",
-              lineHeight: "1.3",
-              marginBottom: "10px",
-            }}
-          >
-            Get your facility&apos;s actual emission baseline
-          </div>
-          <div style={{ fontSize: "12px", color: "#9CA3AF", lineHeight: "1.7" }}>
-            The saving shown above is achievable once your facility completes a verified
-            emission baseline. We work on-site with Indian manufacturers — completing the
-            CBAM Communication Template, supporting ISO 14064 verification, and defending
-            your data with EU importers.
-          </div>
+          <p className={styles.leadEyebrow}>Next step</p>
+          <h2 className={styles.leadTitle}>Get your facility&apos;s actual emission baseline</h2>
+          <p className={styles.leadBody}>
+            The saving shown above becomes more defensible once your facility has a verified emissions baseline. This
+            route creates a live scoping lead tied to the product, tonnage, and estimate currently visible in the
+            calculator.
+          </p>
         </div>
 
-        {/* Right form */}
-        <div>
-          <div
-            style={{
-              fontFamily: "'DM Mono', monospace",
-              fontSize: "9px",
-              color: "#6B7280",
-              marginBottom: "8px",
-              textTransform: "uppercase",
-            }}
-          >
-            GET A FREE SCOPING ASSESSMENT
-          </div>
+        <form className={styles.formStack} onSubmit={handleSubmit}>
+          <div className={styles.formIntro}>Get a free scoping assessment</div>
 
+          {message ? (
+            <div
+              className={`${styles.alert} ${message.tone === "warning" ? styles.alertWarning : styles.alertInfo}`}
+              role="status"
+            >
+              {message.text}
+            </div>
+          ) : null}
+
+          <label className={styles.visuallyHidden} htmlFor="cbam-lead-email">
+            Work email address
+          </label>
           <input
+            id="cbam-lead-email"
             type="email"
             placeholder="your.email@company.com"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-            style={{
-              width: "100%",
-              padding: "12px 14px",
-              background: "#0D0D14",
-              border: "1px solid #1A1A24",
-              borderRadius: "3px",
-              color: "#FAFAF8",
-              fontFamily: "'DM Mono', monospace",
-              fontSize: "13px",
-              marginBottom: "10px",
-              transition: "border-color 0.15s",
-              outline: "none",
-            }}
-            onFocus={(e) => (e.currentTarget.style.borderColor = "#F59E0B")}
-            onBlur={(e)  => (e.currentTarget.style.borderColor = "#1A1A24")}
+            onChange={(event) => setEmail(event.target.value)}
+            className={`${styles.input} ${message?.tone === "warning" && email.trim().length === 0 ? styles.inputInvalid : ""}`}
+            autoComplete="email"
+            inputMode="email"
           />
 
-          <button
-            onClick={handleSubmit}
-            style={{
-              width: "100%",
-              padding: "13px",
-              background: "#F59E0B",
-              border: "none",
-              borderRadius: "3px",
-              cursor: "pointer",
-              fontFamily: "'DM Mono', monospace",
-              fontSize: "11px",
-              letterSpacing: "2px",
-              textTransform: "uppercase",
-              color: "#000",
-              fontWeight: "700",
-              transition: "all 0.15s",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "#D97706";
-              e.currentTarget.style.transform  = "translateY(-1px)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "#F59E0B";
-              e.currentTarget.style.transform  = "translateY(0)";
-            }}
-          >
-            Request Free Scoping Call →
+          <label className={styles.consentRow}>
+            <input
+              type="checkbox"
+              checked={consentAccepted}
+              onChange={(event) => setConsentAccepted(event.target.checked)}
+              className={styles.checkbox}
+            />
+            <span>
+              I consent to being contacted about this CBAM estimate and understand the request will be stored in the
+              lead intake table for follow-up.
+            </span>
+          </label>
+
+          <button type="submit" className={`${styles.button} ${styles.buttonPrimary}`} disabled={submitting}>
+            {submitting ? "Saving request..." : "Request free scoping call"}
           </button>
 
-          <div
-            style={{
-              fontFamily: "'DM Mono', monospace",
-              fontSize: "9px",
-              color: "#374151",
-              textAlign: "center",
-              marginTop: "8px",
-            }}
-          >
-            We respond within 24 hours · No sales pressure
-          </div>
-        </div>
+          <div className={styles.helperText}>We respond within 24 hours. No raw error details are ever shown here.</div>
+        </form>
       </div>
-    </div>
+    </section>
   );
 }

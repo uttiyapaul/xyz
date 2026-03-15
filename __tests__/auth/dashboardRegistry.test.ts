@@ -30,6 +30,15 @@ describe("dashboard registry", () => {
     expect(getDashboardProfile("grievance_officer").preferredPath).toBe("/governance/grievances");
   });
 
+  it("routes platform staff roles into dedicated platform workspaces instead of the generic shared home", () => {
+    expect(getDashboardProfile("platform_developer").preferredPath).toBe("/dashboard/platform/operations");
+    expect(getDashboardProfile("platform_support").preferredPath).toBe("/dashboard/platform/operations");
+    expect(getDashboardProfile("platform_crm").preferredPath).toBe("/dashboard/platform/commercial");
+    expect(getDashboardProfile("platform_finance").preferredPath).toBe("/dashboard/platform/commercial");
+    expect(getDashboardProfile("digital_twin_engineer").preferredPath).toBe("/dashboard/platform/models");
+    expect(getDashboardProfile("platform_data_scientist").preferredPath).toBe("/dashboard/platform/models");
+  });
+
   it("keeps integration-only roles away from team-management shortcuts", () => {
     const apiKeyManagerShortcuts = getDashboardShortcutCards("api_key_manager").map((shortcut) => shortcut.href);
 
@@ -47,6 +56,20 @@ describe("dashboard registry", () => {
         "/governance/privacy",
         "/governance/grievances",
         "/dashboard/settings",
+      ]),
+    );
+  });
+
+  it("gives filing-oriented sustainability roles the disclosure hub shortcut", () => {
+    const filingAgentShortcuts = getDashboardShortcutCards("regulatory_filing_agent").map(
+      (shortcut) => shortcut.href,
+    );
+
+    expect(filingAgentShortcuts).toEqual(
+      expect.arrayContaining([
+        "/sustainability/disclosures",
+        "/sustainability/cbam-reports",
+        "/dashboard/reports",
       ]),
     );
   });

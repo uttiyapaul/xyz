@@ -1,95 +1,66 @@
 "use client";
 
+import styles from "./CBAMCalculator.module.css";
+
 interface MarketParametersProps {
   euaPrice: number;
   inrRate: number;
-  onEuaChange: (v: number) => void;
-  onInrChange: (v: number) => void;
+  onEuaChange: (value: number) => void;
+  onInrChange: (value: number) => void;
 }
 
-export function MarketParameters({
-  euaPrice,
-  inrRate,
-  onEuaChange,
-  onInrChange,
-}: MarketParametersProps) {
-  const labelStyle = {
-    fontFamily: "'DM Mono',monospace",
-    fontSize: "10px",
-    color: "#6B7280",
-  };
-  const valueStyle = {
-    fontFamily: "'DM Mono',monospace",
-    fontSize: "12px",
-    color: "#FAFAF8",
-  };
-  const rangeHintStyle = {
-    display: "flex",
-    justifyContent: "space-between" as const,
-    fontFamily: "'DM Mono',monospace",
-    fontSize: "9px",
-    color: "#374151",
-    marginTop: "2px",
-  };
-
+export function MarketParameters({ euaPrice, inrRate, onEuaChange, onInrChange }: MarketParametersProps) {
   return (
-    <div>
-      <div
-        style={{
-          fontFamily: "'DM Mono',monospace",
-          fontSize: "9px",
-          color: "#4B5563",
-          letterSpacing: "2px",
-          textTransform: "uppercase",
-          marginBottom: "12px",
-        }}
-      >
-        04 / MARKET PARAMETERS
-      </div>
+    <section>
+      <p className={styles.sectionEyebrow}>04 / Market Parameters</p>
 
-      {/* EUA Price */}
-      <div style={{ marginBottom: "14px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
-          <span style={labelStyle}>EU ETS Carbon Price</span>
-          <span style={valueStyle}>€{euaPrice}/tCO₂e</span>
+      <div className={styles.rangeBlock}>
+        <div className={styles.rangeRow}>
+          <label className={styles.rangeLabel} htmlFor="cbam-eua-price">
+            EU ETS Carbon Price
+          </label>
+          <span className={styles.rangeValue}>EUR {euaPrice}/tCO2e</span>
         </div>
         <input
+          id="cbam-eua-price"
           type="range"
           min={30}
           max={150}
           step={1}
           value={euaPrice}
-          onChange={(e) => onEuaChange(Number(e.target.value))}
-          style={{ width: "100%", accentColor: "#F59E0B" }}
+          onChange={(event) => onEuaChange(Number(event.target.value))}
+          className={styles.rangeInput}
         />
-        <div style={rangeHintStyle}>
-          <span>€30 low</span>
-          <span>€65 current</span>
-          <span>€150 high</span>
+        <div className={styles.rangeHints}>
+          <span>EUR 30 low</span>
+          <span>EUR 65 current</span>
+          <span>EUR 150 high</span>
         </div>
       </div>
 
-      {/* INR Rate */}
       <div>
-        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
-          <span style={labelStyle}>INR / EUR rate</span>
-          <span style={valueStyle}>₹{inrRate}/€</span>
+        <div className={styles.rangeRow}>
+          <label className={styles.rangeLabel} htmlFor="cbam-inr-rate">
+            INR / EUR rate
+          </label>
+          <span className={styles.rangeValue}>INR {inrRate}/EUR</span>
         </div>
         <input
+          id="cbam-inr-rate"
           type="range"
           min={80}
           max={110}
           step={1}
           value={inrRate}
-          onChange={(e) => onInrChange(Number(e.target.value))}
-          style={{ width: "100%", accentColor: "#F59E0B" }}
+          onChange={(event) => onInrChange(Number(event.target.value))}
+          className={styles.rangeInput}
         />
-        <div style={rangeHintStyle}>
-          <span>₹80</span>
-          <span>₹{inrRate}</span>
-          <span>₹110</span>
+        <div className={styles.rangeHints}>
+          <span>INR 80</span>
+          <span>INR {inrRate}</span>
+          <span>INR 110</span>
         </div>
       </div>
-    </div>
+    </section>
   );
 }
